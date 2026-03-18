@@ -3,6 +3,7 @@
 import { FormEvent, ReactNode, useEffect, useState } from "react";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Building2, Eye, EyeOff, KeyRound, Mail, ShieldCheck, UserRound } from "lucide-react";
 import AppSplashScreen from "../components/AppSplashScreen";
 
@@ -35,11 +36,12 @@ export default function AdminAuthClient() {
   const [showSplash, setShowSplash] = useState(true);
   const [activeRole, setActiveRole] = useState<RoleKey>("administrator");
   const shouldReduceMotion = useReducedMotion();
+  const router = useRouter();
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setShowSplash(false);
-    }, 5000);
+    }, 1000); // Show splash screen for at least 2 seconds
 
     return () => {
       window.clearTimeout(timer);
@@ -52,6 +54,14 @@ export default function AdminAuthClient() {
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const roleRoutes: Record<RoleKey, string> = {
+      administrator: "/admin-page",
+      correctionalOfficer: "/officer-page",
+      medicalStaff: "/medical-page",
+      rehabilitationStaff: "/rehab-page",
+    };
+
+    router.push(roleRoutes[activeRole]);
   };
 
   if (showSplash) {

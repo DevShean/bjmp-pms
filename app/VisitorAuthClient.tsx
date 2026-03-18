@@ -13,6 +13,7 @@ import {
   UserRound,
 } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { FormEvent, type ReactNode, useEffect, useState } from "react";
 import VisitorSplashScreen from "./components/VisitorSplashScreen";
 
@@ -31,11 +32,12 @@ export default function VisitorAuthClient() {
   const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const shouldReduceMotion = useReducedMotion();
+  const router = useRouter();
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setShowSplash(false);
-    }, 5000);
+    }, 1000); // Show splash screen for at least 1 second
 
     return () => {
       window.clearTimeout(timer);
@@ -46,8 +48,13 @@ export default function VisitorAuthClient() {
     ? { duration: 0 }
     : { duration: 0.32, ease: [0.22, 1, 0.36, 1] as const };
 
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const onRegisterSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+  };
+
+  const onLoginSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    router.push("/visitor-page");
   };
 
   if (showSplash) {
@@ -154,7 +161,7 @@ export default function VisitorAuthClient() {
                     exit={{ opacity: 0, x: shouldReduceMotion ? 0 : 18, filter: "blur(6px)" }}
                     transition={contentTransition}
                   >
-                    <LoginForm onSubmit={onSubmit} />
+                    <LoginForm onSubmit={onLoginSubmit} />
                   </motion.div>
                 ) : (
                   <motion.div
@@ -164,7 +171,7 @@ export default function VisitorAuthClient() {
                     exit={{ opacity: 0, x: shouldReduceMotion ? 0 : -18, filter: "blur(6px)" }}
                     transition={contentTransition}
                   >
-                    <RegisterForm onSubmit={onSubmit} />
+                    <RegisterForm onSubmit={onRegisterSubmit} />
                   </motion.div>
                 )}
               </AnimatePresence>

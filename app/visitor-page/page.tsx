@@ -1,0 +1,32 @@
+"use client";
+
+import { useState } from "react";
+import VisitorHeader from "../components/VisitorHeader";
+import VisitorSidebar from "../components/VisitorSidebar";
+
+export default function VisitorPage() {
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  return (
+    <div className="flex min-h-screen w-full">
+      <VisitorSidebar
+        sessionUser={{
+          name: "Visitor Account",
+          email: "visitor@bjmp.portal",
+        }}
+        isCollapsed={isSidebarCollapsed}
+      />
+      <div className="flex flex-1 flex-col">
+        <VisitorHeader
+          isSidebarCollapsed={isSidebarCollapsed}
+          onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          sessionUser={{
+            name: "Visitor Account",
+            email: "visitor@bjmp.portal",
+          }}
+        />
+        <main className="flex-1 bg-gray-50" />
+      </div>
+    </div>
+  );
+}
