@@ -13,7 +13,8 @@ import {
   UserRound,
 } from "lucide-react";
 import Image from "next/image";
-import { FormEvent, type ReactNode, useState } from "react";
+import { FormEvent, type ReactNode, useEffect, useState } from "react";
+import AppSplashScreen from "./components/AppSplashScreen";
 
 const authCopy = {
   login: {
@@ -27,8 +28,19 @@ const authCopy = {
 } as const;
 
 export default function Home() {
+  const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const shouldReduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setShowSplash(false);
+    }, 5000);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, []);
 
   const contentTransition = shouldReduceMotion
     ? { duration: 0 }
@@ -37,6 +49,10 @@ export default function Home() {
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
   };
+
+  if (showSplash) {
+    return <AppSplashScreen />;
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center px-5 py-6 sm:px-8 sm:py-8">
@@ -220,14 +236,7 @@ function LoginForm({ onSubmit }: AuthFormProps) {
       />
 
       <div className="flex items-center justify-between text-sm">
-        <label className="flex items-center gap-2 text-[#4d5f84]">
-          <input
-            type="checkbox"
-            className="h-4 w-4 rounded border-(--line) text-(--primary) focus:ring-(--primary)"
-          />
-          Keep me signed in
-        </label>
-        <button type="button" className="inline-flex items-center gap-1 font-semibold text-(--primary) hover:underline">
+        <button type="button" className="cursor-pointer inline-flex items-center gap-1 font-semibold text-(--primary) hover:underline">
           <CircleHelp size={14} aria-hidden="true" />
           Forget Password?
         </button>
