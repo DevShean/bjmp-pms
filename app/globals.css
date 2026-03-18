@@ -1,26 +1,54 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #e8edf7;
+  --foreground: #0c1f47;
+  --surface: #f7f8fc;
+  --surface-strong: #ffffff;
+  --line: #cad4e8;
+  --primary: #0b2559;
+  --primary-soft: #e2e8f7;
+  --primary-accent: #12408f;
+  --success: #30723c;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-inter);
 }
 
 body {
-  background: var(--background);
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 10% 0%, #f8fbff 0%, rgba(248, 251, 255, 0) 42%),
+    radial-gradient(circle at 90% 100%, #d3def4 0%, rgba(211, 222, 244, 0) 40%),
+    var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), "Segoe UI", sans-serif;
+}
+
+.font-lexend {
+  font-family: var(--font-lexend), "Trebuchet MS", sans-serif;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-rise-in {
+  animation: rise-in 600ms ease-out both;
 }
