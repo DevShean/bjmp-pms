@@ -13,8 +13,13 @@ const lexend = Lexend({
 });
 
 export const metadata: Metadata = {
-  title: "BJMP Visitor Registration",
-  description: "Visitor registration and sign-in portal for prison facility visits",
+  title: "BJMP | Prison Management System",
+  description: "Prison management and access portal for BJMP operations",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
