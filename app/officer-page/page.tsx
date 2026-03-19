@@ -1,25 +1,21 @@
+import StaffDashboardShell from "../components/StaffDashboardShell";
+
 export default function OfficerPage() {
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-5 py-8 sm:px-8">
-      <header className="rounded-2xl border border-(--line) bg-(--surface) p-6 shadow-sm">
-        <p className="text-xs font-semibold tracking-[0.2em] text-(--primary-accent) uppercase">
-          BJMP Internal Portal
-        </p>
-        <h1 className="mt-2 font-lexend text-3xl font-bold text-(--primary)">Officer Page</h1>
-        <p className="mt-2 text-sm text-[#5f6f8f]">
-          You are signed in as a correctional officer. This is a placeholder page while
-          authentication and database features are still being built.
-        </p>
-      </header>
-
-      <section className="rounded-2xl border border-dashed border-(--line) bg-(--surface-strong) p-6">
-        <h2 className="font-lexend text-xl font-semibold text-(--primary)">Next Steps</h2>
-        <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-[#5f6f8f]">
-          <li>Connect officer sign-in to backend authentication.</li>
-          <li>Load duty logs and movement records from your database.</li>
-          <li>Add protected routes with officer-specific permissions.</li>
-        </ul>
-      </section>
-    </main>
+    <StaffDashboardShell
+      role="officer"
+      title="Officer Duty Dashboard"
+      description="Access inmate records, document behavior logs, and keep frontline operational data aligned with daily custodial activity."
+      highlights={[
+        { label: "Inmates Monitored", value: "128", note: "Within current officer coverage" },
+        { label: "Behavior Logs", value: "18", note: "Filed during the current shift cycle" },
+        { label: "Security Flags", value: "05", note: "Need immediate officer attention" },
+      ]}
+      focusAreas={[
+        "Log inmate behavior updates with complete and accurate timestamps.",
+        "Monitor flagged inmates and coordinate immediate response if needed.",
+        "Keep unit-level inmate records aligned with shift observations.",
+      ]}
+    />
   );
 }

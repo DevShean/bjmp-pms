@@ -184,7 +184,7 @@ const UserMenu = memo(
                   if (onProfile) onProfile();
                   setIsOpen(false);
                 }}
-                className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-[#2f3d5b] transition-colors hover:bg-[#f8fafd]"
+                className="cursor-pointer flex w-full items-center gap-2 px-4 py-2.5 text-sm text-[#2f3d5b] transition-colors hover:bg-[#f8fafd]"
               >
                 <UserCircle2 className="h-4 w-4 text-[#8191b3]" />
                 <span>Profile</span>
@@ -207,7 +207,7 @@ const UserMenu = memo(
                   if (onSignOut) onSignOut();
                   setIsOpen(false);
                 }}
-                className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-[#b91c1c] transition-colors hover:bg-[#fef2f2]"
+                className="cursor-pointer flex w-full items-center gap-2 px-4 py-2.5 text-sm text-[#b91c1c] transition-colors hover:bg-[#fef2f2]"
               >
                 <X className="h-4 w-4" />
                 <span>Sign out</span>

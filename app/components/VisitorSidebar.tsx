@@ -54,8 +54,8 @@ export default function VisitorSidebar({ sessionUser, isCollapsed = false }: Vis
   return (
     <aside
       className={cn(
-        "relative flex h-screen flex-col bg-linear-to-b from-[#f8fbff] via-[#f4f8ff] to-[#eef4ff] transition-all duration-300 ease-in-out",
-        effectiveCollapsed ? "w-[72px]" : "w-64",
+        "sticky top-0 flex h-screen shrink-0 flex-col bg-linear-to-b from-[#f8fbff] via-[#f4f8ff] to-[#eef4ff] transition-all duration-300 ease-in-out",
+        effectiveCollapsed ? "w-18" : "w-64",
         "border-r border-[#d9e3fb]"
       )}
       onMouseEnter={() => setIsHovered(true)}
@@ -89,7 +89,10 @@ export default function VisitorSidebar({ sessionUser, isCollapsed = false }: Vis
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
+          const isDashboard = item.path === "/visitor-page";
+          const isActive = isDashboard
+            ? pathname === item.path
+            : pathname === item.path || pathname.startsWith(`${item.path}/`);
 
           return (
             <Link

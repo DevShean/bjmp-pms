@@ -1,25 +1,21 @@
+import StaffDashboardShell from "../components/StaffDashboardShell";
+
 export default function MedicalPage() {
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-5 py-8 sm:px-8">
-      <header className="rounded-2xl border border-(--line) bg-(--surface) p-6 shadow-sm">
-        <p className="text-xs font-semibold tracking-[0.2em] text-(--primary-accent) uppercase">
-          BJMP Internal Portal
-        </p>
-        <h1 className="mt-2 font-lexend text-3xl font-bold text-(--primary)">Medical Page</h1>
-        <p className="mt-2 text-sm text-[#5f6f8f]">
-          You are signed in as medical staff. This is a placeholder page while authentication
-          and database features are still being built.
-        </p>
-      </header>
-
-      <section className="rounded-2xl border border-dashed border-(--line) bg-(--surface-strong) p-6">
-        <h2 className="font-lexend text-xl font-semibold text-(--primary)">Next Steps</h2>
-        <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-[#5f6f8f]">
-          <li>Connect medical staff sign-in to backend authentication.</li>
-          <li>Load consultations and treatment schedules from your database.</li>
-          <li>Add protected routes with medical-role permissions.</li>
-        </ul>
-      </section>
-    </main>
+    <StaffDashboardShell
+      role="medical"
+      title="Medical Operations Desk"
+      description="Track inmate health records, treatment schedules, incident notes, and daily medical reporting from one secure clinical dashboard."
+      highlights={[
+        { label: "Open Cases", value: "11", note: "Currently under medical observation" },
+        { label: "Scheduled Checkups", value: "07", note: "Due within the next 24 hours" },
+        { label: "Incident Reports", value: "03", note: "Require follow-up documentation" },
+      ]}
+      focusAreas={[
+        "Review inmate consultations and ensure treatment plans are current.",
+        "Log incident-related medical observations with complete supporting records.",
+        "Prepare timely health reports for command and partner units.",
+      ]}
+    />
   );
 }

@@ -4,10 +4,24 @@ import { FormEvent, ReactNode, useEffect, useState } from "react";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Building2, Eye, EyeOff, KeyRound, Mail, ShieldCheck, UserRound } from "lucide-react";
+import { LogIn, Building2, Eye, EyeOff, KeyRound, Mail, ShieldCheck, UserRound } from "lucide-react";
 import AppSplashScreen from "../components/AppSplashScreen";
+import { supabase } from "../../lib/supabase/client";
 
 type RoleKey = "administrator" | "correctionalOfficer" | "medicalStaff" | "rehabilitationStaff";
+
+type UserRoleRecord = {
+  email: string;
+  password: string;
+  roles: {
+    role_name: string;
+  };
+};
+
+type AuthFeedback = {
+  type: "error" | "success" | "warning";
+  message: string;
+};
 
 const roleCopy: Record<RoleKey, { title: string; subtitle: string; actionLabel: string }> = {
   administrator: {
@@ -35,6 +49,8 @@ const roleCopy: Record<RoleKey, { title: string; subtitle: string; actionLabel: 
 export default function AdminAuthClient() {
   const [showSplash, setShowSplash] = useState(true);
   const [activeRole, setActiveRole] = useState<RoleKey>("administrator");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [authFeedback, setAuthFeedback] = useState<AuthFeedback | null>(null);
   const shouldReduceMotion = useReducedMotion();
   const router = useRouter();
 
@@ -48,12 +64,41 @@ export default function AdminAuthClient() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!authFeedback) {
+      return;
+    }
+
+    const feedbackTimer = window.setTimeout(() => {
+      setAuthFeedback(null);
+    }, 3000);
+
+    return () => {
+      window.clearTimeout(feedbackTimer);
+    };
+  }, [authFeedback]);
+
   const panelTransition = shouldReduceMotion
     ? { duration: 0 }
     : { duration: 0.32, ease: [0.22, 1, 0.36, 1] as const };
 
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+    const email = String(formData.get("staffEmail") || "").trim().toLowerCase();
+    const password = String(formData.get("staffPassword") || "");
+
+    setAuthFeedback(null);
+
+    if (!email || !password) {
+      setAuthFeedback({
+        type: "warning",
+        message: "Enter both email and password to continue.",
+      });
+      return;
+    }
+
     const roleRoutes: Record<RoleKey, string> = {
       administrator: "/admin-page",
       correctionalOfficer: "/officer-page",
@@ -61,7 +106,54 @@ export default function AdminAuthClient() {
       rehabilitationStaff: "/rehab-page",
     };
 
-    router.push(roleRoutes[activeRole]);
+    const roleLookup: Record<string, RoleKey> = {
+      Administrator: "administrator",
+      "Correctional Officer": "correctionalOfficer",
+      "Medical Staff": "medicalStaff",
+      "Rehabilitation Staff": "rehabilitationStaff",
+    };
+
+    try {
+      setIsSubmitting(true);
+
+      const { data: userRecord, error: userError } = await supabase
+        .from("users")
+        .select("email, password, roles!inner(role_name)")
+        .eq("email", email)
+        .single<UserRoleRecord>();
+
+      if (userError || !userRecord) {
+        throw new Error("No staff profile matched this account.");
+      }
+
+      if (userRecord.password !== password) {
+        throw new Error("The password you entered is incorrect.");
+      }
+
+      const resolvedRole = roleLookup[userRecord.roles.role_name];
+
+      if (!resolvedRole) {
+        throw new Error("The account role is not mapped in the portal yet.");
+      }
+
+      if (resolvedRole !== activeRole) {
+        throw new Error(`This account is assigned to ${userRecord.roles.role_name}, not the selected portal.`);
+      }
+
+      setAuthFeedback({
+        type: "success",
+        message: `Welcome back, ${userRecord.roles.role_name}. Redirecting...`,
+      });
+
+      router.push(roleRoutes[resolvedRole]);
+    } catch (error) {
+      setAuthFeedback({
+        type: "error",
+        message: error instanceof Error ? error.message : "An unexpected authentication error occurred.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (showSplash) {
@@ -69,10 +161,10 @@ export default function AdminAuthClient() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-5 py-6 sm:px-8 sm:py-8">
+    <div className="flex min-h-screen items-center justify-center px-5 py-5 sm:px-8 sm:py-8">
       <main className="glass-panel animate-rise-in grid w-full max-w-5xl overflow-hidden rounded-4xl shadow-[0_24px_70px_-28px_rgba(24,49,92,0.48)] lg:grid-cols-[1.05fr_1fr]">
         <section
-          className="relative hidden bg-cover bg-center p-10 text-white lg:flex lg:flex-col lg:justify-between"
+          className="relative hidden bg-cover bg-center p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-12"
           style={{ backgroundImage: "url('/img/images/jailbureau-bg.png')" }}
         >
           <div className="absolute inset-0 bg-black/40" />
@@ -103,9 +195,9 @@ export default function AdminAuthClient() {
           </div>
         </section>
 
-        <section className="bg-(--surface) p-6 sm:p-8">
-          <div className="mx-auto w-full max-w-md space-y-5">
-            <div className="space-y-3 text-center">
+        <section className="bg-(--surface) p-6 sm:p-8 lg:p-9">
+          <div className="mx-auto flex w-full max-w-md flex-col gap-6">
+            <div className="space-y-4 text-center">
               <motion.div
                 animate={{ scale: 1, opacity: 1 }}
                 initial={{ scale: 0.94, opacity: 0 }}
@@ -181,17 +273,11 @@ export default function AdminAuthClient() {
                 exit={{ opacity: 0, x: shouldReduceMotion ? 0 : 16, filter: "blur(6px)" }}
                 transition={panelTransition}
               >
-                <form className="flex min-h-100 flex-col gap-4" onSubmit={onSubmit}>
-                  <InputField
-                    id="staffId"
-                    label="Staff ID"
-                    type="text"
-                    placeholder="Enter staff ID"
-                    icon={<UserRound size={18} aria-hidden="true" />}
-                  />
+                <form className="flex flex-col gap-4" onSubmit={onSubmit}>          
                   <InputField
                     id="staffEmail"
-                    label="Official Email"
+                    label="Email"
+                    disabled={isSubmitting}
                     type="email"
                     placeholder="name@bjmp.gov.ph"
                     icon={<Mail size={18} aria-hidden="true" />}
@@ -199,25 +285,32 @@ export default function AdminAuthClient() {
                   <InputField
                     id="staffPassword"
                     label="Password"
+                    disabled={isSubmitting}
                     type="password"
                     placeholder="Enter your password"
                     icon={<KeyRound size={18} aria-hidden="true" />}
                   />
-                  <InputField
-                    id="facilityCode"
-                    label="Facility Code"
-                    type="text"
-                    placeholder="Enter assigned facility code"
-                    icon={<ShieldCheck size={18} aria-hidden="true" />}
-                  />
-
-                  <div className="mt-auto pt-3">
+                  {authFeedback ? (
+                    <div
+                      className={`rounded-xl border px-4 py-3 text-sm ${
+                        authFeedback.type === "success"
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          : authFeedback.type === "warning"
+                            ? "border-amber-200 bg-amber-50 text-amber-700"
+                            : "border-rose-200 bg-rose-50 text-rose-700"
+                      }`}
+                    >
+                      {authFeedback.message}
+                    </div>
+                  ) : null}
+                  <div className="pt-2">
                     <button
                       type="submit"
-                      className="font-lexend flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-(--primary) px-4 py-3 text-base font-semibold text-white transition hover:brightness-110"
+                      disabled={isSubmitting}
+                      className="font-lexend flex w-full items-center justify-center gap-2 rounded-xl bg-(--primary) px-4 py-3 text-base font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
                     >
-                      <ArrowRight size={18} aria-hidden="true" />
-                      Continue as {roleCopy[activeRole].actionLabel}
+                      <LogIn size={18} aria-hidden="true" />
+                      {isSubmitting ? "Signing in..." : "Login"}
                     </button>
                   </div>
                 </form>
@@ -276,9 +369,10 @@ type InputFieldProps = {
   type: "text" | "email" | "password";
   placeholder: string;
   icon?: ReactNode;
+  disabled?: boolean;
 };
 
-function InputField({ id, label, type, placeholder, icon }: InputFieldProps) {
+function InputField({ id, label, type, placeholder, icon, disabled = false }: InputFieldProps) {
   const isPassword = type === "password";
   const [showPassword, setShowPassword] = useState(false);
   const resolvedType = isPassword && showPassword ? "text" : type;
@@ -297,6 +391,7 @@ function InputField({ id, label, type, placeholder, icon }: InputFieldProps) {
           name={id}
           type={resolvedType}
           placeholder={placeholder}
+          disabled={disabled}
           className="w-full rounded-xl border border-(--line) bg-(--surface-strong) px-3 py-3 text-[#2f3d5b] outline-none transition placeholder:text-[#9fa9bf] focus:border-(--primary-accent) focus:ring-2 focus:ring-[#c3d4f8]"
           style={{
             ...(icon ? { paddingLeft: "2.55rem" } : {}),
