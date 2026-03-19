@@ -20,7 +20,7 @@ export type StaffRole = "admin" | "medical" | "officer" | "rehab";
 
 export type StaffMenuItem = {
   name: string;
-  path: string;
+  path?: string;
   icon: ComponentType<{ className?: string }>;
   badge?: number;
   children?: Array<{
@@ -50,7 +50,6 @@ export const staffRoleConfig: Record<
       { name: "Dashboard", path: "/admin-page", icon: House },
       {
         name: "Manage Inmate",
-        path: "/admin-page/manage-inmate",
         icon: Users,
         children: [
           { name: "Inmate Profile", path: "/admin-page/inmate-profile" },
@@ -59,7 +58,6 @@ export const staffRoleConfig: Record<
       },
       {
         name: "Program & Rehabilitation",
-        path: "/admin-page/program-rehabilitation",
         icon: ClipboardList,
         children: [
           { name: "Manage Program", path: "/admin-page/manage-program" },

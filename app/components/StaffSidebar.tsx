@@ -74,7 +74,7 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
           const Icon = item.icon;
           const children = item.children ?? [];
           const hasChildren = children.length > 0;
-          const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
+          const isActive = item.path ? (pathname === item.path || pathname.startsWith(`${item.path}/`)) : false;
           const hasActiveChild = children.some(
             (child) => pathname === child.path || pathname.startsWith(`${child.path}/`),
           );
@@ -83,48 +83,7 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
           return (
             <div key={item.name} className="space-y-1">
               <div className="flex items-center gap-1">
-                <Link
-                  href={item.path}
-                  className={cn(
-                    "group relative flex min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all",
-                    isActive || hasActiveChild
-                      ? "bg-[#dfe9ff] text-[#00154A] shadow-sm"
-                      : "text-[#4b5d86] hover:bg-[#edf3ff] hover:text-[#00154A]"
-                  )}
-                  title={effectiveCollapsed ? item.name : undefined}
-                >
-                  <Icon
-                    className={cn(
-                      "h-5 w-5 shrink-0 transition-transform group-hover:scale-110",
-                      isActive || hasActiveChild ? "text-[#00154A]" : "text-[#8191b3]"
-                    )}
-                  />
-
-                  <span
-                    className={cn(
-                      "flex-1 overflow-hidden whitespace-nowrap transition-all duration-300",
-                      effectiveCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
-                    )}
-                  >
-                    {item.name}
-                  </span>
-
-                  {item.badge && !effectiveCollapsed && (
-                    <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#2952b3] px-1.5 text-xs font-medium text-white">
-                      {item.badge}
-                    </span>
-                  )}
-
-                  {(isActive || hasActiveChild) && !effectiveCollapsed && !hasChildren && (
-                    <ChevronRight className="h-4 w-4 text-[#00154A]" />
-                  )}
-
-                  {item.badge && effectiveCollapsed && (
-                    <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#2952b3] ring-2 ring-white" />
-                  )}
-                </Link>
-
-                {hasChildren && !effectiveCollapsed && (
+                {hasChildren ? (
                   <button
                     type="button"
                     onClick={() =>
@@ -133,13 +92,79 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
                         [item.name]: !resolvedExpandedItems[item.name],
                       }))
                     }
-                    className="flex h-9 w-9 items-center justify-center rounded-lg text-[#6b7b99] transition hover:bg-[#edf3ff] hover:text-[#00154A]"
-                    aria-label={`Toggle ${item.name} submenu`}
+                    className={cn(
+                      "group relative flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all",
+                      hasActiveChild
+                        ? "bg-[#dfe9ff] text-[#00154A] shadow-sm"
+                        : "text-[#4b5d86] hover:bg-[#edf3ff] hover:text-[#00154A]"
+                    )}
+                    title={effectiveCollapsed ? item.name : undefined}
                   >
-                    <ChevronDown
-                      className={cn("h-4 w-4 transition-transform", resolvedExpandedItems[item.name] && "rotate-180")}
+                    <Icon
+                      className={cn(
+                        "h-5 w-5 shrink-0 transition-transform group-hover:scale-110",
+                        hasActiveChild ? "text-[#00154A]" : "text-[#8191b3]"
+                      )}
                     />
+                    <span
+                      className={cn(
+                        "flex-1 overflow-hidden whitespace-nowrap text-left transition-all duration-300",
+                        effectiveCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
+                      )}
+                    >
+                      {item.name}
+                    </span>
+                    {item.badge && !effectiveCollapsed && (
+                      <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#2952b3] px-1.5 text-xs font-medium text-white">
+                        {item.badge}
+                      </span>
+                    )}
+                    {!effectiveCollapsed && (
+                      <ChevronDown
+                        className={cn("h-4 w-4 transition-transform", resolvedExpandedItems[item.name] && "rotate-180")}
+                      />
+                    )}
+                    {item.badge && effectiveCollapsed && (
+                      <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#2952b3] ring-2 ring-white" />
+                    )}
                   </button>
+                ) : (
+                  <Link
+                    href={item.path!}
+                    className={cn(
+                      "group relative flex min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all",
+                      isActive || hasActiveChild
+                        ? "bg-[#dfe9ff] text-[#00154A] shadow-sm"
+                        : "text-[#4b5d86] hover:bg-[#edf3ff] hover:text-[#00154A]"
+                    )}
+                    title={effectiveCollapsed ? item.name : undefined}
+                  >
+                    <Icon
+                      className={cn(
+                        "h-5 w-5 shrink-0 transition-transform group-hover:scale-110",
+                        isActive || hasActiveChild ? "text-[#00154A]" : "text-[#8191b3]"
+                      )}
+                    />
+                    <span
+                      className={cn(
+                        "flex-1 overflow-hidden whitespace-nowrap transition-all duration-300",
+                        effectiveCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
+                      )}
+                    >
+                      {item.name}
+                    </span>
+                    {item.badge && !effectiveCollapsed && (
+                      <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#2952b3] px-1.5 text-xs font-medium text-white">
+                        {item.badge}
+                      </span>
+                    )}
+                    {(isActive || hasActiveChild) && !effectiveCollapsed && (
+                      <ChevronRight className="h-4 w-4 text-[#00154A]" />
+                    )}
+                    {item.badge && effectiveCollapsed && (
+                      <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#2952b3] ring-2 ring-white" />
+                    )}
+                  </Link>
                 )}
               </div>
 
