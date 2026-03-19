@@ -10,6 +10,10 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.99.2",
+    "@tanstack/react-table": "^8.21.3",
+    "datatables.net": "^2.3.7",
+    "datatables.net-dt": "^2.3.7",
+    "datatables.net-react": "^1.0.1",
     "lucide-react": "^0.577.0",
     "motion": "^12.38.0",
     "next": "16.1.7",

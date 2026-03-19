@@ -74,7 +74,10 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
           const Icon = item.icon;
           const children = item.children ?? [];
           const hasChildren = children.length > 0;
-          const isActive = item.path ? (pathname === item.path || pathname.startsWith(`${item.path}/`)) : false;
+          const isHomeItem = item.path === config.homePath;
+          const isActive = item.path
+            ? pathname === item.path || (!isHomeItem && pathname.startsWith(`${item.path}/`))
+            : false;
           const hasActiveChild = children.some(
             (child) => pathname === child.path || pathname.startsWith(`${child.path}/`),
           );
@@ -194,7 +197,7 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
         })}
       </nav>
 
-      <div className="border-t border-[#d9e3fb] bg-linear-to-r from-[#eef4ff] to-[#f8fbff] p-3">
+      <div className="sticky bottom-0 border-t border-[#d9e3fb] bg-linear-to-r from-[#eef4ff] to-[#f8fbff] p-3">
         <div className="flex items-center gap-3 rounded-xl border border-[#dbe6ff] bg-white/85 px-2.5 py-2.5 shadow-[0_6px_18px_rgba(0,40,120,0.08)]">
           <div className="relative shrink-0">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-linear-to-br from-[#15337b] to-[#2952b3] text-white shadow-sm">
