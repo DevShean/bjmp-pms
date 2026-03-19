@@ -141,7 +141,7 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
                 )}
               </div>
 
-              {showChildren && (
+              {showChildren && item.children && (
                 <div className="ml-5 space-y-1 border-l border-[#d9e3fb] pl-4">
                   {item.children.map((child) => {
                     const childActive = pathname === child.path || pathname.startsWith(`${child.path}/`);
