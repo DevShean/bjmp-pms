@@ -72,11 +72,13 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
         {config.menuItems.map((item) => {
           const Icon = item.icon;
+          const children = item.children ?? [];
+          const hasChildren = children.length > 0;
           const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
-          const hasActiveChild = item.children?.some(
+          const hasActiveChild = children.some(
             (child) => pathname === child.path || pathname.startsWith(`${child.path}/`),
           );
-          const showChildren = !effectiveCollapsed && item.children && resolvedExpandedItems[item.name];
+          const showChildren = hasChildren && !effectiveCollapsed && resolvedExpandedItems[item.name];
 
           return (
             <div key={item.name} className="space-y-1">
@@ -113,7 +115,7 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
                     </span>
                   )}
 
-                  {(isActive || hasActiveChild) && !effectiveCollapsed && !item.children && (
+                  {(isActive || hasActiveChild) && !effectiveCollapsed && !hasChildren && (
                     <ChevronRight className="h-4 w-4 text-[#00154A]" />
                   )}
 
@@ -122,7 +124,7 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
                   )}
                 </Link>
 
-                {item.children && !effectiveCollapsed && (
+                {hasChildren && !effectiveCollapsed && (
                   <button
                     type="button"
                     onClick={() =>
@@ -141,9 +143,9 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
                 )}
               </div>
 
-              {showChildren && item.children && (
+              {showChildren && (
                 <div className="ml-5 space-y-1 border-l border-[#d9e3fb] pl-4">
-                  {item.children.map((child) => {
+                  {children.map((child) => {
                     const childActive = pathname === child.path || pathname.startsWith(`${child.path}/`);
                     return (
                       <Link
