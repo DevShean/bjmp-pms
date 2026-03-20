@@ -11,6 +11,7 @@ import {
 } from "@tanstack/react-table";
 import { Eye, Edit, Trash2 } from "lucide-react";
 import AdminSidebarLayout from "../components/AdminSidebarLayout";
+import AddInmateModal from "../components/AddInmateModal";
 
 type InmateStatus = "Active" | "Released" | "Transferred";
 
@@ -55,6 +56,7 @@ export default function InmateProfilePage() {
     const [searchField, setSearchField] = useState<"name" | "status" | "gender">("name");
     const [searchTerm, setSearchTerm] = useState("");
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [graphData, setGraphData] = useState<GraphApiResponse | null>(null);
     const [graphError, setGraphError] = useState<string | null>(null);
 
@@ -202,6 +204,7 @@ export default function InmateProfilePage() {
     const transferredCount = graphCounts.find((item) => item.status === "Transferred")?.count ?? 0;
 
     return (
+        <>
         <AdminSidebarLayout>
             <section className="space-y-6">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -215,6 +218,7 @@ export default function InmateProfilePage() {
                     <div className="flex flex-wrap items-center gap-3">
                         <button
                             type="button"
+                            onClick={() => setIsAddModalOpen(true)}
                             className="rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
                         >
                             Add New Inmate
@@ -402,6 +406,17 @@ export default function InmateProfilePage() {
                 </div>
             </section>
         </AdminSidebarLayout>
+
+        <AddInmateModal
+            isOpen={isAddModalOpen}
+            onClose={() => setIsAddModalOpen(false)}
+            onSubmit={(data) => {
+                // TODO: persist to Supabase
+                console.log("New inmate data:", data);
+                setIsAddModalOpen(false);
+            }}
+        />
+        </>
     );
 }
 
