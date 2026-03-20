@@ -219,7 +219,7 @@ export default function InmateProfilePage() {
                         <button
                             type="button"
                             onClick={() => setIsAddModalOpen(true)}
-                            className="rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
+                            className="cursor-pointer rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
                         >
                             Add New Inmate
                         </button>
