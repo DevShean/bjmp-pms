@@ -14,13 +14,14 @@ type Pdl = {
 type PdlComboboxProps = {
   value: string;
   onValueChange: (pdlId: string) => void;
+  placeholder?: string;
 };
 
 function cn(...classNames: Array<string | false | null | undefined>) {
   return classNames.filter(Boolean).join(" ");
 }
 
-export default function PdlCombobox({ value, onValueChange }: PdlComboboxProps) {
+export default function PdlCombobox({ value, onValueChange, placeholder = "Select a PDL" }: PdlComboboxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -113,14 +114,14 @@ export default function PdlCombobox({ value, onValueChange }: PdlComboboxProps) 
               <span className="truncate font-medium text-slate-700">{selectedPdl.name}</span>
             </>
           ) : (
-            <span className="text-slate-500">Select a PDL</span>
+            <span className="text-slate-500">{placeholder}</span>
           )}
         </span>
         <ChevronsUpDown className="h-4 w-4 shrink-0 text-slate-400" />
       </button>
 
       {open && (
-        <div className="absolute z-30 mt-2 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+        <div className="absolute z-100 mt-2 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
           <div className="border-b border-slate-100 p-2">
             <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-sm text-slate-600 focus-within:border-blue-300 focus-within:bg-white">
               <Search className="h-4 w-4" />
