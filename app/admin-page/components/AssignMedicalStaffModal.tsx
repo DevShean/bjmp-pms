@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import IconButton from "@/components/ui/IconButton";
 import { AnimatePresence, motion } from "motion/react";
 import { X, Stethoscope, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
@@ -148,14 +149,14 @@ export default function AssignMedicalStaffModal({ isOpen, onClose, onSubmit }: A
 
             {/* Footer */}
             <div className="flex items-center justify-end border-t border-slate-200 bg-slate-50 px-6 py-4">
-              <button
-                type="button"
+              <IconButton
                 onClick={handleSubmit}
+                icon={<Stethoscope size={18} />}
+                colorClass="bg-blue-700 hover:bg-blue-800 text-white"
                 disabled={!inmateId || !medicalStaffId || !date}
-                className="cursor-pointer flex items-center gap-1.5 rounded-lg bg-blue-700 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Assign
-              </button>
+              </IconButton>
             </div>
           </motion.div>
         </motion.div>

@@ -9,7 +9,8 @@ import {
     type ColumnDef,
     type PaginationState,
 } from "@tanstack/react-table";
-import { Eye, Edit, Trash2 } from "lucide-react";
+import { Eye, Edit, Trash2, UserPlus, Stethoscope } from "lucide-react";
+import IconButton from "@/components/ui/IconButton";
 import AdminSidebarLayout from "../components/AdminSidebarLayout";
 import AddInmateModal from "../components/AddInmateModal";
 import AssignMedicalStaffModal from "../components/AssignMedicalStaffModal";
@@ -218,20 +219,20 @@ export default function InmateProfilePage() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3">
-                        <button
-                            type="button"
+                        <IconButton
                             onClick={() => setIsAddModalOpen(true)}
-                            className="cursor-pointer rounded-lg bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
+                            icon={<UserPlus size={18} className="-ml-1" />} 
+                            colorClass="bg-teal-700 hover:bg-teal-800 text-white"
                         >
                             Add New Inmate
-                        </button>
-                        <button
-                            type="button"
+                        </IconButton>
+                        <IconButton
                             onClick={() => setIsAssignMedicalModalOpen(true)}
-                            className="cursor-pointer rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800"
+                            icon={<Stethoscope size={18} className="-ml-1" />} 
+                            colorClass="bg-blue-700 hover:bg-blue-800 text-white"
                         >
                             Assign Medical Staff
-                        </button>
+                        </IconButton>
                     </div>
                 </div>
 

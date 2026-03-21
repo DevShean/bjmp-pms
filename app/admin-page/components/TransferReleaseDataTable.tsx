@@ -2,7 +2,8 @@
 
 import { Button } from "../../../components/ui/button";
 import { useReactTable, getCoreRowModel, flexRender, ColumnDef } from "@tanstack/react-table";
-import { useMemo} from "react";
+import { useMemo } from "react";
+import { ArrowRightLeft } from "lucide-react";
 
 export type InmateCellBlock = {
   id: string;
@@ -21,39 +22,61 @@ export default function TransferReleaseDataTable({ data, newBlocks, setNewBlocks
   const columns = useMemo<ColumnDef<InmateCellBlock>[]>(
     () => [
       {
-        header: "INMATE NAME",
+        header: "INMATE",
         accessorKey: "name",
-        cell: ({ row }) => <span className="text-slate-800 font-medium">{row.original.name}</span>,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-3 w-full max-w-[250px]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-purple-100 text-purple-700 text-sm font-bold uppercase ring-2 ring-white">
+              {row.original.name.charAt(0)}
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-slate-900">{row.original.name}</span>
+              <span className="text-xs text-slate-500">ID: #{row.original.id.padStart(4, '0')}</span>
+            </div>
+          </div>
+        ),
       },
       {
-        header: "CURRENT CELL BLOCK",
+        header: "CURRENT BLOCK",
         accessorKey: "currentBlock",
-        cell: ({ row }) => <span className="text-slate-700">{row.original.currentBlock}</span>,
+        cell: ({ row }) => (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-slate-200">
+            {row.original.currentBlock}
+          </span>
+        ),
       },
       {
-        header: "NEW CELL BLOCK",
+        header: "NEW BLOCK DETAILS",
         id: "newBlock",
         cell: ({ row }) => (
-          <input
-            type="text"
-            placeholder="Enter new block"
-            value={newBlocks[row.original.id] || ""}
-            onChange={e => setNewBlocks({ ...newBlocks, [row.original.id]: e.target.value })}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none ring-teal-500 placeholder:text-slate-400 focus:ring-2"
-          />
+          <div className="w-full max-w-[180px]">
+            <input
+              type="text"
+              placeholder="e.g. B2"
+              value={newBlocks[row.original.id] || ""}
+              onChange={e => setNewBlocks({ ...newBlocks, [row.original.id]: e.target.value.toUpperCase() })}
+              className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 transition-colors placeholder:text-slate-400 focus:border-purple-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+            />
+          </div>
         ),
       },
       {
         header: "ACTION",
         id: "action",
-        cell: ({ row }) => (
-          <Button
-            variant="default"
-            size="sm"
-            disabled={!newBlocks[row.original.id] || newBlocks[row.original.id] === row.original.currentBlock}
-            onClick={() => onTransfer(row.original.id, row.original.name, newBlocks[row.original.id])}
-          >Transfer</Button>
-        ),
+        cell: ({ row }) => {
+          const isReady = newBlocks[row.original.id] && newBlocks[row.original.id] !== row.original.currentBlock;
+          return (
+            <Button
+              variant={isReady ? "default" : "outline"}
+              size="sm"
+              disabled={!isReady}
+              onClick={() => onTransfer(row.original.id, row.original.name, newBlocks[row.original.id])}
+              className={isReady ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-500/20 transition-all font-medium border-0' : 'text-slate-500 border-slate-200'}
+            >
+              <ArrowRightLeft className="mr-2 h-4 w-4" /> Transfer
+            </Button>
+          );
+        },
       },
     ],
     [newBlocks, setNewBlocks, onTransfer]
@@ -67,13 +90,13 @@ export default function TransferReleaseDataTable({ data, newBlocks, setNewBlocks
   });
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full">
-        <thead className="bg-slate-50">
+    <div className="w-full overflow-x-auto">
+      <table className="w-full min-w-[800px] border-collapse text-left">
+        <thead>
           {table.getHeaderGroups().map(headerGroup => (
-            <tr key={headerGroup.id}>
+            <tr key={headerGroup.id} className="border-b border-slate-200 bg-slate-50/50">
               {headerGroup.headers.map(header => (
-                <th key={header.id} className="px-5 py-3 text-left text-sm font-semibold text-slate-700">
+                <th key={header.id} className="whitespace-nowrap px-6 py-4 text-xs font-bold tracking-wider text-slate-500 uppercase">
                   {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                 </th>
               ))}
@@ -82,9 +105,9 @@ export default function TransferReleaseDataTable({ data, newBlocks, setNewBlocks
         </thead>
         <tbody className="divide-y divide-slate-100 bg-white">
           {table.getRowModel().rows.map(row => (
-            <tr key={row.id} className="hover:bg-slate-50/70">
+            <tr key={row.id} className="group transition-colors duration-200 hover:bg-slate-50/80">
               {row.getVisibleCells().map(cell => (
-                <td key={cell.id} className="px-5 py-3 text-sm">
+                <td key={cell.id} className="whitespace-nowrap px-6 py-4 align-middle">
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}
