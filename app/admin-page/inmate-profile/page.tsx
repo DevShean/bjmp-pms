@@ -12,6 +12,7 @@ import {
 import { Eye, Edit, Trash2 } from "lucide-react";
 import AdminSidebarLayout from "../components/AdminSidebarLayout";
 import AddInmateModal from "../components/AddInmateModal";
+import AssignMedicalStaffModal from "../components/AssignMedicalStaffModal";
 
 type InmateStatus = "Active" | "Released" | "Transferred";
 
@@ -57,6 +58,7 @@ export default function InmateProfilePage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isAssignMedicalModalOpen, setIsAssignMedicalModalOpen] = useState(false);
     const [graphData, setGraphData] = useState<GraphApiResponse | null>(null);
     const [graphError, setGraphError] = useState<string | null>(null);
 
@@ -225,7 +227,8 @@ export default function InmateProfilePage() {
                         </button>
                         <button
                             type="button"
-                            className="rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800"
+                            onClick={() => setIsAssignMedicalModalOpen(true)}
+                            className="cursor-pointer rounded-lg bg-blue-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800"
                         >
                             Assign Medical Staff
                         </button>
@@ -297,7 +300,7 @@ export default function InmateProfilePage() {
 
                             <button
                                 type="button"
-                                className="rounded-lg bg-teal-700 px-6 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
+                                className="cursor-pointer rounded-lg bg-teal-700 px-6 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
                             >
                                 Search
                             </button>
@@ -309,7 +312,7 @@ export default function InmateProfilePage() {
                                     setSearchTerm("");
                                     setPagination((prev) => ({ ...prev, pageIndex: 0 }));
                                 }}
-                                className="rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-300"
+                                className="cursor-pointer rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-300"
                             >
                                 Clear
                             </button>
@@ -370,10 +373,10 @@ export default function InmateProfilePage() {
                                     onChange={(event) => {
                                         table.setPageSize(Number(event.target.value));
                                     }}
-                                    className="rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-700"
+                                    className="cursor-pointer rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-700"
                                 >
                                     {[5, 8, 10].map((size) => (
-                                        <option key={size} value={size}>
+                                        <option className="cursor-pointer" key={size} value={size}>
                                             {size}
                                         </option>
                                     ))}
@@ -388,7 +391,7 @@ export default function InmateProfilePage() {
                                     type="button"
                                     onClick={() => table.previousPage()}
                                     disabled={!table.getCanPreviousPage()}
-                                    className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="cursor-pointer rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     Previous
                                 </button>
@@ -396,7 +399,7 @@ export default function InmateProfilePage() {
                                     type="button"
                                     onClick={() => table.nextPage()}
                                     disabled={!table.getCanNextPage()}
-                                    className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                    className="cursor-pointer rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     Next
                                 </button>
@@ -414,6 +417,15 @@ export default function InmateProfilePage() {
                 // TODO: persist to Supabase
                 console.log("New inmate data:", data);
                 setIsAddModalOpen(false);
+            }}
+        />
+        <AssignMedicalStaffModal
+            isOpen={isAssignMedicalModalOpen}
+            onClose={() => setIsAssignMedicalModalOpen(false)}
+            onSubmit={(data) => {
+                // TODO: handle assignment
+                console.log("Assigned medical staff:", data);
+                setIsAssignMedicalModalOpen(false);
             }}
         />
         </>
