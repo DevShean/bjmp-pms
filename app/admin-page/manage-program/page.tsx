@@ -1,11 +1,17 @@
+"use client";
+
 import AdminSidebarLayout from "../components/AdminSidebarLayout";
 import { BookOpen, Plus } from "lucide-react";
-import { Button } from "../../../components/ui/button";
+import IconButton from "@/components/ui/IconButton";
 import ProgramDataTable, { ProgramRecord } from "../components/ProgramDataTable";
+import AddProgramModal from "../components/AddProgramModal";
+import { useState } from "react";
 
 const demoPrograms: ProgramRecord[] = [];
 
 export default function ManageProgramPage() {
+	const [isModalOpen, setIsModalOpen] = useState(false);
+
 	return (
 		<AdminSidebarLayout>
 			<section className="space-y-6">
@@ -17,16 +23,28 @@ export default function ManageProgramPage() {
 						</h1>
 						<p className="mt-1 text-sm text-slate-600">Create, manage, and assign rehabilitation programs</p>
 					</div>
-					<Button variant="default" size="lg" className="mt-4 md:mt-0 flex items-center gap-2">
-						<Plus size={18} />
+					<IconButton
+						onClick={() => setIsModalOpen(true)}
+						icon={<Plus size={18} />} 
+						colorClass="bg-teal-700 hover:bg-teal-800 text-white mt-4 md:mt-0"
+					>
 						Add New Program
-					</Button>
+					</IconButton>
 				</div>
 
 				<div className="mt-2">
 					<ProgramDataTable data={demoPrograms} />
 				</div>
 			</section>
+
+			<AddProgramModal 
+				isOpen={isModalOpen} 
+				onClose={() => setIsModalOpen(false)} 
+				onSubmit={(data) => {
+					console.log("Submitted Program Data:", data);
+					// TODO: Add logic to save the program
+				}} 
+			/>
 		</AdminSidebarLayout>
 	);
 }
