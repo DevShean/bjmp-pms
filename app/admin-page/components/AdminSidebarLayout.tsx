@@ -23,7 +23,7 @@ export default function AdminSidebarLayout({ children }: AdminSidebarLayoutProps
         }}
       />
 
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col min-w-0">
         <StaffHeader
           role="admin"
           isSidebarCollapsed={isSidebarCollapsed}
@@ -34,7 +34,7 @@ export default function AdminSidebarLayout({ children }: AdminSidebarLayoutProps
           }}
         />
 
-        <main className="flex-1 px-6 py-8 md:px-10">{children}</main>
+        <main className="flex-1 px-6 py-8 md:px-10 min-w-0 overflow-x-hidden">{children}</main>
       </div>
     </div>
   );
