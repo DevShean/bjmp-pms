@@ -30,6 +30,13 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
   const effectiveCollapsed = isCollapsed && !isHovered;
   const config = staffRoleConfig[role];
 
+  // Derived state to reset expanded items on route change without useEffect
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    setExpandedItems({});
+  }
+
   const openMap = useMemo(() => {
     const nextMap: Record<string, boolean> = {};
     for (const item of config.menuItems) {
@@ -89,12 +96,15 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
                 {hasChildren ? (
                   <button
                     type="button"
-                    onClick={() =>
-                      setExpandedItems((current) => ({
-                        ...current,
-                        [item.name]: !resolvedExpandedItems[item.name],
-                      }))
-                    }
+                    onClick={() => {
+                      const isCurrentlyExpanded = resolvedExpandedItems[item.name];
+                      const nextExpandedItems: Record<string, boolean> = {};
+                      for (const m of config.menuItems) {
+                        nextExpandedItems[m.name] = false;
+                      }
+                      nextExpandedItems[item.name] = !isCurrentlyExpanded;
+                      setExpandedItems(nextExpandedItems);
+                    }}
                     className={cn(
                       "group relative flex min-w-0 flex-1 cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all",
                       hasActiveChild

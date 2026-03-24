@@ -102,19 +102,19 @@ export default function InmateDataTable({ data }: InmateDataTableProps) {
 					<div className="flex items-center gap-2">
 						<button
 							type="button"
-							className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5 text-slate-700 hover:bg-slate-50"
+							className="inline-flex items-center justify-center rounded-md border border-slate-200 p-1.5 text-slate-700 hover:bg-slate-50"
+							title="View"
 							aria-label={`View ${row.original.id}`}
 						>
 							<Eye size={16} />
-							<span>View</span>
 						</button>
 						<button
 							type="button"
-							className="inline-flex items-center gap-1 rounded-md border border-blue-200 px-2.5 py-1.5 text-blue-700 hover:bg-blue-50"
+							className="inline-flex items-center justify-center rounded-md border border-blue-200 p-1.5 text-blue-700 hover:bg-blue-50"
+							title="Edit"
 							aria-label={`Edit ${row.original.id}`}
 						>
 							<Pencil size={16} />
-							<span>Edit</span>
 						</button>
 					</div>
 				),

@@ -42,7 +42,6 @@ export default function ManageProgramPage() {
 				onClose={() => setIsModalOpen(false)} 
 				onSubmit={(data) => {
 					console.log("Submitted Program Data:", data);
-					// TODO: Add logic to save the program
 				}} 
 			/>
 		</AdminSidebarLayout>
