@@ -13,18 +13,24 @@ import {
 export default function MedicalRecordsPage() {
   return (
     <AdminSidebarLayout>
-      <div className="flex flex-col gap-6 p-2 md:p-6 w-full">
-        <h1 className="font-lexend text-3xl font-extrabold text-slate-800">
-          Medical Records
-        </h1>
+      <div className="flex flex-col gap-6 w-full">
+        <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white px-5 py-6 shadow-sm md:flex-row md:items-center md:justify-between sm:px-8">
+          <div>
+            <h1 className="font-lexend text-2xl font-semibold text-slate-800 flex items-center gap-3 sm:text-3xl">
+              Medical Records
+              <BriefcaseMedical size={32} className="text-teal-600 shrink-0" />
+            </h1>
+            <p className="mt-1 text-sm text-slate-600">Track inmate health checkups, diagnoses, and medical requirements</p>
+          </div>
+        </div>
 
         {/* Filter Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 flex items-center gap-4">
-          <label className="text-sm font-medium text-slate-600">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-4 flex flex-col sm:flex-row items-center gap-4">
+          <label className="text-sm font-medium text-slate-600 shrink-0">
             Filter by Assigned Staff:
           </label>
-          <div className="relative">
-            <select className="appearance-none bg-white border border-slate-200 text-slate-700 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-48 p-2.5 pr-8">
+          <div className="relative w-full sm:w-auto">
+            <select className="appearance-none bg-white border border-slate-200 text-slate-700 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 block w-full sm:w-48 p-2.5 pr-8">
               <option>All Staff</option>
               <option>Danna Villanueva</option>
             </select>
@@ -32,15 +38,15 @@ export default function MedicalRecordsPage() {
               <ChevronDown className="w-4 h-4" />
             </div>
           </div>
-          <button className="bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg text-sm px-5 py-2.5 transition-colors">
-            Filter
+          <button className="bg-teal-700 hover:bg-teal-800 text-white font-medium rounded-lg text-sm px-6 py-2.5 transition-colors w-full sm:w-auto">
+            Filter Results
           </button>
         </div>
 
         {/* Records Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
           {/* Record Card */}
-          <div className="bg-white rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-slate-100 p-6 relative flex flex-col gap-4 max-w-md">
+          <div className="bg-white rounded-2xl shadow-[0_2px_10px_-3px_rgba(15,118,110,0.1)] border border-slate-100 p-6 relative flex flex-col gap-4 max-w-md">
             
             <div className="flex justify-between items-start">
               <div>
@@ -52,7 +58,7 @@ export default function MedicalRecordsPage() {
                   <p>Assigned Staff: Danna Villanueva</p>
                 </div>
               </div>
-              <span className="bg-blue-100 text-blue-600 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
+              <span className="bg-teal-100 text-teal-600 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
                 Routine Checkup
               </span>
             </div>
@@ -83,13 +89,13 @@ export default function MedicalRecordsPage() {
             {/* Vital Signs */}
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <Columns className="w-5 h-5 text-blue-500" strokeWidth={2.5} />
+                <Columns className="w-5 h-5 text-teal-500" strokeWidth={2.5} />
                 <h3 className="font-bold text-slate-800">Vital Signs</h3>
               </div>
               
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-blue-50/70 border border-blue-50/50 rounded-lg p-3">
-                  <span className="text-blue-500 text-[13px] font-medium block">BP: ddsad</span>
+                <div className="bg-teal-50/70 border border-teal-50/50 rounded-lg p-3">
+                  <span className="text-teal-600 text-[13px] font-medium block">BP: ddsad</span>
                 </div>
                 <div className="bg-red-50 border border-red-50 flex items-center rounded-lg p-3">
                   <span className="text-red-400 text-[13px] font-medium block">Temp: 0.8°C</span>
@@ -119,7 +125,7 @@ export default function MedicalRecordsPage() {
                 </p>
               </div>
               <div className="flex items-start gap-2.5">
-                <Calendar className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" strokeWidth={2.5} />
+                <Calendar className="w-4 h-4 text-teal-600 mt-0.5 shrink-0" strokeWidth={2.5} />
                 <p>
                   <strong className="text-slate-800 font-bold">Next Checkup:</strong> 2026-03-21
                 </p>

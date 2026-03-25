@@ -57,7 +57,7 @@ export default function AdminAuthClient() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setShowSplash(false);
-    }, 1000); // Show splash screen for at least 2 seconds
+    }, 5000); // Show splash screen for at least 2 seconds
 
     return () => {
       window.clearTimeout(timer);
@@ -145,6 +145,13 @@ export default function AdminAuthClient() {
         message: `Welcome back, ${userRecord.roles.role_name}. Redirecting...`,
       });
 
+      // Set session cookie (Expires in 24 hours)
+      const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString();
+      document.cookie = `bjmp_session=${encodeURIComponent(JSON.stringify({
+        role: userRecord.roles.role_name,
+        email: userRecord.email
+      }))}; path=/; expires=${expires}; SameSite=Lax`;
+
       router.push(roleRoutes[resolvedRole]);
     } catch (error) {
       setAuthFeedback({
@@ -220,7 +227,7 @@ export default function AdminAuthClient() {
                   exit={{ opacity: 0, y: shouldReduceMotion ? 0 : -10 }}
                   transition={panelTransition}
                 >
-                  <h2 className="font-lexend text-4xl font-bold tracking-tight text-(--primary)">
+                  <h2 className="font-lexend text-4xl font-bold tracking-tight text-primary">
                     {roleCopy[activeRole].title}
                   </h2>
                   <p className="mt-2 text-sm text-[#5f6f8f]">{roleCopy[activeRole].subtitle}</p>
@@ -307,7 +314,7 @@ export default function AdminAuthClient() {
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="font-lexend flex w-full items-center justify-center gap-2 rounded-xl bg-(--primary) px-4 py-3 text-base font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
+                      className="font-lexend flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-base font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
                     >
                       <LogIn size={18} aria-hidden="true" />
                       {isSubmitting ? "Signing in..." : "Login"}
@@ -344,7 +351,7 @@ function RoleTab({ active, children, icon, onClick, transition }: RoleTabProps) 
       type="button"
       aria-pressed={active}
       className={`relative cursor-pointer overflow-hidden rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
-        active ? "text-(--primary)" : "text-(--primary-accent)"
+        active ? "text-primary" : "text-(--primary-accent)"
       }`}
       onClick={onClick}
     >
@@ -379,7 +386,7 @@ function InputField({ id, label, type, placeholder, icon, disabled = false }: In
 
   return (
     <label className="space-y-2 text-sm" htmlFor={id}>
-      <span className="font-lexend text-(--primary)">{label}</span>
+      <span className="font-lexend text-primary">{label}</span>
       <div className="relative">
         {icon ? (
           <span className="pointer-events-none absolute inset-y-0 left-3 inline-flex items-center text-[#8191b3]">
@@ -403,7 +410,7 @@ function InputField({ id, label, type, placeholder, icon, disabled = false }: In
             type="button"
             aria-label={showPassword ? "Hide password" : "Show password"}
             onClick={() => setShowPassword((current) => !current)}
-            className="absolute inset-y-0 right-2 inline-flex cursor-pointer items-center rounded-md px-1.5 text-[#7e8cab] transition hover:text-(--primary)"
+            className="absolute inset-y-0 right-2 inline-flex cursor-pointer items-center rounded-md px-1.5 text-[#7e8cab] transition hover:text-primary"
           >
             {showPassword ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}
           </button>

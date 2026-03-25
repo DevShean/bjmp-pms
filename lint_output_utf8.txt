@@ -2,35 +2,3 @@
 > bjmp-pms@0.1.0 lint
 > eslint
 
-
-C:\Users\tanam\bjmp-pms\app\admin-page\components\ProgramDataTable.tsx
-   12:30  warning  'Calendar' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
-  127:17  warning  Compilation Skipped: Use of incompatible library
-
-This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
-
-C:\Users\tanam\bjmp-pms\app\admin-page\components\ProgramDataTable.tsx:127:17
-  125 |   const initialPagination = useMemo<PaginationState>(() => ({ pageIndex: 0, pageSize: 10 }), []);
-  126 |
-> 127 |   const table = useReactTable({
-      |                 ^^^^^^^^^^^^^ TanStack Table's `useReactTable()` API returns functions that cannot be memoized safely
-  128 |     data,
-  129 |     columns,
-  130 |     initialState: { pagination: initialPagination },  react-hooks/incompatible-library
-
-C:\Users\tanam\bjmp-pms\app\admin-page\components\TransferReleaseDataTable.tsx
-  62:17  warning  Compilation Skipped: Use of incompatible library
-
-This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
-
-C:\Users\tanam\bjmp-pms\app\admin-page\components\TransferReleaseDataTable.tsx:62:17
-  60 |   );
-  61 |
-> 62 |   const table = useReactTable({
-     |                 ^^^^^^^^^^^^^ TanStack Table's `useReactTable()` API returns functions that cannot be memoized safely
-  63 |     data,
-  64 |     columns,
-  65 |     getCoreRowModel: getCoreRowModel(),  react-hooks/incompatible-library
-
-Γ£û 3 problems (0 errors, 3 warnings)
-

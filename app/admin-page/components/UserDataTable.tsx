@@ -16,6 +16,7 @@ export interface UserRecord {
   username: string;
   email: string;
   role: string;
+  role_id: number;
 }
 
 interface UserDataTableProps {
@@ -60,7 +61,7 @@ export default function UserDataTable({ data, onEdit, onDelete }: UserDataTableP
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="text-blue-700 hover:text-blue-900 transition"
+              className="cursor-pointer text-teal-700 hover:text-teal-900 transition"
               title="Edit"
               aria-label={`Edit ${row.original.id}`}
               onClick={() => onEdit?.(row.original)}
@@ -69,7 +70,7 @@ export default function UserDataTable({ data, onEdit, onDelete }: UserDataTableP
             </button>
             <button
               type="button"
-              className="text-rose-600 hover:text-rose-700 transition"
+              className="cursor-pointer text-rose-600 hover:text-rose-700 transition"
               title="Delete"
               aria-label={`Delete ${row.original.id}`}
               onClick={() => onDelete?.(row.original)}
@@ -122,14 +123,17 @@ export default function UserDataTable({ data, onEdit, onDelete }: UserDataTableP
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y divide-slate-100 bg-white">
+          <tbody className="divide-y divide-slate-100 text-slate-700">
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="hover:bg-slate-50">
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="whitespace-nowrap px-4 py-3 text-sm">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
+              <tr key={row.id} className="hover:bg-teal-50/50 transition-colors group">
+                {row.getVisibleCells().map((cell) => {
+                  const rowBg = row.index % 2 !== 0 ? 'bg-slate-200' : 'bg-white';
+                  return (
+                    <td key={cell.id} className={`whitespace-nowrap px-4 py-3 text-sm ${rowBg} transition-colors group-hover:bg-teal-600/8`}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
@@ -145,7 +149,7 @@ export default function UserDataTable({ data, onEdit, onDelete }: UserDataTableP
             <select
               value={table.getState().pagination.pageSize}
               onChange={(e) => table.setPageSize(Number(e.target.value))}
-              className="border border-slate-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="border border-slate-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-teal-500"
             >
               {[5, 10, 30].map((pageSize) => (
                 <option key={pageSize} value={pageSize}>

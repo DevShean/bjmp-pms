@@ -376,7 +376,7 @@ export default function InmateProfilePage() {
                                         </tr>
                                     ))}
                                 </thead>
-                                <tbody className="divide-y divide-slate-100 bg-white">
+                                <tbody className="divide-y divide-slate-100">
                                     {isLoading ? (
                                         <tr>
                                             <td colSpan={columns.length} className="px-5 py-12 text-center text-sm text-slate-500">
@@ -391,17 +391,21 @@ export default function InmateProfilePage() {
                                         </tr>
                                     ) : (
                                         table.getRowModel().rows.map((row) => (
-                                            <tr key={row.id} className="hover:bg-slate-50/70">
-                                                {row.getVisibleCells().map((cell) => (
-                                                    <td
-                                                        key={cell.id}
-                                                        className={`px-5 py-3 text-sm text-slate-700 ${
-                                                            cell.column.id === "actions" ? "sticky right-0 z-10 bg-white" : ""
-                                                        }`}
-                                                    >
-                                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                                    </td>
-                                                ))}
+                                            <tr key={row.id} className="hover:bg-teal-50/50 transition-colors group">
+                                                {row.getVisibleCells().map((cell) => {
+                                                    const isActions = cell.column.id === "actions";
+                                                    const rowBg = row.index % 2 !== 0 ? 'bg-slate-200' : 'bg-white';
+                                                    return (
+                                                        <td
+                                                            key={cell.id}
+                                                            className={`px-5 py-3 text-sm text-slate-700 ${rowBg} transition-colors group-hover:bg-teal-600/8 ${
+                                                                isActions ? `role-sticky sticky right-0 z-10 shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)]` : ""
+                                                            }`}
+                                                        >
+                                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                        </td>
+                                                    );
+                                                })}
                                             </tr>
                                         ))
                                     )}

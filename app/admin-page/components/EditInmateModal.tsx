@@ -751,12 +751,21 @@ export default function EditInmateModal({ isOpen, onClose, onSubmit, inmateId }:
             let finalPhotoPath = form.photo_path;
 
             if (photoFile) {
-                const fileName = `${Math.random().toString(36).substring(2, 10)}-${photoFile.name}`;
-                const filePath = `inmate-photos/${fileName}`;
-                const { error: uploadError } = await supabase.storage.from("inmates").upload(filePath, photoFile);
-                if (uploadError) throw uploadError;
-                const { data: publicUrlData } = supabase.storage.from("inmates").getPublicUrl(filePath);
-                finalPhotoPath = publicUrlData.publicUrl;
+                const formData = new FormData();
+                formData.append("file", photoFile);
+
+                const response = await fetch("/api/upload-inmate-photo", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || "Upload failed");
+                }
+
+                const data = await response.json();
+                finalPhotoPath = data.filePath;
             }
 
             const payload: Record<string, unknown> = {};
@@ -797,34 +806,37 @@ export default function EditInmateModal({ isOpen, onClose, onSubmit, inmateId }:
                         exit={{ opacity: 0, scale: 0.94, y: 24 }} transition={{ type: "spring", duration: 0.38 }}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="flex items-center justify-between border-b bg-blue-700 px-6 py-4 text-white">
+                        <div className="flex items-center justify-between border-b bg-teal-700 px-6 py-4 text-white">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 border border-white/20 rounded-full"><StepIcon size={18} /></div>
                                 <div>
                                     <p className="font-lexend text-lg font-semibold">Edit Inmate Profile</p>
-                                    <p className="text-xs text-blue-100">Step {currentStep + 1} of {STEPS.length} — {stepTitle}</p>
+                                    <p className="text-xs text-teal-100">Step {currentStep + 1} of {STEPS.length} — {stepTitle}</p>
                                 </div>
                             </div>
-                            <button onClick={onClose} className="p-1 hover:bg-white/20 rounded-full"><X size={22} /></button>
+                            <button onClick={onClose} className="cursor-pointer p-1 hover:bg-white/20 rounded-full"><X size={22} /></button>
                         </div>
 
-                        <div className="flex items-center gap-2 border-b bg-slate-50 px-6 py-3">
+                        <div className="flex items-center justify-center gap-x-3 border-b bg-slate-50 px-6 py-3 overflow-x-auto custom-scrollbar">
                             {STEPS.map((s, idx) => (
-                                <div key={s.title} className="flex-1 flex items-center gap-2">
+                                <div key={s.title} className="flex items-center gap-x-3 flex-none">
                                     <button
                                         onClick={() => setPagination({ pageIndex: idx, pageSize: 1 })}
-                                        className={`h-7 w-7 rounded-full text-xs font-bold flex items-center justify-center transition ${idx <= currentStep ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-500'}`}
+                                        className={`h-8 w-8 rounded-full text-xs font-bold flex items-center justify-center transition shrink-0 ${idx <= currentStep ? 'bg-teal-700 text-white' : 'bg-slate-200 text-slate-500'} cursor-pointer hover:ring-2 ring-teal-500/30`}
+                                        title={s.title}
                                     >
-                                        <s.icon size={13} />
+                                        <s.icon size={15} />
                                     </button>
-                                    {idx < STEPS.length - 1 && <div className={`flex-1 h-0.5 rounded ${idx < currentStep ? 'bg-blue-400' : 'bg-slate-200'}`} />}
+                                    {idx < STEPS.length - 1 && (
+                                        <div className={`w-8 sm:w-12 h-0.5 rounded transition-colors ${idx < currentStep ? 'bg-teal-400' : 'bg-slate-200'}`} />
+                                    )}
                                 </div>
                             ))}
                         </div>
 
                         <div className="flex-1 overflow-y-auto px-6 py-5">
                             {isLoading ? (
-                                <div className="h-full flex items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" /></div>
+                                <div className="h-full flex items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" /></div>
                             ) : (
                                 <StepComponent form={form} onChange={handleChange} onFieldChange={handleFieldChange} errors={errors} onFileChange={setPhotoFile} />
                             )}
@@ -839,11 +851,11 @@ export default function EditInmateModal({ isOpen, onClose, onSubmit, inmateId }:
                                 Previous
                             </button>
                             {currentStep === STEPS.length - 1 ? (
-                                <button onClick={handleSubmit} disabled={isSubmitting} className="px-6 py-2 bg-blue-700 text-white rounded-lg text-sm font-semibold hover:bg-blue-800 disabled:opacity-50 flex items-center gap-2">
+                                <button onClick={handleSubmit} disabled={isSubmitting} className="px-6 py-2 bg-teal-700 text-white rounded-lg text-sm font-semibold hover:bg-teal-800 disabled:opacity-50 flex items-center gap-2">
                                     {isSubmitting ? "Updating..." : "Update Inmate"}
                                 </button>
                             ) : (
-                                <button onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))} className="px-6 py-2 bg-blue-700 text-white rounded-lg text-sm font-semibold hover:bg-blue-800">
+                                <button onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))} className="px-6 py-2 bg-teal-700 text-white rounded-lg text-sm font-semibold hover:bg-teal-800">
                                     Next
                                 </button>
                             )}
