@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Lexend, Geist } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { AppToaster } from "./ui/sonner";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -34,6 +35,7 @@ export default function RootLayout({
     <html lang="en" className={cn("font-sans", geist.variable)}>
       <body className={`${inter.variable} ${lexend.variable} antialiased`}>
         {children}
+        <AppToaster />
       </body>
     </html>
   );
