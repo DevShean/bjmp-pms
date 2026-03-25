@@ -5,6 +5,7 @@ import { BookOpen, Plus } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
 import ProgramDataTable, { ProgramRecord } from "../components/ProgramDataTable";
 import AddProgramModal, { AddProgramFormData } from "../components/AddProgramModal";
+import EditProgramModal from "../components/EditProgramModal";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -12,6 +13,8 @@ import { toast } from "sonner";
 export default function ManageProgramPage() {
 	const [programs, setPrograms] = useState<ProgramRecord[]>([]);
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+	const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 
 	const fetchPrograms = useCallback(async () => {
@@ -106,9 +109,12 @@ export default function ManageProgramPage() {
 						) : (
 							<ProgramDataTable 
 							data={programs} 
-							onView={(p: ProgramRecord) => console.log("View", p)}
-							onEdit={(p: ProgramRecord) => console.log("Edit", p)}
+							onEdit={(p: ProgramRecord) => {
+								setSelectedProgramId(p.id);
+								setIsEditModalOpen(true);
+							}}
 							onDelete={(p: ProgramRecord) => console.log("Delete", p)}
+							onAssign={(p: ProgramRecord) => console.log("Assign", p)}
 						/>
 						)}
 					</div>
@@ -119,6 +125,16 @@ export default function ManageProgramPage() {
 				isOpen={isModalOpen} 
 				onClose={() => setIsModalOpen(false)} 
 				onSubmit={handleAddProgram} 
+			/>
+
+			<EditProgramModal
+				isOpen={isEditModalOpen}
+				onClose={() => {
+					setIsEditModalOpen(false);
+					setSelectedProgramId(null);
+				}}
+				onSubmit={fetchPrograms}
+				programId={selectedProgramId}
 			/>
 		</AdminSidebarLayout>
 	);

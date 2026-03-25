@@ -11,7 +11,7 @@ import {
   PaginationState,
   ColumnFiltersState,
 } from "@tanstack/react-table";
-import { Eye, Users, BarChart2, CheckCircle2, Edit, Trash2, Search, FilterX, ChevronDown } from "lucide-react";
+import { UserPlus, Users, BarChart2, CheckCircle2, Edit, Trash2, Search, FilterX, ChevronDown } from "lucide-react";
 
 export interface ProgramRecord {
   id: string;
@@ -26,12 +26,12 @@ export interface ProgramRecord {
 
 interface ProgramDataTableProps {
   data: ProgramRecord[];
-  onView?: (program: ProgramRecord) => void;
   onEdit?: (program: ProgramRecord) => void;
   onDelete?: (program: ProgramRecord) => void;
+  onAssign?: (program: ProgramRecord) => void;
 }
 
-export default function ProgramDataTable({ data, onView, onEdit, onDelete }: ProgramDataTableProps) {
+export default function ProgramDataTable({ data, onEdit, onDelete, onAssign }: ProgramDataTableProps) {
   const columns = useMemo<ColumnDef<ProgramRecord>[]>(
     () => [
       {
@@ -96,14 +96,6 @@ export default function ProgramDataTable({ data, onView, onEdit, onDelete }: Pro
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="text-teal-700 hover:text-teal-900 transition p-1 hover:bg-teal-50 rounded-md cursor-pointer"
-              title="View"
-              onClick={() => onView?.(row.original)}
-            >
-              <Eye size={18} />
-            </button>
-            <button
-              type="button"
               className="text-blue-700 hover:text-blue-900 transition p-1 hover:bg-blue-50 rounded-md cursor-pointer"
               title="Edit"
               onClick={() => onEdit?.(row.original)}
@@ -118,11 +110,19 @@ export default function ProgramDataTable({ data, onView, onEdit, onDelete }: Pro
             >
               <Trash2 size={18} />
             </button>
+            <button
+              type="button"
+              className="text-teal-700 hover:text-teal-900 transition p-1 hover:bg-teal-50 rounded-md cursor-pointer"
+              title="Assign"
+              onClick={() => onAssign?.(row.original)}
+            >
+              <UserPlus size={18} />
+            </button>
           </div>
         ),
       },
     ],
-    [onView, onEdit, onDelete]
+    [onEdit, onDelete, onAssign]
   );
 
   const [globalFilter, setGlobalFilter] = useState("");
