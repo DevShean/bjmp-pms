@@ -1,15 +1,17 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   getPaginationRowModel,
+  getFilteredRowModel,
   PaginationState,
+  ColumnFiltersState,
 } from "@tanstack/react-table";
-import { Eye, Users, BarChart2, CheckCircle2, Edit, Trash2 } from "lucide-react";
+import { Eye, Users, BarChart2, CheckCircle2, Edit, Trash2, Search, FilterX, ChevronDown } from "lucide-react";
 
 export interface ProgramRecord {
   id: string;
@@ -123,15 +125,31 @@ export default function ProgramDataTable({ data, onView, onEdit, onDelete }: Pro
     [onView, onEdit, onDelete]
   );
 
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+
+  // Derive unique categories for filters
+  const uniqueTypes = useMemo(() => Array.from(new Set(data.map((p) => p.type))).sort(), [data]);
+  const uniqueStatuses = useMemo(() => Array.from(new Set(data.map((p) => p.status))).sort(), [data]);
+
   const initialPagination = useMemo<PaginationState>(() => ({ pageIndex: 0, pageSize: 10 }), []);
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,
-    initialState: { pagination: initialPagination },
+    state: {
+      globalFilter,
+      columnFilters,
+    },
+    onGlobalFilterChange: setGlobalFilter,
+    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    initialState: {
+      pagination: initialPagination,
+    },
   });
 
   if (data.length === 0) {
@@ -143,7 +161,79 @@ export default function ProgramDataTable({ data, onView, onEdit, onDelete }: Pro
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow">
+    <div className="space-y-4">
+      {/* Filters and Search */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Global Search */}
+          <div className="relative w-full sm:w-64">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+              <Search size={16} />
+            </div>
+            <input
+              type="text"
+              value={globalFilter ?? ""}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              className="block w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 sm:text-sm transition-all shadow-sm"
+              placeholder="Search programs..."
+            />
+          </div>
+
+          {/* Type Filter */}
+          <div className="relative">
+            <select
+              value={(table.getColumn("type")?.getFilterValue() as string) ?? ""}
+              onChange={(e) => table.getColumn("type")?.setFilterValue(e.target.value || undefined)}
+              className="appearance-none block w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 sm:text-sm transition-all shadow-sm cursor-pointer"
+            >
+              <option value="">All Types</option>
+              {uniqueTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+              <ChevronDown size={14} />
+            </div>
+          </div>
+
+          {/* Status Filter */}
+          <div className="relative">
+            <select
+              value={(table.getColumn("status")?.getFilterValue() as string) ?? ""}
+              onChange={(e) => table.getColumn("status")?.setFilterValue(e.target.value || undefined)}
+              className="appearance-none block w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 sm:text-sm transition-all shadow-sm cursor-pointer"
+            >
+              <option value="">All Statuses</option>
+              {uniqueStatuses.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+              <ChevronDown size={14} />
+            </div>
+          </div>
+
+          {/* Clear Filters */}
+          {(globalFilter || columnFilters.length > 0) && (
+            <button
+              onClick={() => {
+                setGlobalFilter("");
+                setColumnFilters([]);
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors border border-rose-100"
+            >
+              <FilterX size={14} />
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-slate-200">
           <thead className="bg-slate-50">
@@ -189,11 +279,45 @@ export default function ProgramDataTable({ data, onView, onEdit, onDelete }: Pro
         </table>
       </div>
       <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
-        <p className="text-sm text-slate-600">
-          Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-        </p>
-        {/* Pagination controls can be added here */}
+        <div className="flex items-center gap-6 text-sm text-slate-600">
+          <p>
+            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+          </p>
+          <div className="flex items-center gap-2">
+            <span className="font-medium">Rows per page:</span>
+            <select
+              value={table.getState().pagination.pageSize}
+              onChange={(e) => table.setPageSize(Number(e.target.value))}
+              className="border border-slate-200 rounded-md px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
+            >
+              {[5, 10, 30, 50].map((pageSize) => (
+                <option key={pageSize} value={pageSize}>
+                  {pageSize}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+            className="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+            className="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
-  );
+  </div>
+);
 }
