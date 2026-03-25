@@ -37,7 +37,7 @@ export default function VisitorAuthClient() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setShowSplash(false);
-    }, 1000); // Show splash screen for at least 1 second
+    }, 5000); // Show splash screen for at least 1 second
 
     return () => {
       window.clearTimeout(timer);
@@ -54,6 +54,14 @@ export default function VisitorAuthClient() {
 
   const onLoginSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    
+    // Set visitor session cookie (Expires in 24 hours)
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString();
+    document.cookie = `bjmp_session=${encodeURIComponent(JSON.stringify({
+      role: 'Visitor',
+      email: 'visitor@guest.local' // Placeholder as real auth is out of scope 
+    }))}; path=/; expires=${expires}; SameSite=Lax`;
+
     router.push("/visitor-page");
   };
 
@@ -122,7 +130,7 @@ export default function VisitorAuthClient() {
                   exit={{ opacity: 0, y: shouldReduceMotion ? 0 : -10 }}
                   transition={contentTransition}
                 >
-                  <h2 className="font-lexend text-4xl font-bold tracking-tight text-(--primary)">
+                  <h2 className="font-lexend text-4xl font-bold tracking-tight text-primary">
                     {authCopy[activeTab].title}
                   </h2>
                   <p className="mt-2 text-sm text-[#5f6f8f]">{authCopy[activeTab].description}</p>
@@ -204,7 +212,7 @@ function AuthTabButton({ active, children, icon, onClick, transition }: AuthTabB
       type="button"
       aria-pressed={active}
       className={`relative cursor-pointer overflow-hidden rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
-        active ? "text-(--primary)" : "text-(--primary-accent)"
+        active ? "text-primary" : "text-(--primary-accent)"
       }`}
       onClick={onClick}
     >
@@ -248,7 +256,7 @@ function LoginForm({ onSubmit }: AuthFormProps) {
       <div className="flex items-center justify-between text-sm">
         <button
           type="button"
-          className="cursor-pointer inline-flex items-center gap-1 font-semibold text-(--primary) hover:underline"
+          className="cursor-pointer inline-flex items-center gap-1 font-semibold text-primary hover:underline"
         >
           <CircleHelp size={14} aria-hidden="true" />
           Forget Password?
@@ -257,7 +265,7 @@ function LoginForm({ onSubmit }: AuthFormProps) {
 
       <button
         type="submit"
-        className="font-lexend flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-(--primary) px-4 py-3 text-base font-semibold text-white transition hover:bg-[#0a1f49]"
+        className="font-lexend flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-base font-semibold text-white transition hover:bg-[#0a1f49]"
       >
         <LogIn size={18} aria-hidden="true" />
         Sign In
@@ -326,7 +334,7 @@ function InputField({ id, label, type, placeholder, icon }: InputFieldProps) {
 
   return (
     <label className="space-y-2 text-sm" htmlFor={id}>
-      <span className="font-lexend text-(--primary)">{label}</span>
+      <span className="font-lexend text-primary">{label}</span>
       <div className="relative">
         {icon ? (
           <span className="pointer-events-none absolute inset-y-0 left-3 inline-flex items-center text-[#8191b3]">
@@ -349,7 +357,7 @@ function InputField({ id, label, type, placeholder, icon }: InputFieldProps) {
             type="button"
             aria-label={showPassword ? "Hide password" : "Show password"}
             onClick={() => setShowPassword((current) => !current)}
-            className="absolute inset-y-0 right-2 inline-flex cursor-pointer items-center rounded-md px-1.5 text-[#7e8cab] transition hover:text-(--primary)"
+            className="absolute inset-y-0 right-2 inline-flex cursor-pointer items-center rounded-md px-1.5 text-[#7e8cab] transition hover:text-primary"
           >
             {showPassword ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}
           </button>

@@ -13,10 +13,16 @@ export interface AddUserFormData {
     role: string;
 }
 
+export type Role = {
+    role_id: number;
+    role_name: string;
+};
+
 interface AddUserModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: AddUserFormData) => void;
+    onSubmit: (data: AddUserFormData, reset: () => void) => void;
+    roles: Role[];
 }
 
 function Field({ label, id, error, children }: { label: string; id: string; error?: string; children: React.ReactNode }) {
@@ -31,9 +37,9 @@ function Field({ label, id, error, children }: { label: string; id: string; erro
     );
 }
 
-const inputClass = "w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 transition pr-9 border-slate-300 focus:border-blue-500 focus:ring-2 ring-blue-500";
+const inputClass = "w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 transition pr-9 border-slate-300 focus:border-teal-500 focus:ring-2 ring-teal-500";
 
-export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModalProps) {
+export default function AddUserModal({ isOpen, onClose, onSubmit, roles }: AddUserModalProps) {
     const [form, setForm] = useState<AddUserFormData>({
         username: "",
         email: "",
@@ -85,8 +91,7 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
 
     const handleSubmit = () => {
         if (validate()) {
-            onSubmit(form);
-            handleClose();
+            onSubmit(form, handleClose);
         }
     };
 
@@ -117,7 +122,7 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between border-b border-slate-200 bg-blue-600 px-6 py-4">
+                        <div className="flex items-center justify-between border-b border-slate-200 bg-teal-700 px-6 py-4">
                             <div className="flex items-center gap-3">
                                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
                                     <UserPlus size={18} className="text-white" />
@@ -126,7 +131,7 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
                                     <p id="modal-title" className="font-lexend text-lg font-semibold text-white leading-tight">
                                         Add New User
                                     </p>
-                                    <p className="text-xs text-blue-100">User Details</p>
+                                    <p className="text-xs text-teal-100">User Details</p>
                                 </div>
                             </div>
                             <button
@@ -161,10 +166,11 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
                                                 <SelectValue placeholder="Select role" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="Admin">Admin</SelectItem>
-                                                <SelectItem value="Medical Staff">Medical Staff</SelectItem>
-                                                <SelectItem value="Guard">Guard</SelectItem>
-                                                <SelectItem value="Warden">Warden</SelectItem>
+                                                {roles.map((r) => (
+                                                    <SelectItem key={r.role_id} value={String(r.role_id)}>
+                                                        {r.role_name}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                     </Field>
@@ -177,7 +183,7 @@ export default function AddUserModal({ isOpen, onClose, onSubmit }: AddUserModal
                             <IconButton
                                 onClick={handleSubmit}
                                 icon={<UserPlus size={18} />}
-                                colorClass="bg-blue-600 hover:bg-blue-700 text-white"
+                                colorClass="bg-teal-700 hover:bg-teal-800 text-white"
                             >
                                 Create User
                             </IconButton>

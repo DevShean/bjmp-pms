@@ -7,6 +7,9 @@ import { format } from "date-fns";
 import { X, ChevronLeft, ChevronRight, User, Activity, Phone, GraduationCap, Scale, Package } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import Image from "next/image";
+
+import { getInmateImageUrl } from "@/app/lib/utils/image";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -211,21 +214,21 @@ function StepCase({ form }: { form: InmateForm }) {
 }
 
 function StepProperty({ form }: { form: InmateForm }) {
+    const fullName = `${form.first_name} ${form.last_name}`;
+    const finalImageUrl = getInmateImageUrl(form.photo_path, fullName);
+
     return (
         <div className="flex flex-col gap-6">
             <div className="flex justify-center">
-                {form.photo_path ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                        src={form.photo_path}
-                        alt="Inmate Profile"
-                        className="h-48 w-48 rounded-lg object-cover shadow-md border-4 border-white"
+                <div className="relative h-48 w-48 overflow-hidden rounded-lg shadow-md border-4 border-white bg-slate-100">
+                    <Image
+                        src={finalImageUrl}
+                        alt={`${fullName} Profile photo`}
+                        fill
+                        className="object-cover"
+                        unoptimized={finalImageUrl.startsWith("data:")}
                     />
-                ) : (
-                    <div className="flex h-48 w-48 items-center justify-center rounded-lg bg-slate-100 text-slate-400 text-sm">
-                        No photo available
-                    </div>
-                )}
+                </div>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <ViewField label="Prisoner Property" value={form.prisoner_property} isFullWidth />
@@ -418,22 +421,23 @@ export default function ViewInmateModal({ isOpen, onClose, inmateId }: ViewInmat
                         </div>
 
                         {/* Step Indicator */}
-                        <div className="flex items-center gap-0 border-b border-slate-100 bg-slate-50 px-6 py-3">
+                        <div className="flex items-center justify-center gap-x-3 border-b border-slate-100 bg-slate-50 px-6 py-3 overflow-x-auto custom-scrollbar">
                             {STEPS.map((step, idx) => {
                                 const Icon = step.icon;
                                 const isVisited = idx <= currentStep;
                                 const isActive = idx === currentStep;
                                 return (
-                                    <div key={step.title} className="flex flex-1 items-center">
+                                    <div key={step.title} className="flex items-center gap-x-3 flex-none">
                                         <button
+                                            title={step.title}
                                             onClick={() => setPagination((prev) => ({ ...prev, pageIndex: idx }))}
-                                            className={`cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition
+                                            className={`cursor-pointer flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold transition
                                                 ${isActive ? "bg-teal-800 text-white ring-2 ring-teal-200" : isVisited ? "bg-teal-600 text-white" : "bg-slate-200 text-slate-500 hover:bg-slate-300"}`}
                                         >
-                                            <Icon size={13} />
+                                            <Icon size={15} />
                                         </button>
                                         {idx < STEPS.length - 1 && (
-                                            <div className={`mx-1 h-0.5 flex-1 rounded transition ${isVisited && idx < currentStep ? "bg-teal-500" : "bg-slate-200"}`} />
+                                            <div className={`w-8 sm:w-12 h-0.5 rounded transition-colors ${isVisited && idx < currentStep ? "bg-teal-500" : "bg-slate-200"}`} />
                                         )}
                                     </div>
                                 );

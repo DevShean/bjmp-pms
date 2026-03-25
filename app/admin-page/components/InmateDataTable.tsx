@@ -85,7 +85,7 @@ export default function InmateDataTable({ data }: InmateDataTableProps) {
 							row.original.status === 'Active'
 								? 'bg-green-100 text-green-800'
 								: row.original.status === 'Released'
-								? 'bg-blue-100 text-blue-800'
+								? 'bg-teal-100 text-teal-800'
 								: row.original.status === 'Transferred'
 								? 'bg-amber-100 text-amber-800'
 								: 'bg-slate-200 text-slate-800'
@@ -110,7 +110,7 @@ export default function InmateDataTable({ data }: InmateDataTableProps) {
 						</button>
 						<button
 							type="button"
-							className="inline-flex items-center justify-center rounded-md border border-blue-200 p-1.5 text-blue-700 hover:bg-blue-50"
+							className="inline-flex items-center justify-center rounded-md border border-teal-200 p-1.5 text-teal-700 hover:bg-teal-50"
 							title="Edit"
 							aria-label={`Edit ${row.original.id}`}
 						>
@@ -162,14 +162,17 @@ export default function InmateDataTable({ data }: InmateDataTableProps) {
 							</tr>
 						))}
 					</thead>
-					<tbody className="divide-y divide-slate-100 bg-white">
+					<tbody className="divide-y divide-slate-100 text-slate-700">
 						{table.getRowModel().rows.map((row) => (
-							<tr key={row.id} className="hover:bg-slate-50">
-								{row.getVisibleCells().map((cell) => (
-									<td key={cell.id} className="whitespace-nowrap px-4 py-3 text-sm">
-										{flexRender(cell.column.columnDef.cell, cell.getContext())}
-									</td>
-								))}
+							<tr key={row.id} className="hover:bg-teal-50/50 transition-colors group">
+								{row.getVisibleCells().map((cell) => {
+									const rowBg = row.index % 2 !== 0 ? 'bg-slate-200' : 'bg-white';
+									return (
+										<td key={cell.id} className={`whitespace-nowrap px-4 py-3 text-sm ${rowBg} transition-colors group-hover:bg-teal-600/8`}>
+											{flexRender(cell.column.columnDef.cell, cell.getContext())}
+										</td>
+									);
+								})}
 							</tr>
 						))}
 					</tbody>

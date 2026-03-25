@@ -44,7 +44,7 @@ function DatePickerField({ id, value, onSelect }: {
             <Popover>
                 <PopoverTrigger
                     id={id}
-                    className="flex w-full cursor-pointer items-center justify-between rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-blue-500"
+                    className="flex w-full cursor-pointer items-center justify-between rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-teal-500"
                 >
                     <span className={selected ? "text-slate-800" : "text-slate-500"}>
                         {selected ? format(selected, "dd/MM/yyyy") : "dd/mm/yyyy"}

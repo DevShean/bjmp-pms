@@ -3,7 +3,10 @@
 import { useState } from "react";
 import StaffHeader from "./StaffHeader";
 import StaffSidebar from "./StaffSidebar";
+import AppSplashScreen from "./AppSplashScreen";
 import { type StaffRole, staffRoleConfig } from "./staffNavigation";
+import { useEffect } from "react";
+import { isSplashShown, setSplashShown } from "@/app/lib/utils/splash_session";
 
 type Highlight = {
   label: string;
@@ -27,7 +30,23 @@ export default function StaffDashboardShell({
   focusAreas,
 }: StaffDashboardShellProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [showSplash, setShowSplash] = useState(!isSplashShown());
   const config = staffRoleConfig[role];
+
+  useEffect(() => {
+    // Only handle the timer if the splash is currently showing
+    if (showSplash) {
+      const timer = window.setTimeout(() => {
+        setShowSplash(false);
+        setSplashShown(true);
+      }, 5000);
+      return () => window.clearTimeout(timer);
+    }
+  }, [showSplash]);
+
+  if (showSplash) {
+    return <AppSplashScreen />;
+  }
 
   return (
     <div className="flex min-h-screen w-full bg-linear-to-br from-slate-50 via-white to-blue-50/30">

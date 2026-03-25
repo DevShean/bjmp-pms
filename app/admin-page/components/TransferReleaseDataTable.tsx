@@ -5,10 +5,13 @@ import { useReactTable, getCoreRowModel, flexRender, ColumnDef } from "@tanstack
 import { useMemo, useState, useEffect, memo } from "react";
 import { ArrowRightLeft } from "lucide-react";
 
+import Image from "next/image";
+
 export type InmateCellBlock = {
   id: string;
   name: string;
   currentBlock: string;
+  imageUrl: string;
 };
 
 interface TransferReleaseDataTableProps {
@@ -36,7 +39,7 @@ const CellInput = memo(function CellInput({ value, onChange }: { value: string, 
         setLocalVal(v);
         onChange(v);
       }}
-      className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 transition-colors placeholder:text-slate-400 focus:border-purple-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+      className="w-full rounded-md border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-900 transition-colors placeholder:text-slate-400 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20"
     />
   );
 });
@@ -55,12 +58,18 @@ export default function TransferReleaseDataTable({
         accessorKey: "name",
         cell: ({ row }) => (
           <div className="flex items-center gap-3 w-full max-w-[250px]">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-purple-100 text-purple-700 text-sm font-bold uppercase ring-2 ring-white">
-              {row.original.name.charAt(0)}
+            <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-white shadow-sm bg-slate-100">
+              <Image
+                src={row.original.imageUrl}
+                alt={row.original.name}
+                fill
+                className="object-cover"
+                unoptimized={row.original.imageUrl.startsWith("data:")}
+              />
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-slate-900">{row.original.name}</span>
-              <span className="text-xs text-slate-500">ID: #{row.original.id.padStart(4, '0')}</span>
+              <span className="text-xs text-slate-500">ID: #{row.original.id}</span>
             </div>
           </div>
         ),
@@ -109,7 +118,7 @@ export default function TransferReleaseDataTable({
               size="sm"
               disabled={!isReady}
               onClick={() => onTransfer(row.original.id, row.original.name, meta?.newBlocks[row.original.id])}
-              className={isReady ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-500/20 transition-all font-medium border-0' : 'text-slate-500 border-slate-200'}
+              className={isReady ? 'cursor-pointer bg-teal-600 hover:bg-teal-700 text-white shadow-md shadow-teal-500/20 transition-all font-medium border-0' : 'text-slate-500 border-slate-200'}
             >
               <ArrowRightLeft className="mr-2 h-4 w-4" /> Transfer
             </Button>
@@ -146,12 +155,12 @@ export default function TransferReleaseDataTable({
             </tr>
           ))}
         </thead>
-        <tbody className="divide-y divide-slate-100 bg-white">
+        <tbody className="divide-y divide-slate-100">
           {isLoading ? (
             <tr>
               <td colSpan={columns.length} className="px-6 py-12 text-center text-sm text-slate-500">
                 <div className="flex flex-col items-center gap-2">
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-purple-600 border-t-transparent" />
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
                   <span>Loading inmate records...</span>
                 </div>
               </td>
@@ -164,12 +173,15 @@ export default function TransferReleaseDataTable({
             </tr>
           ) : (
             table.getRowModel().rows.map(row => (
-              <tr key={row.id} className="group transition-colors duration-200 hover:bg-slate-50/80">
-                {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className="whitespace-nowrap px-6 py-4 align-middle">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
+              <tr key={row.id} className="group transition-colors duration-200 hover:bg-teal-50/50">
+                {row.getVisibleCells().map(cell => {
+                  const rowBg = row.index % 2 !== 0 ? 'bg-slate-200' : 'bg-white';
+                  return (
+                    <td key={cell.id} className={`whitespace-nowrap px-6 py-4 align-middle ${rowBg} transition-colors group-hover:bg-teal-600/8`}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  );
+                })}
               </tr>
             ))
           )}

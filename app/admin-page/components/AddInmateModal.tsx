@@ -831,23 +831,25 @@ export default function AddInmateModal({ isOpen, onClose, onSubmit }: AddInmateM
                 let finalPhotoPath = form.photo_path;
 
                 if (photoFile) {
-                    const fileExt = photoFile.name.split(".").pop();
-                    const fileName = `${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
-                    const filePath = `inmate-photos/${fileName}`;
+                    const formData = new FormData();
+                    formData.append("file", photoFile);
 
-                    const { error: uploadError } = await supabase.storage
-                        .from("inmates")
-                        .upload(filePath, photoFile);
+                    try {
+                        const response = await fetch("/api/upload-inmate-photo", {
+                            method: "POST",
+                            body: formData,
+                        });
 
-                    if (uploadError) {
-                        toast.error(`Photo upload failed: ${uploadError.message}`);
-                        // Continue anyway or return? DB says photo_path is varchar(255) and can be null.
-                    } else {
-                        // Get public URL
-                        const { data: publicUrlData } = supabase.storage
-                            .from("inmates")
-                            .getPublicUrl(filePath);
-                        finalPhotoPath = publicUrlData.publicUrl;
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.error || "Upload failed");
+                        }
+
+                        const data = await response.json();
+                        finalPhotoPath = data.filePath;
+                    } catch (uploadError: unknown) {
+                        toast.error(`Photo upload failed: ${(uploadError as Error).message}`);
+                        // Continue anyway or return?
                     }
                 }
 
@@ -928,25 +930,25 @@ export default function AddInmateModal({ isOpen, onClose, onSubmit }: AddInmateM
                 </div>
 
                 {/* ── Step Indicator ─────────────────────────────────────── */}
-                <div className="flex items-center gap-0 border-b border-slate-100 bg-slate-50 px-6 py-3">
+                <div className="flex items-center justify-center gap-x-3 border-b border-slate-100 bg-slate-50 px-6 py-3 overflow-x-auto custom-scrollbar">
                     {STEPS.map((step, idx) => {
                         const Icon = step.icon;
                         const isCompleted = idx < currentStep;
                         const isActive = idx === currentStep;
                         return (
-                            <div key={step.title} className="flex flex-1 items-center">
+                            <div key={step.title} className="flex items-center gap-x-3 flex-none">
                                 <button
                                     type="button"
                                     title={step.title}
                                     onClick={() => setPagination((prev) => ({ ...prev, pageIndex: idx }))}
-                                    className={`cursor-pointer flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold transition
+                                    className={`cursor-pointer flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold transition
                                         ${isCompleted ? "bg-teal-600 text-white" : isActive ? "bg-teal-700 text-white ring-2 ring-teal-300" : "bg-slate-200 text-slate-500 hover:bg-slate-300"}`}
                                 >
-                                    {isCompleted ? <Check size={13} /> : <Icon size={13} />}
+                                    {isCompleted ? <Check size={13} /> : <Icon size={15} />}
                                 </button>
                                 {idx < STEPS.length - 1 && (
                                     <div
-                                        className={`mx-1 h-0.5 flex-1 rounded transition ${isCompleted ? "bg-teal-500" : "bg-slate-200"}`}
+                                        className={`w-8 sm:w-12 h-0.5 rounded transition-colors ${isCompleted ? "bg-teal-500" : "bg-slate-200"}`}
                                     />
                                 )}
                             </div>

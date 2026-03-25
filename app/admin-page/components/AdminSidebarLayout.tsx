@@ -4,6 +4,9 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import StaffHeader from "../../components/StaffHeader";
 import StaffSidebar from "../../components/StaffSidebar";
+import AppSplashScreen from "../../components/AppSplashScreen";
+import { useEffect } from "react";
+import { isSplashShown, setSplashShown } from "@/app/lib/utils/splash_session";
 
 type AdminSidebarLayoutProps = {
   children: ReactNode;
@@ -11,6 +14,22 @@ type AdminSidebarLayoutProps = {
 
 export default function AdminSidebarLayout({ children }: AdminSidebarLayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [showSplash, setShowSplash] = useState(!isSplashShown());
+
+  useEffect(() => {
+    // Only handle the timer if the splash is currently showing
+    if (showSplash) {
+      const timer = window.setTimeout(() => {
+        setShowSplash(false);
+        setSplashShown(true);
+      }, 5000);
+      return () => window.clearTimeout(timer);
+    }
+  }, [showSplash]);
+
+  if (showSplash) {
+    return <AppSplashScreen />;
+  }
 
   return (
     <div className="flex min-h-screen w-full bg-slate-50">

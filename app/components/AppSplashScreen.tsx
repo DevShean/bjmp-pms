@@ -9,7 +9,7 @@ export default function AppSplashScreen() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setSystemReady(true);
-    }, 2500);
+    }, 4500);
 
     return () => {
       window.clearTimeout(timer);

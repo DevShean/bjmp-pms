@@ -6,11 +6,14 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import TransferReleaseDataTable from "../components/TransferReleaseDataTable";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { ArrowLeftRight, Search, FileText, Zap, User } from "lucide-react";
+import { getInmateImageUrl } from "../../lib/utils/image";
 
 type InmateCellBlock = {
 	id: string;
 	name: string;
 	currentBlock: string;
+	imageUrl: string;
 };
 
 // Removed static INMATES constant
@@ -26,16 +29,20 @@ export default function TransferReleasePage() {
 		try {
 			const { data, error } = await supabase
 				.from("inmates")
-				.select("inmate_id, first_name, last_name, cell_block")
+				.select("inmate_id, first_name, last_name, cell_block, photo_path")
 				.order("last_name", { ascending: true });
 
 			if (error) throw error;
 
-			const formatted: InmateCellBlock[] = (data || []).map((item) => ({
-				id: `INM-${String(item.inmate_id).padStart(3, "0")}`,
-				name: `${item.first_name} ${item.last_name}`,
-				currentBlock: item.cell_block || "Unassigned",
-			}));
+			const formatted: InmateCellBlock[] = (data || []).map((item) => {
+				const fullName = `${item.first_name} ${item.last_name}`;
+				return {
+					id: `INM-${String(item.inmate_id).padStart(3, "0")}`,
+					name: fullName,
+					currentBlock: item.cell_block || "Unassigned",
+					imageUrl: getInmateImageUrl(item.photo_path, fullName),
+				};
+			});
 			setInmates(formatted);
 		} catch (err) {
 			console.error("Error fetching inmates:", err);
@@ -92,29 +99,38 @@ export default function TransferReleasePage() {
 	 return (
 		 <AdminSidebarLayout>
 			 <section className="space-y-6">
-				 <h1 className="font-lexend text-3xl font-semibold text-slate-800">Inmate Transfers Management</h1>
+				<div>
+					<h1 className="font-lexend text-2xl font-semibold text-slate-800 flex items-center gap-3 sm:text-3xl">
+						Inmate Transfers & Release
+						<ArrowLeftRight size={32} className="text-teal-600 shrink-0" />
+					</h1>
+					<p className="mt-1 text-sm text-slate-600">Manage inmate cell block transfers and release processing</p>
+				</div>
 
-				 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-					 <SummaryCard title="Total Transfers" value={String(totalTransfers)} icon="document" tone="text-purple-700" />
-					 <SummaryCard title="This Month" value={String(thisMonth)} icon="bolt" tone="text-green-600" />
-					 <SummaryCard title="Total Inmates" value={String(totalInmates)} icon="user" tone="text-purple-700" />
+				 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+					 <SummaryCard title="Total Transfers" value={String(totalTransfers)} icon="document" tone="text-teal-700" />
+					 <SummaryCard title="Pending Requests" value={String(thisMonth)} icon="bolt" tone="text-amber-600" />
+					 <SummaryCard title="Total Inmates" value={String(totalInmates)} icon="user" tone="text-teal-700" />
 				 </div>
 
-				 <div className="mt-8 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-					 <div className="px-6 py-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
-						 <h2 className="font-lexend text-xl font-semibold text-slate-800">Update Inmate Cell Blocks</h2>
-						 <div className="relative w-full max-w-sm">
-							 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-								 <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-							 </div>
-							 <input
-								 type="text"
-								 placeholder="Search by name, ID, or block..."
-								 value={searchTerm}
-								 onChange={(e) => setSearchTerm(e.target.value)}
-								 className="w-full rounded-lg border border-slate-300 bg-slate-50 py-2 pl-10 pr-3 text-sm text-slate-700 outline-none transition-all focus:border-purple-500 focus:bg-white focus:ring-2 focus:ring-purple-500/20"
-							 />
+				 <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col sm:flex-row gap-4 items-center">
+					 <div className="relative w-full sm:w-96">
+						 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+							 <Search size={18} />
 						 </div>
+						 <input
+							 type="text"
+							 placeholder="Search by name, ID, or block..."
+							 value={searchTerm}
+							 onChange={(e) => setSearchTerm(e.target.value)}
+							 className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all bg-slate-50/50 focus:bg-white"
+						 />
+					 </div>
+				 </div>
+
+				 <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden min-w-0">
+					 <div className="px-6 py-4 border-b border-slate-200 bg-white sticky top-0 z-20">
+						 <h2 className="font-lexend text-xl font-semibold text-slate-800">Transfer & Release Records</h2>
 					 </div>
 					 <TransferReleaseDataTable
 						 data={filteredInmates}
@@ -131,15 +147,9 @@ export default function TransferReleasePage() {
 
 function SummaryCard({ title, value, icon, tone }: { title: string; value: string; icon: "document" | "bolt" | "user"; tone: string }) {
 	const iconMap = {
-		document: (
-			<svg className="size-7 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2" /><path d="M9 7h6M9 11h6M9 15h6" /></svg>
-		),
-		bolt: (
-			<svg className="size-7 text-green-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 3L4 14h7l-1 7 9-11h-7l1-7z" /></svg>
-		),
-		user: (
-			<svg className="size-7 text-purple-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4" /><path d="M6 21v-2a6 6 0 0 1 12 0v2" /></svg>
-		),
+		document: <FileText className="size-6 text-teal-500" />,
+		bolt: <Zap className="size-6 text-amber-500" />,
+		user: <User className="size-6 text-teal-500" />,
 	};
 	return (
 		<article className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">

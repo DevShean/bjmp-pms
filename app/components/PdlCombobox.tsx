@@ -1,14 +1,18 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronsUpDown, Search } from "lucide-react";
+import { Check, ChevronsUpDown, Search, Lock } from "lucide-react";
+import Image from "next/image";
+import { supabase } from "@/lib/supabase/client";
+
+import { getInmateImageUrl } from "@/app/lib/utils/image";
 
 type Pdl = {
   id: string;
   name: string;
   imageUrl: string;
   unit: string;
+  isAssigned?: boolean;
 };
 
 type PdlComboboxProps = {
@@ -34,16 +38,43 @@ export default function PdlCombobox({ value, onValueChange, placeholder = "Selec
     async function loadPdls() {
       try {
         setLoading(true);
-        const response = await fetch("/api/pdls", { cache: "no-store" });
-        if (!response.ok) {
-          throw new Error("Failed to fetch PDL list");
+        const { data, error } = await supabase
+          .from("inmates")
+          .select("inmate_id, first_name, last_name, photo_path, cell_block")
+          .order("last_name", { ascending: true });
+
+        if (error) {
+          throw error;
         }
 
-        const data = (await response.json()) as Pdl[];
-        if (isMounted) {
-          setPdls(data);
+        const { data: medicalRecords, error: medicalError } = await supabase
+          .from("medical_records")
+          .select("inmate_id");
+
+        if (medicalError) {
+          console.error("Error fetching medical records:", medicalError);
         }
-      } catch {
+
+        const assignedInmateIds = new Set((medicalRecords || []).map((r) => String(r.inmate_id)));
+
+        const formatted: Pdl[] = (data || []).map((item) => {
+          const fullName = `${item.first_name} ${item.last_name}`;
+          const inmateId = String(item.inmate_id);
+          
+          return {
+            id: inmateId,
+            name: fullName,
+            imageUrl: getInmateImageUrl(item.photo_path, fullName),
+            unit: item.cell_block || "Unassigned",
+            isAssigned: assignedInmateIds.has(inmateId),
+          };
+        });
+
+        if (isMounted) {
+          setPdls(formatted);
+        }
+      } catch (err) {
+        console.error("Error fetching PDL list:", err);
         if (isMounted) {
           setPdls([]);
         }
@@ -104,13 +135,16 @@ export default function PdlCombobox({ value, onValueChange, placeholder = "Selec
         <span className="flex min-w-0 items-center gap-2">
           {selectedPdl ? (
             <>
-              <Image
-                src={selectedPdl.imageUrl}
-                alt={selectedPdl.name}
-                width={28}
-                height={28}
-                className="h-7 w-7 rounded-full border border-slate-200 object-cover"
-              />
+              <div className="relative h-7 w-7 shrink-0">
+                <Image
+                  src={selectedPdl.imageUrl}
+                  alt={selectedPdl.name}
+                  fill
+                  sizes="28px"
+                  className="rounded-full border border-slate-200 object-cover"
+                  unoptimized={selectedPdl.imageUrl.startsWith("data:")}
+                />
+              </div>
               <span className="truncate font-medium text-slate-700">{selectedPdl.name}</span>
             </>
           ) : (
@@ -146,22 +180,34 @@ export default function PdlCombobox({ value, onValueChange, placeholder = "Selec
                 <button
                   type="button"
                   key={item.id}
+                  disabled={item.isAssigned}
                   onClick={() => {
                     onValueChange(item.id);
                     setOpen(false);
                   }}
-                  className="cursor-pointer flex w-full items-center justify-between rounded-lg px-2 py-2 text-left transition hover:bg-slate-50"
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-lg px-2 py-2 text-left transition",
+                    item.isAssigned ? "opacity-50 cursor-not-allowed bg-slate-200/50" : "cursor-pointer hover:bg-slate-50"
+                  )}
                 >
                   <span className="flex items-center gap-2">
-                    <Image
-                      src={item.imageUrl}
-                      alt={item.name}
-                      width={32}
-                      height={32}
-                      className="h-8 w-8 rounded-full border border-slate-200 object-cover"
-                    />
+                    <div className="relative h-8 w-8 shrink-0">
+                      <Image
+                        src={item.imageUrl}
+                        alt={item.name}
+                        fill
+                        sizes="32px"
+                        className="rounded-full border border-slate-200 object-cover"
+                        unoptimized={item.imageUrl.startsWith("data:")}
+                      />
+                    </div>
                     <span>
-                      <span className="block text-sm font-medium text-slate-700">{item.name}</span>
+                      <span className="flex items-center gap-1.5 text-sm font-medium text-slate-700">
+                        {item.name}
+                        {item.isAssigned && (
+                          <Lock className="h-3 w-3 text-slate-400" />
+                        )}
+                      </span>
                       <span className="block text-xs text-slate-500">
                         {item.id} • {item.unit}
                       </span>

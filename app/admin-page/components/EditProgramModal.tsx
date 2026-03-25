@@ -299,14 +299,14 @@ export default function EditProgramModal({ isOpen, onClose, onSubmit, programId 
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between border-b bg-blue-700 px-6 py-4 text-white">
+                        <div className="flex items-center justify-between border-b bg-teal-700 px-6 py-4 text-white">
                             <div className="flex items-center gap-3">
                                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20">
                                     <BookOpen size={22} className="text-white" />
                                 </div>
                                 <div>
                                     <h2 className="font-lexend text-xl font-semibold leading-tight">Edit Program</h2>
-                                    <p className="text-xs text-blue-100 flex items-center gap-1.5 mt-0.5 uppercase tracking-wider font-medium">
+                                    <p className="text-xs text-teal-100 flex items-center gap-1.5 mt-0.5 uppercase tracking-wider font-medium">
                                         Update program details and requirements
                                     </p>
                                 </div>
@@ -423,7 +423,7 @@ export default function EditProgramModal({ isOpen, onClose, onSubmit, programId 
                             <IconButton
                                 onClick={handleSubmit}
                                 icon={<ClipboardList size={18} />}
-                                colorClass="bg-blue-700 hover:bg-blue-800 text-white"
+                                colorClass="bg-teal-700 hover:bg-teal-800 text-white"
                                 disabled={isSubmitting}
                             >
                                 {isSubmitting ? "Updating..." : "Update Program"}

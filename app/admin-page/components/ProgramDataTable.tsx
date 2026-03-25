@@ -39,7 +39,7 @@ export default function ProgramDataTable({ data, onEdit, onDelete, onAssign }: P
         accessorKey: "name",
         cell: ({ row }) => (
           <span className="font-medium text-slate-800 flex items-center gap-2">
-            <BarChart2 size={16} className="text-blue-500" />
+            <BarChart2 size={16} className="text-teal-500" />
             {row.original.name}
           </span>
         ),
@@ -78,7 +78,7 @@ export default function ProgramDataTable({ data, onEdit, onDelete, onAssign }: P
               row.original.status === "Active"
                 ? "bg-green-100 text-green-800"
                 : row.original.status === "Completed"
-                ? "bg-blue-100 text-blue-800"
+                ? "bg-teal-100 text-teal-800"
                 : row.original.status === "Upcoming"
                 ? "bg-amber-100 text-amber-800"
                 : "bg-slate-200 text-slate-800"
@@ -96,7 +96,7 @@ export default function ProgramDataTable({ data, onEdit, onDelete, onAssign }: P
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="text-blue-700 hover:text-blue-900 transition p-1 hover:bg-blue-50 rounded-md cursor-pointer"
+              className="text-teal-700 hover:text-teal-900 transition p-1 hover:bg-teal-50 rounded-md cursor-pointer"
               title="Edit"
               onClick={() => onEdit?.(row.original)}
             >
@@ -112,7 +112,7 @@ export default function ProgramDataTable({ data, onEdit, onDelete, onAssign }: P
             </button>
             <button
               type="button"
-              className="text-teal-700 hover:text-teal-900 transition p-1 hover:bg-teal-50 rounded-md cursor-pointer"
+              className="text-blue-700 hover:text-blue-900 transition p-1 hover:bg-blue-50 rounded-md cursor-pointer"
               title="Assign"
               onClick={() => onAssign?.(row.original)}
             >
@@ -174,7 +174,7 @@ export default function ProgramDataTable({ data, onEdit, onDelete, onAssign }: P
               type="text"
               value={globalFilter ?? ""}
               onChange={(e) => setGlobalFilter(e.target.value)}
-              className="block w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 sm:text-sm transition-all shadow-sm"
+              className="block w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 sm:text-sm transition-all shadow-sm"
               placeholder="Search programs..."
             />
           </div>
@@ -184,7 +184,7 @@ export default function ProgramDataTable({ data, onEdit, onDelete, onAssign }: P
             <select
               value={(table.getColumn("type")?.getFilterValue() as string) ?? ""}
               onChange={(e) => table.getColumn("type")?.setFilterValue(e.target.value || undefined)}
-              className="appearance-none block w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 sm:text-sm transition-all shadow-sm cursor-pointer"
+              className="appearance-none block w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 sm:text-sm transition-all shadow-sm cursor-pointer"
             >
               <option value="">All Types</option>
               {uniqueTypes.map((type) => (
@@ -257,16 +257,17 @@ export default function ProgramDataTable({ data, onEdit, onDelete, onAssign }: P
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y divide-slate-100 bg-white">
+          <tbody className="divide-y divide-slate-100 text-slate-700">
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="hover:bg-slate-50 group">
+              <tr key={row.id} className="hover:bg-teal-50/50 transition-colors group">
                 {row.getVisibleCells().map((cell) => {
                   const isActions = cell.column.id === "actions";
+                  const rowBg = row.index % 2 !== 0 ? 'bg-slate-200' : 'bg-white';
                   return (
                     <td 
                       key={cell.id} 
-                      className={`whitespace-nowrap px-4 py-3 text-sm ${
-                        isActions ? "sticky right-0 z-10 bg-white group-hover:bg-slate-50 shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)]" : ""
+                      className={`whitespace-nowrap px-4 py-3 text-sm ${rowBg} transition-colors group-hover:bg-teal-600/8 ${
+                        isActions ? `sticky right-0 z-10 shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)]` : ""
                       }`}
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -288,7 +289,7 @@ export default function ProgramDataTable({ data, onEdit, onDelete, onAssign }: P
             <select
               value={table.getState().pagination.pageSize}
               onChange={(e) => table.setPageSize(Number(e.target.value))}
-              className="border border-slate-200 rounded-md px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
+              className="border border-slate-200 rounded-md px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all cursor-pointer"
             >
               {[5, 10, 30, 50].map((pageSize) => (
                 <option key={pageSize} value={pageSize}>

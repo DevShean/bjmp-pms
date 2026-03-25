@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState, useEffect } from "react";
 import { Check, ChevronsUpDown, Search } from "lucide-react";
+import { supabase } from "@/lib/supabase/client";
 
 type MedicalStaff = {
   id: string;
@@ -9,12 +10,15 @@ type MedicalStaff = {
   role: string;
 };
 
-const DUMMY_STAFF: MedicalStaff[] = [
-  { id: "MS-001", name: "Dr. Sarah Johnson", role: "Physician" },
-  { id: "MS-002", name: "Dr. Mark Wilson", role: "Psychiatrist" },
-  { id: "MS-003", name: "Nurse Emily Davis", role: "Registered Nurse" },
-  { id: "MS-004", name: "Nurse John Smith", role: "Head Nurse" },
-];
+interface SupabaseUserResponse {
+  user_id: number;
+  username: string;
+  roles: {
+    role_name: string;
+  } | null;
+}
+
+// role_id 3 is Medical Staff
 
 type MedicalStaffComboboxProps = {
   value: string;
@@ -28,7 +32,45 @@ function cn(...classNames: Array<string | false | null | undefined>) {
 export default function MedicalStaffCombobox({ value, onValueChange }: MedicalStaffComboboxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [staff, setStaff] = useState<MedicalStaff[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadStaff() {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from("users")
+          .select("user_id, username, roles(role_name)")
+          .eq("role_id", 3)
+          .order("username", { ascending: true });
+
+        if (error) throw error;
+
+        const formatted: MedicalStaff[] = (data as unknown as SupabaseUserResponse[] || []).map((item) => ({
+          id: String(item.user_id),
+          name: item.username,
+          role: item.roles?.role_name || "Medical Staff",
+        }));
+
+        if (isMounted) setStaff(formatted);
+      } catch (err) {
+        console.error("Error fetching medical staff:", err);
+        if (isMounted) setStaff([]);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+
+    loadStaff();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     function onOutsideClick(event: MouseEvent) {
@@ -44,22 +86,22 @@ export default function MedicalStaffCombobox({ value, onValueChange }: MedicalSt
     return () => document.removeEventListener("mousedown", onOutsideClick);
   }, []);
 
-  const selectedStaff = useMemo(() => DUMMY_STAFF.find((item) => item.id === value), [value]);
+  const selectedStaff = useMemo(() => staff.find((item) => item.id === value), [staff, value]);
 
   const filteredStaff = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) {
-      return DUMMY_STAFF;
+      return staff;
     }
 
-    return DUMMY_STAFF.filter((item) => {
+    return staff.filter((item) => {
       return (
         item.name.toLowerCase().includes(normalized) ||
         item.id.toLowerCase().includes(normalized) ||
         item.role.toLowerCase().includes(normalized)
       );
     });
-  }, [query]);
+  }, [staff, query]);
 
   return (
     <div className="relative" ref={containerRef}>
@@ -94,7 +136,9 @@ export default function MedicalStaffCombobox({ value, onValueChange }: MedicalSt
           </div>
 
           <div className="max-h-64 overflow-y-auto p-2">
-            {filteredStaff.length === 0 && (
+            {loading && <p className="px-2 py-4 text-sm text-slate-500">Loading staff...</p>}
+
+            {!loading && filteredStaff.length === 0 && (
               <p className="px-2 py-4 text-sm text-slate-500">No staff found.</p>
             )}
 
