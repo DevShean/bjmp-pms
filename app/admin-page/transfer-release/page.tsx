@@ -2,8 +2,10 @@
 
 "use client";
 import AdminSidebarLayout from "../components/AdminSidebarLayout";
-import { useState } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import TransferReleaseDataTable from "../components/TransferReleaseDataTable";
+import { supabase } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 type InmateCellBlock = {
 	id: string;
@@ -11,25 +13,81 @@ type InmateCellBlock = {
 	currentBlock: string;
 };
 
-const INMATES: InmateCellBlock[] = [
-	{ id: "1", name: "Anthony Lopez", currentBlock: "A3" },
-	{ id: "2", name: "Daniel Cortez", currentBlock: "D1" },
-	{ id: "3", name: "Eric Gomez", currentBlock: "A2" },
-	{ id: "4", name: "Jose Mendoza", currentBlock: "D4" },
-	{ id: "5", name: "Juans Dela Cruz", currentBlock: "A1" },
-	{ id: "6", name: "Leo Navarro", currentBlock: "B3" },
-	{ id: "7", name: "Mark Santos", currentBlock: "B2" },
-	{ id: "8", name: "Michael Tan", currentBlock: "B1" },
-	{ id: "9", name: "Pedro Reyes", currentBlock: "C1" },
-];
+// Removed static INMATES constant
 
 export default function TransferReleasePage() {
+	const [inmates, setInmates] = useState<InmateCellBlock[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
 	const [newBlocks, setNewBlocks] = useState<{ [id: string]: string }>({});
+	const [searchTerm, setSearchTerm] = useState("");
 
-	// Demo stats
+	const fetchInmates = useCallback(async () => {
+		setIsLoading(true);
+		try {
+			const { data, error } = await supabase
+				.from("inmates")
+				.select("inmate_id, first_name, last_name, cell_block")
+				.order("last_name", { ascending: true });
+
+			if (error) throw error;
+
+			const formatted: InmateCellBlock[] = (data || []).map((item) => ({
+				id: `INM-${String(item.inmate_id).padStart(3, "0")}`,
+				name: `${item.first_name} ${item.last_name}`,
+				currentBlock: item.cell_block || "Unassigned",
+			}));
+			setInmates(formatted);
+		} catch (err) {
+			console.error("Error fetching inmates:", err);
+			toast.error("Failed to load inmate records.");
+		} finally {
+			setIsLoading(false);
+		}
+	}, []);
+
+	useEffect(() => {
+		fetchInmates();
+	}, [fetchInmates]);
+
+	const handleTransfer = useCallback(async (id: string, name: string, newBlock: string) => {
+		try {
+			const numericId = parseInt(id.replace("INM-", ""), 10);
+			const { error } = await supabase
+				.from("inmates")
+				.update({ cell_block: newBlock })
+				.eq("inmate_id", numericId);
+
+			if (error) throw error;
+
+			toast.success(`Transferred ${name} to block ${newBlock}`);
+			
+			// Clear the input for this inmate
+			setNewBlocks(prev => {
+				const next = { ...prev };
+				delete next[id];
+				return next;
+			});
+			
+			fetchInmates();
+		} catch (err) {
+			console.error("Transfer error:", err);
+			toast.error(`Failed to transfer ${name}.`);
+		}
+	}, [fetchInmates]);
+
+	const filteredInmates = useMemo(() => {
+		const keyword = searchTerm.toLowerCase();
+		return inmates.filter(i => 
+			i.name.toLowerCase().includes(keyword) || 
+			i.id.toLowerCase().includes(keyword) ||
+			i.currentBlock.toLowerCase().includes(keyword)
+		);
+	}, [inmates, searchTerm]);
+
+	// Demo stats (can be enriched later)
 	const totalTransfers = 0;
 	const thisMonth = 0;
-	const totalInmates = INMATES.length;
+	const totalInmates = inmates.length;
 
 	 return (
 		 <AdminSidebarLayout>
@@ -42,18 +100,28 @@ export default function TransferReleasePage() {
 					 <SummaryCard title="Total Inmates" value={String(totalInmates)} icon="user" tone="text-purple-700" />
 				 </div>
 
-				 <div className="mt-8 rounded-2xl border border-slate-200 bg-white shadow-sm">
-					 <div className="px-6 py-4 border-b border-slate-200">
+				 <div className="mt-8 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+					 <div className="px-6 py-4 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
 						 <h2 className="font-lexend text-xl font-semibold text-slate-800">Update Inmate Cell Blocks</h2>
+						 <div className="relative w-full max-w-sm">
+							 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+								 <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+							 </div>
+							 <input
+								 type="text"
+								 placeholder="Search by name, ID, or block..."
+								 value={searchTerm}
+								 onChange={(e) => setSearchTerm(e.target.value)}
+								 className="w-full rounded-lg border border-slate-300 bg-slate-50 py-2 pl-10 pr-3 text-sm text-slate-700 outline-none transition-all focus:border-purple-500 focus:bg-white focus:ring-2 focus:ring-purple-500/20"
+							 />
+						 </div>
 					 </div>
 					 <TransferReleaseDataTable
-						 data={INMATES}
+						 data={filteredInmates}
 						 newBlocks={newBlocks}
 						 setNewBlocks={setNewBlocks}
-						 onTransfer={(id, name, newBlock) => {
-							 // TODO: Implement transfer logic
-							 alert(`Transferred ${name} to block ${newBlock}`);
-						 }}
+						 onTransfer={handleTransfer}
+						 isLoading={isLoading}
 					 />
 				 </div>
 			 </section>

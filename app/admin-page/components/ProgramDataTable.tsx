@@ -9,8 +9,7 @@ import {
   getPaginationRowModel,
   PaginationState,
 } from "@tanstack/react-table";
-import { Pencil, Eye, Users, BarChart2, CheckCircle2, MoreVertical } from "lucide-react";
-import { Button } from "../../../components/ui/button";
+import { Eye, Users, BarChart2, CheckCircle2, Edit, Trash2 } from "lucide-react";
 
 export interface ProgramRecord {
   id: string;
@@ -20,14 +19,17 @@ export interface ProgramRecord {
   endDate: string;
   enrolled: number;
   capacity: number;
-  status: "Active" | "Completed" | "Upcoming" | "Inactive";
+  status: "Active" | "Completed" | "Upcoming" | "Inactive" | "Cancelled";
 }
 
 interface ProgramDataTableProps {
   data: ProgramRecord[];
+  onView?: (program: ProgramRecord) => void;
+  onEdit?: (program: ProgramRecord) => void;
+  onDelete?: (program: ProgramRecord) => void;
 }
 
-export default function ProgramDataTable({ data }: ProgramDataTableProps) {
+export default function ProgramDataTable({ data, onView, onEdit, onDelete }: ProgramDataTableProps) {
   const columns = useMemo<ColumnDef<ProgramRecord>[]>(
     () => [
       {
@@ -90,36 +92,35 @@ export default function ProgramDataTable({ data }: ProgramDataTableProps) {
         id: "actions",
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="inline-flex items-center gap-1"
-              aria-label={`View ${row.original.name}`}
+            <button
+              type="button"
+              className="text-teal-700 hover:text-teal-900 transition p-1 hover:bg-teal-50 rounded-md cursor-pointer"
+              title="View"
+              onClick={() => onView?.(row.original)}
             >
-              <Eye size={15} />
-              View
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="inline-flex items-center gap-1"
-              aria-label={`Edit ${row.original.name}`}
+              <Eye size={18} />
+            </button>
+            <button
+              type="button"
+              className="text-blue-700 hover:text-blue-900 transition p-1 hover:bg-blue-50 rounded-md cursor-pointer"
+              title="Edit"
+              onClick={() => onEdit?.(row.original)}
             >
-              <Pencil size={15} />
-              Edit
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label="More actions"
+              <Edit size={18} />
+            </button>
+            <button
+              type="button"
+              className="text-rose-600 hover:text-rose-700 transition p-1 hover:bg-rose-50 rounded-md cursor-pointer"
+              title="Delete"
+              onClick={() => onDelete?.(row.original)}
             >
-              <MoreVertical size={16} />
-            </Button>
+              <Trash2 size={18} />
+            </button>
           </div>
         ),
       },
     ],
-    []
+    [onView, onEdit, onDelete]
   );
 
   const initialPagination = useMemo<PaginationState>(() => ({ pageIndex: 0, pageSize: 10 }), []);
@@ -148,27 +149,40 @@ export default function ProgramDataTable({ data }: ProgramDataTableProps) {
           <thead className="bg-slate-50">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </th>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  const isActions = header.id === "actions";
+                  return (
+                    <th
+                      key={header.id}
+                      className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 ${
+                        isActions ? "sticky right-0 z-10 bg-slate-50 shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)]" : ""
+                      }`}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(header.column.columnDef.header, header.getContext())}
+                    </th>
+                  );
+                })}
               </tr>
             ))}
           </thead>
           <tbody className="divide-y divide-slate-100 bg-white">
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="hover:bg-slate-50">
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="whitespace-nowrap px-4 py-3 text-sm">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
+              <tr key={row.id} className="hover:bg-slate-50 group">
+                {row.getVisibleCells().map((cell) => {
+                  const isActions = cell.column.id === "actions";
+                  return (
+                    <td 
+                      key={cell.id} 
+                      className={`whitespace-nowrap px-4 py-3 text-sm ${
+                        isActions ? "sticky right-0 z-10 bg-white group-hover:bg-slate-50 shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)]" : ""
+                      }`}
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
