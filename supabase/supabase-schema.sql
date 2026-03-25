@@ -62,8 +62,6 @@ create table if not exists inmates (
   photo_path varchar(255),
   marital_status varchar(50),
   place_of_birth varchar(255),
-  height varchar(50),
-  weight varchar(50),
   hair_description varchar(100),
   complexion varchar(100),
   eyes_description varchar(100),

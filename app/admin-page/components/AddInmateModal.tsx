@@ -10,13 +10,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import DegreeCombobox from "../../components/DegreeCombobox";
 import CourseCombobox from "../../components/CourseCombobox";
-import Image from "next/image";
+
+import { supabase } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type InmateGender = "Male" | "Female";
 type InmateStatus = "Active" | "Released" | "Transferred";
-type BloodType = "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-";
+type BloodType = "A" | "B" | "AB" | "O";
 
 type InmateForm = {
     // Step 1 – Personal Information
@@ -34,8 +36,6 @@ type InmateForm = {
     no_of_children: string;
 
     // Step 2 – Physical Description
-    height: string;
-    weight: string;
     height_cm: string;
     weight_kg: string;
     hair_description: string;
@@ -93,7 +93,7 @@ const INITIAL_FORM: InmateForm = {
     first_name: "", last_name: "", birthdate: "", gender: "", marital_status: "",
     place_of_birth: "", citizenship: "", nationality: "", religion: "", race: "",
     occupation: "", no_of_children: "",
-    height: "", weight: "", height_cm: "", weight_kg: "", hair_description: "",
+    height_cm: "", weight_kg: "", hair_description: "",
     hair_color: "", complexion: "", eyes_description: "", eye_color: "", blood_type: "",
     identifying_marks: "",
     permanent_address: "", provincial_address: "", contact_number: "",
@@ -320,7 +320,7 @@ function StepPersonal({ form, onChange, onFieldChange, errors }: StepProps) {
                 {errors?.birthdate && <span className="text-xs text-red-500 font-medium mt-0.5">{errors.birthdate}</span>}
             </div>
             <Field label="Gender" id="gender" error={errors?.gender} valid={valid("gender") as boolean}>
-                <Select value={form.gender || undefined} onValueChange={(val) => onFieldChange && onFieldChange("gender", val ?? "") }>
+                <Select value={form.gender || ""} onValueChange={(val) => onFieldChange && onFieldChange("gender", val ?? "") }>
                     <SelectTrigger id="gender" className={getInputClass(valid("gender") as boolean, errors?.gender) + " w-full cursor-pointer"}>
                         <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
@@ -331,7 +331,21 @@ function StepPersonal({ form, onChange, onFieldChange, errors }: StepProps) {
                 </Select>
             </Field>
             <Field label="Marital Status" id="marital_status" error={errors?.marital_status} valid={valid("marital_status") as boolean}>
-                <input id="marital_status" name="marital_status" type="text" value={form.marital_status} onChange={onChange} placeholder="Single / Married…" className={getInputClass(valid("marital_status") as boolean, errors?.marital_status)} />
+                <Select
+                    value={form.marital_status || ""}
+                    onValueChange={(val) => onFieldChange && onFieldChange("marital_status", val ?? "")}
+                >
+                    <SelectTrigger id="marital_status" className={getInputClass(valid("marital_status") as boolean, errors?.marital_status) + " w-full cursor-pointer"}>
+                        <SelectValue placeholder="Select marital status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="Single">Single</SelectItem>
+                        <SelectItem value="Married">Married</SelectItem>
+                        <SelectItem value="Widowed">Widowed</SelectItem>
+                        <SelectItem value="Separated">Separated</SelectItem>
+                        <SelectItem value="Divorced">Divorced</SelectItem>
+                    </SelectContent>
+                </Select>
             </Field>
             <Field label="Place of Birth" id="place_of_birth" error={errors?.place_of_birth} valid={valid("place_of_birth") as boolean}>
                 <input id="place_of_birth" name="place_of_birth" type="text" value={form.place_of_birth} onChange={onChange} placeholder="City, Province" className={getInputClass(valid("place_of_birth") as boolean, errors?.place_of_birth)} />
@@ -362,12 +376,6 @@ function StepPhysical({ form, onChange, onFieldChange, errors }: StepProps) {
     const valid = (name: keyof typeof form) => form[name] && !errors?.[name];
     return (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Height (text)" id="height" error={errors?.height} valid={valid("height") as boolean}>
-                <input id="height" name="height" type="text" value={form.height} onChange={onChange} placeholder="5'8&quot;" className={getInputClass(valid("height") as boolean, errors?.height)} />
-            </Field>
-            <Field label="Weight (text)" id="weight" error={errors?.weight} valid={valid("weight") as boolean}>
-                <input id="weight" name="weight" type="text" value={form.weight} onChange={onChange} placeholder="65 kg" className={getInputClass(valid("weight") as boolean, errors?.weight)} />
-            </Field>
             <Field label="Height (cm)" id="height_cm" error={errors?.height_cm} valid={valid("height_cm") as boolean}>
                 <input id="height_cm" name="height_cm" type="number" step="0.01" value={form.height_cm} onChange={onChange} placeholder="172.50" className={getInputClass(valid("height_cm") as boolean, errors?.height_cm)} />
             </Field>
@@ -390,14 +398,14 @@ function StepPhysical({ form, onChange, onFieldChange, errors }: StepProps) {
                 <input id="eye_color" name="eye_color" type="text" value={form.eye_color} onChange={onChange} placeholder="Brown" className={getInputClass(valid("eye_color") as boolean, errors?.eye_color)} />
             </Field>
             <Field label="Blood Type" id="blood_type" error={errors?.blood_type} valid={valid("blood_type") as boolean}>
-                <Select value={form.blood_type || undefined} onValueChange={(val) => onFieldChange?.("blood_type", val ?? "")}> 
+                <Select value={form.blood_type || ""} onValueChange={(val) => onFieldChange?.("blood_type", val ?? "")}> 
                     <SelectTrigger id="blood_type" className={getInputClass(valid("blood_type") as boolean, errors?.blood_type) + " w-full cursor-pointer"}>
                         <SelectValue placeholder="Select blood type" />
                     </SelectTrigger>
                     <SelectContent>
-                        {(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] as BloodType[]).map((bt) => (
-                            <SelectItem key={bt} value={bt}>{bt}</SelectItem>
-                        ))}
+                        {(["A", "B", "AB", "O"] as BloodType[]).map((bt) => (
+                             <SelectItem key={bt} value={bt}>{bt}</SelectItem>
+                         ))}
                     </SelectContent>
                 </Select>
             </Field>
@@ -535,7 +543,7 @@ function StepCase({ form, onChange, onFieldChange, errors }: StepProps) {
                 <input id="cell_block" name="cell_block" type="text" value={form.cell_block} onChange={onChange} placeholder="Block A" className={getInputClass(valid("cell_block") as boolean, errors?.cell_block)} />
             </Field>
             <Field label="Inmate Status" id="status" error={errors?.status} valid={valid("status") as boolean}>
-                <Select value={form.status || undefined} onValueChange={(val) => onFieldChange?.("status", val ?? "")}> 
+                <Select value={form.status || ""} onValueChange={(val) => onFieldChange?.("status", val ?? "")}> 
                     <SelectTrigger id="status" className={getInputClass(valid("status") as boolean, errors?.status) + " w-full cursor-pointer"}>
                         <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -577,7 +585,7 @@ function StepCase({ form, onChange, onFieldChange, errors }: StepProps) {
     );
 }
 
-function StepProperty({ form, onChange, errors }: StepProps) {
+function StepProperty({ form, onChange, onFieldChange, errors, onFileChange }: StepProps & { onFileChange?: (file: File) => void }) {
     const [preview, setPreview] = useState<string | null>(form.photo_path ? form.photo_path : null);
 
     function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -585,8 +593,8 @@ function StepProperty({ form, onChange, errors }: StepProps) {
         if (file) {
             const url = URL.createObjectURL(file);
             setPreview(url);
-            // Simulate storing the file path as a data URL for preview; in real app, upload and store URL
-            onChange({ target: { name: "photo_path", value: url } } as React.ChangeEvent<HTMLInputElement>);
+            onFileChange?.(file);
+            onFieldChange?.("photo_path", file.name); // Store filename temporarily
         }
     }
 
@@ -596,19 +604,16 @@ function StepProperty({ form, onChange, errors }: StepProps) {
         <div className="flex flex-col gap-6">
             {/* Image preview at the top */}
             <div className="flex justify-center">
-                {preview && (
-                    <div className="relative w-60 h-36 rounded-lg border border-slate-300 bg-slate-100 shadow-inner flex items-center justify-center overflow-hidden">
-                        <Image
-                            src={preview || ""}
-                            alt="Inmate Preview"
-                            className="object-contain w-full h-full"
-                            fill
-                            sizes="240px"
-                            style={{ objectFit: "contain" }}
-                        />
-                        <div className="absolute bottom-0 left-0 w-full bg-black/60 text-white text-xs text-center py-1">ID Photo Preview</div>
-                    </div>
-                )}
+                        {preview && (preview.startsWith("blob:") || preview.startsWith("http")) ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                                src={preview}
+                                alt="Inmate Preview"
+                                className="object-contain w-full h-full"
+                            />
+                        ) : (
+                            <div className="text-slate-400 text-xs text-center p-4">Select a photo to preview</div>
+                        )}
             </div>
             {/* File input and fields below */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -707,10 +712,41 @@ function validateForm(form: InmateForm): ValidationErrors {
     return errors;
 }
 
+// Helper to format values for Supabase
+function formatValue(key: keyof InmateForm, value: string) {
+    if (value === "") return null;
+    // Numeric fields
+    if (["height_cm", "weight_kg", "no_of_children", "sentence_years"].includes(key)) {
+        const num = Number(value);
+        return isNaN(num) ? null : num;
+    }
+    // Date fields (YYYY-MM-DD or ISO)
+    if (["birthdate", "admission_date", "release_date"].includes(key)) {
+        // Accept only valid date strings
+        if (!value) return null;
+        const d = new Date(value);
+        return isNaN(d.getTime()) ? null : value;
+    }
+    // Timestamp field
+    if (key === "date_time_received") {
+        if (!value) return null;
+        const d = new Date(value);
+        return isNaN(d.getTime()) ? null : d.toISOString();
+    }
+    // Enum fields
+    if (key === "gender" && !["Male", "Female"].includes(value)) return null;
+    if (key === "status" && !["Active", "Released", "Transferred"].includes(value)) return null;
+    if (key === "blood_type" && !["A", "B", "AB", "O"].includes(value)) return null;
+    return value;
+}
+
 export default function AddInmateModal({ isOpen, onClose, onSubmit }: AddInmateModalProps) {
+
     const [form, setForm] = useState<InmateForm>(INITIAL_FORM);
+    const [photoFile, setPhotoFile] = useState<File | null>(null);
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 1 });
     const [errors, setErrors] = useState<ValidationErrors>({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         if (!isOpen) {
@@ -779,12 +815,61 @@ export default function AddInmateModal({ isOpen, onClose, onSubmit }: AddInmateM
         const validation = validateForm(form);
         setErrors(validation);
         if (Object.keys(validation).length > 0) {
-            // Focus first error field if needed
+            toast.error("Please fill out all required fields correctly.");
             return;
         }
-        onSubmit(form);
-        handleClose();
-    }, [form, handleClose, onSubmit]);
+
+        // Prepare payload with correct formatting for Supabase
+        const payload: Record<string, unknown> = {};
+        Object.keys(form).forEach((key) => {
+            payload[key] = formatValue(key as keyof InmateForm, form[key as keyof InmateForm]);
+        });
+
+        (async () => {
+            setIsSubmitting(true);
+            try {
+                let finalPhotoPath = form.photo_path;
+
+                if (photoFile) {
+                    const fileExt = photoFile.name.split(".").pop();
+                    const fileName = `${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
+                    const filePath = `inmate-photos/${fileName}`;
+
+                    const { error: uploadError } = await supabase.storage
+                        .from("inmates")
+                        .upload(filePath, photoFile);
+
+                    if (uploadError) {
+                        toast.error(`Photo upload failed: ${uploadError.message}`);
+                        // Continue anyway or return? DB says photo_path is varchar(255) and can be null.
+                    } else {
+                        // Get public URL
+                        const { data: publicUrlData } = supabase.storage
+                            .from("inmates")
+                            .getPublicUrl(filePath);
+                        finalPhotoPath = publicUrlData.publicUrl;
+                    }
+                }
+
+                const finalPayload = { ...payload, photo_path: finalPhotoPath };
+
+                const { error } = await supabase.from("inmates").insert([finalPayload]);
+                if (error) {
+                    setErrors((prev) => ({ ...prev, submit: error.message }));
+                    toast.error(`Failed to add inmate: ${error.message}`);
+                    return;
+                }
+                toast.success("Inmate added successfully!");
+                onSubmit(form);
+                handleClose();
+            } catch (err) {
+                console.error("Submission error:", err);
+                toast.error("An unexpected error occurred.");
+            } finally {
+                setIsSubmitting(false);
+            }
+        })();
+    }, [form, handleClose, onSubmit, photoFile]);
 
     const StepComponent = STEP_COMPONENTS[currentStep];
     const { title: stepTitle, icon: StepIcon } = STEPS[currentStep];
@@ -872,7 +957,13 @@ export default function AddInmateModal({ isOpen, onClose, onSubmit }: AddInmateM
                 {/* ── Body (scrollable) ──────────────────────────────────── */}
                 <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5">
                     {/* Pass errors to step component for field-level error display */}
-                    <StepComponent form={form} onChange={handleChange} onFieldChange={handleFieldChange} errors={errors} />
+                    <StepComponent 
+                        form={form} 
+                        onChange={handleChange} 
+                        onFieldChange={handleFieldChange} 
+                        errors={errors} 
+                        {...(currentStep === 5 ? { onFileChange: setPhotoFile } : {})} 
+                    />
                 </div>
 
                 {/* ── Footer ─────────────────────────────────────────────── */}
@@ -895,10 +986,11 @@ export default function AddInmateModal({ isOpen, onClose, onSubmit }: AddInmateM
                         <button
                             type="button"
                             onClick={handleSubmit}
-                            className="cursor-pointer flex items-center gap-1.5 rounded-lg bg-teal-700 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800"
+                            disabled={isSubmitting}
+                            className="cursor-pointer flex items-center gap-1.5 rounded-lg bg-teal-700 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-800 disabled:opacity-50"
                         >
                             <Check size={16} />
-                            Submit
+                            {isSubmitting ? "Submitting..." : "Submit"}
                         </button>
                     ) : (
                         <button
