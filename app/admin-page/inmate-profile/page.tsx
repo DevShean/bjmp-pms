@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     flexRender,
     getCoreRowModel,
@@ -13,7 +13,12 @@ import { Eye, Edit, Trash2, UserPlus, Stethoscope } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
 import AdminSidebarLayout from "../components/AdminSidebarLayout";
 import AddInmateModal from "../components/AddInmateModal";
+import ViewInmateModal from "../components/ViewInmateModal";
+import EditInmateModal from "../components/EditInmateModal";
+import DeleteInmateModal from "../components/DeleteInmateModal";
 import AssignMedicalStaffModal from "../components/AssignMedicalStaffModal";
+import { supabase } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 type InmateStatus = "Active" | "Released" | "Transferred";
 
@@ -26,23 +31,15 @@ type InmateRecord = {
     status: InmateStatus;
 };
 
-type GraphApiResponse = {
-    statusCounts: Array<{ status: InmateStatus; count: number }>;
-    generatedAt: string;
-};
+interface SupabaseInmate {
+    inmate_id: number;
+    first_name: string;
+    last_name: string;
+    birthdate: string;
+    gender: string;
+    status: string;
+}
 
-const INMATES: InmateRecord[] = [
-    { id: "INM-001", firstName: "Leo", lastName: "Navarro", birthdate: "1994-03-08", gender: "Male", status: "Active" },
-    { id: "INM-002", firstName: "Daniel", lastName: "Cortez", birthdate: "1989-06-30", gender: "Male", status: "Active" },
-    { id: "INM-003", firstName: "Eric", lastName: "Gomez", birthdate: "1991-01-25", gender: "Male", status: "Released" },
-    { id: "INM-004", firstName: "Ramon", lastName: "Villanueva", birthdate: "1998-04-14", gender: "Male", status: "Active" },
-    { id: "INM-005", firstName: "Michael", lastName: "Tan", birthdate: "1987-09-09", gender: "Male", status: "Transferred" },
-    { id: "INM-006", firstName: "Anthony", lastName: "Lopez", birthdate: "1992-12-01", gender: "Male", status: "Active" },
-    { id: "INM-007", firstName: "Jose", lastName: "Mendoza", birthdate: "1985-07-18", gender: "Male", status: "Active" },
-    { id: "INM-008", firstName: "Pedro", lastName: "Reyes", birthdate: "1995-02-20", gender: "Male", status: "Active" },
-    { id: "INM-009", firstName: "Mark", lastName: "Santos", birthdate: "1988-11-03", gender: "Male", status: "Active" },
-    { id: "INM-010", firstName: "Juans", lastName: "Dela Cruz", birthdate: "1990-05-12", gender: "Male", status: "Active" },
-];
 
 const STATUS_THEME: Record<InmateStatus, { color: string; mutedColor: string }> = {
     Active: { color: "#0f766e", mutedColor: "#99f6e4" },
@@ -60,42 +57,60 @@ export default function InmateProfilePage() {
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isAssignMedicalModalOpen, setIsAssignMedicalModalOpen] = useState(false);
-    const [graphData, setGraphData] = useState<GraphApiResponse | null>(null);
-    const [graphError, setGraphError] = useState<string | null>(null);
+    const [inmates, setInmates] = useState<InmateRecord[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [selectedInmateId, setSelectedInmateId] = useState<string | null>(null);
+    const [selectedInmateName, setSelectedInmateName] = useState<string | null>(null);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+    const fetchInmates = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const { data, error } = await supabase
+                .from("inmates")
+                .select("inmate_id, first_name, last_name, birthdate, gender, status")
+                .order("inmate_id", { ascending: false });
+
+            if (error) {
+                console.error("Supabase error fetching inmates:", error);
+                throw new Error(error.message);
+            }
+
+            const formatted: InmateRecord[] = (data as SupabaseInmate[] || []).map((item) => ({
+                id: `INM-${String(item.inmate_id).padStart(3, "0")}`,
+                firstName: item.first_name || "",
+                lastName: item.last_name || "",
+                birthdate: item.birthdate || "",
+                gender: item.gender as "Male" | "Female",
+                status: item.status as InmateStatus,
+            }));
+            setInmates(formatted);
+        } catch (err) {
+            console.error("Error fetching inmates:", err);
+            toast.error("Failed to load inmate records.");
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    const handleInmateDeleted = useCallback(() => {
+        fetchInmates();
+    }, [fetchInmates]);
 
     useEffect(() => {
-        const controller = new AbortController();
+        fetchInmates();
+    }, [fetchInmates]);
 
-        async function loadGraph() {
-            try {
-                const response = await fetch("/api/inmate-status", { signal: controller.signal });
-                if (!response.ok) {
-                    throw new Error("Unable to load graph data.");
-                }
-
-                const payload = (await response.json()) as GraphApiResponse;
-                setGraphData(payload);
-            } catch (error) {
-                if ((error as Error).name !== "AbortError") {
-                    setGraphError("Graph data is temporarily unavailable.");
-                }
-            }
-        }
-
-        void loadGraph();
-
-        return () => {
-            controller.abort();
-        };
-    }, []);
 
     const filteredRows = useMemo(() => {
         const keyword = searchTerm.trim().toLowerCase();
         if (!keyword) {
-            return INMATES;
+            return inmates;
         }
 
-        return INMATES.filter((row) => {
+        return inmates.filter((row) => {
             if (searchField === "name") {
                 return `${row.firstName} ${row.lastName}`.toLowerCase().includes(keyword);
             }
@@ -106,7 +121,7 @@ export default function InmateProfilePage() {
 
             return row.gender.toLowerCase().includes(keyword);
         });
-    }, [searchField, searchTerm]);
+    }, [searchField, searchTerm, inmates]);
 
     const columns = useMemo<ColumnDef<InmateRecord>[]>(
         () => [
@@ -146,15 +161,40 @@ export default function InmateProfilePage() {
             {
                 header: "Actions",
                 id: "actions",
-                cell: () => (
+                cell: ({ row }) => (
                     <div className="flex items-center gap-2">
-                        <button type="button" className="text-teal-700 hover:text-teal-900 transition" title="View">
+                        <button 
+                            type="button" 
+                            className="text-teal-700 hover:text-teal-900 transition p-1 hover:bg-teal-50 rounded-md cursor-pointer" 
+                            title="View"
+                            onClick={() => {
+                                setSelectedInmateId(row.original.id);
+                                setIsViewModalOpen(true);
+                            }}
+                        >
                             <Eye size={18} />
                         </button>
-                        <button type="button" className="text-blue-700 hover:text-blue-900 transition" title="Edit">
+                        <button 
+                            type="button" 
+                            className="text-blue-700 hover:text-blue-900 transition p-1 hover:bg-blue-50 rounded-md cursor-pointer" 
+                            title="Edit"
+                            onClick={() => {
+                                setSelectedInmateId(row.original.id);
+                                setIsEditModalOpen(true);
+                            }}
+                        >
                             <Edit size={18} />
                         </button>
-                        <button type="button" className="text-rose-600 hover:text-rose-700 transition" title="Delete">
+                        <button 
+                            type="button" 
+                            className="text-rose-600 hover:text-rose-700 transition p-1 hover:bg-rose-50 rounded-md cursor-pointer" 
+                            title="Delete"
+                            onClick={() => {
+                                setSelectedInmateId(row.original.id);
+                                setSelectedInmateName(`${row.original.firstName} ${row.original.lastName}`);
+                                setIsDeleteModalOpen(true);
+                            }}
+                        >
                             <Trash2 size={18} />
                         </button>
                     </div>
@@ -174,13 +214,12 @@ export default function InmateProfilePage() {
     });
 
     const graphCounts = useMemo(
-        () =>
-            graphData?.statusCounts ?? [
-                { status: "Active" as const, count: statusCountFromRows(INMATES, "Active") },
-                { status: "Released" as const, count: statusCountFromRows(INMATES, "Released") },
-                { status: "Transferred" as const, count: statusCountFromRows(INMATES, "Transferred") },
-            ],
-        [graphData]
+        () => [
+            { status: "Active" as const, count: statusCountFromRows(inmates, "Active") },
+            { status: "Released" as const, count: statusCountFromRows(inmates, "Released") },
+            { status: "Transferred" as const, count: statusCountFromRows(inmates, "Transferred") },
+        ],
+        [inmates]
     );
 
     const totalForGraph = graphCounts.reduce((sum, item) => sum + item.count, 0);
@@ -269,8 +308,6 @@ export default function InmateProfilePage() {
                                 </div>
                             ))}
                         </div>
-
-                        {graphError ? <p className="mt-3 text-xs text-rose-600">{graphError}</p> : null}
                     </div>
 
                     <div className="flex-1 min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -340,7 +377,13 @@ export default function InmateProfilePage() {
                                     ))}
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 bg-white">
-                                    {table.getRowModel().rows.length === 0 ? (
+                                    {isLoading ? (
+                                        <tr>
+                                            <td colSpan={columns.length} className="px-5 py-12 text-center text-sm text-slate-500">
+                                                Loading inmate records...
+                                            </td>
+                                        </tr>
+                                    ) : table.getRowModel().rows.length === 0 ? (
                                         <tr>
                                             <td colSpan={columns.length} className="px-5 py-12 text-center text-sm text-slate-500">
                                                 No inmate records found.
@@ -414,11 +457,40 @@ export default function InmateProfilePage() {
         <AddInmateModal
             isOpen={isAddModalOpen}
             onClose={() => setIsAddModalOpen(false)}
-            onSubmit={(data) => {
-                // TODO: persist to Supabase
-                console.log("New inmate data:", data);
+            onSubmit={() => {
+                fetchInmates();
                 setIsAddModalOpen(false);
             }}
+        />
+        <ViewInmateModal
+            isOpen={isViewModalOpen}
+            onClose={() => {
+                setIsViewModalOpen(false);
+                setSelectedInmateId(null);
+            }}
+            inmateId={selectedInmateId}
+        />
+        <EditInmateModal
+            isOpen={isEditModalOpen}
+            onClose={() => {
+                setIsEditModalOpen(false);
+                setSelectedInmateId(null);
+            }}
+            onSubmit={() => {
+                fetchInmates();
+            }}
+            inmateId={selectedInmateId}
+        />
+        <DeleteInmateModal
+            isOpen={isDeleteModalOpen}
+            onClose={() => {
+                setIsDeleteModalOpen(false);
+                setSelectedInmateId(null);
+                setSelectedInmateName(null);
+            }}
+            onSubmit={handleInmateDeleted}
+            inmateId={selectedInmateId}
+            inmateName={selectedInmateName}
         />
         <AssignMedicalStaffModal
             isOpen={isAssignMedicalModalOpen}
