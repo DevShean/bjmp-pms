@@ -30,13 +30,6 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
   const effectiveCollapsed = isCollapsed && !isHovered;
   const config = staffRoleConfig[role];
 
-  // Derived state to reset expanded items on route change without useEffect
-  const [prevPathname, setPrevPathname] = useState(pathname);
-  if (pathname !== prevPathname) {
-    setPrevPathname(pathname);
-    setExpandedItems({});
-  }
-
   const openMap = useMemo(() => {
     const nextMap: Record<string, boolean> = {};
     for (const item of config.menuItems) {
