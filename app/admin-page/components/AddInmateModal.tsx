@@ -1,16 +1,14 @@
-"use client";
-
 import { useState, useCallback, useEffect } from "react";
+import React from "react";
 import type { PaginationState } from "@tanstack/react-table";
-import { AnimatePresence, motion } from "motion/react";
 import { format } from "date-fns";
 import { X, ChevronLeft, ChevronRight, Check, User, Activity, Phone, GraduationCap, Scale, Package, CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import DegreeCombobox from "../../components/DegreeCombobox";
 import CourseCombobox from "../../components/CourseCombobox";
-
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
@@ -749,24 +747,14 @@ export default function AddInmateModal({ isOpen, onClose, onSubmit }: AddInmateM
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        if (!isOpen) {
-            return;
+        if (isOpen) {
+            // No need for manual body overflow management with shadcn Dialog
+        } else {
+            setForm(INITIAL_FORM);
+            setPagination({ pageIndex: 0, pageSize: 1 });
+            setErrors({});
+            setPhotoFile(null);
         }
-
-        const { style } = document.body;
-        const previousOverflow = style.overflow;
-        const previousPaddingRight = style.paddingRight;
-        const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-        style.overflow = "hidden";
-        if (scrollbarWidth > 0) {
-            style.paddingRight = `${scrollbarWidth}px`;
-        }
-
-        return () => {
-            style.overflow = previousOverflow;
-            style.paddingRight = previousPaddingRight;
-        };
     }, [isOpen]);
 
     const currentStep = pagination.pageIndex;
@@ -877,33 +865,11 @@ export default function AddInmateModal({ isOpen, onClose, onSubmit }: AddInmateM
     const { title: stepTitle, icon: StepIcon } = STEPS[currentStep];
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-                /* Overlay */
-                <motion.div
-                    key="inmate-modal"
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4"
-                    style={{ backgroundColor: "rgba(0,0,0,0.55)" }}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    onClick={(e) => {
-                        if (e.target === e.currentTarget) handleClose();
-                    }}
-                    aria-modal="true"
-                    role="dialog"
-                    aria-labelledby="modal-title"
-                >
-                <motion.div
-                    className="relative flex w-full max-w-3xl min-w-125 h-162.5 flex-col rounded-2xl bg-white shadow-2xl overflow-hidden"
-                    initial={{ opacity: 0, scale: 0.94, y: 24 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.94, y: 24 }}
-                    transition={{ type: "spring", duration: 0.38, bounce: 0.18 }}
-                    onClick={(e) => e.stopPropagation()}
-                >
-
+        <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+            <DialogContent 
+                className="flex w-full max-w-3xl min-w-[500px] h-[650px] flex-col rounded-2xl bg-white shadow-2xl overflow-hidden p-0 border-none"
+                showCloseButton={false}
+            >
                 {/* ── Header ─────────────────────────────────────────────── */}
                 <div className="flex items-center justify-between border-b border-slate-200 bg-teal-700 px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -958,7 +924,6 @@ export default function AddInmateModal({ isOpen, onClose, onSubmit }: AddInmateM
 
                 {/* ── Body (scrollable) ──────────────────────────────────── */}
                 <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5">
-                    {/* Pass errors to step component for field-level error display */}
                     <StepComponent 
                         form={form} 
                         onChange={handleChange} 
@@ -1005,9 +970,7 @@ export default function AddInmateModal({ isOpen, onClose, onSubmit }: AddInmateM
                         </button>
                     )}
                 </div>
-        </motion.div>
-        </motion.div>
-            )}
-        </AnimatePresence>
+            </DialogContent>
+        </Dialog>
     );
 }

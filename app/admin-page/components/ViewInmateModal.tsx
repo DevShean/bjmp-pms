@@ -1,8 +1,5 @@
-"use client";
-
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import type { PaginationState } from "@tanstack/react-table";
-import { AnimatePresence, motion } from "motion/react";
 import { format } from "date-fns";
 import { X, ChevronLeft, ChevronRight, User, Activity, Phone, GraduationCap, Scale, Package } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
@@ -10,6 +7,7 @@ import { toast } from "sonner";
 import Image from "next/image";
 
 import { getInmateImageUrl } from "@/app/lib/utils/image";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -348,14 +346,9 @@ export default function ViewInmateModal({ isOpen, onClose, inmateId }: ViewInmat
     useEffect(() => {
         if (isOpen) {
             fetchInmateData();
-            document.body.style.overflow = "hidden";
         } else {
-            document.body.style.overflow = "unset";
             setPagination({ pageIndex: 0, pageSize: 1 });
         }
-        return () => {
-            document.body.style.overflow = "unset";
-        };
     }, [isOpen, fetchInmateData]);
 
     const currentStep = pagination.pageIndex;
@@ -379,115 +372,100 @@ export default function ViewInmateModal({ isOpen, onClose, inmateId }: ViewInmat
     const { title: stepTitle, icon: StepIcon } = STEPS[currentStep];
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <motion.div
-                    key="view-inmate-modal"
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    onClick={onClose}
-                >
-                    <motion.div
-                        className="relative flex w-full max-w-3xl min-w-[500px] h-[650px] flex-col rounded-2xl bg-white shadow-2xl overflow-hidden"
-                        initial={{ opacity: 0, scale: 0.94, y: 24 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.94, y: 24 }}
-                        transition={{ type: "spring", duration: 0.38, bounce: 0.18 }}
-                        onClick={(e) => e.stopPropagation()}
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent 
+                className="flex w-full max-w-3xl min-w-[500px] h-[650px] max-h-[90vh] flex-col rounded-2xl bg-white shadow-2xl overflow-hidden border-none p-0"
+                showCloseButton={false}
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-slate-200 bg-teal-800 px-6 py-4">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
+                            <StepIcon size={18} className="text-white" />
+                        </div>
+                        <div>
+                            <p className="font-lexend text-lg font-semibold text-white leading-tight">
+                                View Inmate Profile
+                            </p>
+                            <p className="text-xs text-teal-100/80">
+                                Step {currentStep + 1} of {totalSteps} — {stepTitle}
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="rounded-full p-1.5 text-white/80 hover:bg-white/20 hover:text-white transition cursor-pointer"
                     >
-                        {/* Header */}
-                        <div className="flex items-center justify-between border-b border-slate-200 bg-teal-800 px-6 py-4">
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
-                                    <StepIcon size={18} className="text-white" />
-                                </div>
-                                <div>
-                                    <p className="font-lexend text-lg font-semibold text-white leading-tight">
-                                        View Inmate Profile
-                                    </p>
-                                    <p className="text-xs text-teal-100/80">
-                                        Step {currentStep + 1} of {totalSteps} — {stepTitle}
-                                    </p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={onClose}
-                                className="rounded-full p-1.5 text-white/80 hover:bg-white/20 hover:text-white transition cursor-pointer"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
+                        <X size={20} />
+                    </button>
+                </div>
 
-                        {/* Step Indicator */}
-                        <div className="flex items-center justify-center gap-x-3 border-b border-slate-100 bg-slate-50 px-6 py-3 overflow-x-auto custom-scrollbar">
-                            {STEPS.map((step, idx) => {
-                                const Icon = step.icon;
-                                const isVisited = idx <= currentStep;
-                                const isActive = idx === currentStep;
-                                return (
-                                    <div key={step.title} className="flex items-center gap-x-3 flex-none">
-                                        <button
-                                            title={step.title}
-                                            onClick={() => setPagination((prev) => ({ ...prev, pageIndex: idx }))}
-                                            className={`cursor-pointer flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold transition
-                                                ${isActive ? "bg-teal-800 text-white ring-2 ring-teal-200" : isVisited ? "bg-teal-600 text-white" : "bg-slate-200 text-slate-500 hover:bg-slate-300"}`}
-                                        >
-                                            <Icon size={15} />
-                                        </button>
-                                        {idx < STEPS.length - 1 && (
-                                            <div className={`w-8 sm:w-12 h-0.5 rounded transition-colors ${isVisited && idx < currentStep ? "bg-teal-500" : "bg-slate-200"}`} />
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        {/* Body */}
-                        <div className="flex-1 overflow-y-auto px-6 py-5 bg-white">
-                            {isLoading ? (
-                                <div className="flex h-full items-center justify-center">
-                                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" />
-                                </div>
-                            ) : (
-                                <StepComponent form={form} />
-                            )}
-                        </div>
-
-                        {/* Footer */}
-                        <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-4">
-                            <button
-                                onClick={goPrev}
-                                disabled={isFirstStep}
-                                className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-100 disabled:opacity-40 transition cursor-pointer disabled:cursor-not-allowed"
-                            >
-                                <ChevronLeft size={16} />
-                                Previous
-                            </button>
-
-                            <div className="flex items-center gap-3">
-                                {isLastStep ? (
-                                    <button
-                                        onClick={onClose}
-                                        className="rounded-lg bg-teal-800 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-900 transition cursor-pointer"
-                                    >
-                                        Done
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={goNext}
-                                        className="flex items-center gap-1.5 rounded-lg bg-teal-800 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-900 transition cursor-pointer"
-                                    >
-                                        Next
-                                        <ChevronRight size={16} />
-                                    </button>
+                {/* Step Indicator */}
+                <div className="flex items-center justify-center gap-x-3 border-b border-slate-100 bg-slate-50 px-6 py-3 overflow-x-auto custom-scrollbar scrollbar-hide">
+                    {STEPS.map((step, idx) => {
+                        const Icon = step.icon;
+                        const isVisited = idx <= currentStep;
+                        const isActive = idx === currentStep;
+                        return (
+                            <div key={step.title} className="flex items-center gap-x-3 flex-none">
+                                <button
+                                    title={step.title}
+                                    onClick={() => setPagination((prev) => ({ ...prev, pageIndex: idx }))}
+                                    className={`cursor-pointer flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold transition
+                                        ${isActive ? "bg-teal-800 text-white ring-2 ring-teal-200" : isVisited ? "bg-teal-600 text-white" : "bg-slate-200 text-slate-500 hover:bg-slate-300"}`}
+                                >
+                                    <Icon size={15} />
+                                </button>
+                                {idx < STEPS.length - 1 && (
+                                    <div className={`w-8 sm:w-12 h-0.5 rounded transition-colors ${isVisited && idx < currentStep ? "bg-teal-500" : "bg-slate-200"}`} />
                                 )}
                             </div>
+                        );
+                    })}
+                </div>
+
+                {/* Body */}
+                <div className="flex-1 overflow-y-auto px-6 py-5 bg-white scrollbar-hide">
+                    {isLoading ? (
+                        <div className="flex h-full items-center justify-center">
+                            <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" />
                         </div>
-                    </motion.div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+                    ) : (
+                        <StepComponent form={form} />
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-6 py-4 rounded-b-2xl">
+                    <button
+                        onClick={goPrev}
+                        disabled={isFirstStep}
+                        className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-100 disabled:opacity-40 transition cursor-pointer disabled:cursor-not-allowed"
+                    >
+                        <ChevronLeft size={16} />
+                        Previous
+                    </button>
+
+                    <div className="flex items-center gap-3">
+                        {isLastStep ? (
+                            <button
+                                onClick={onClose}
+                                className="rounded-lg bg-teal-800 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-900 transition cursor-pointer"
+                            >
+                                Done
+                            </button>
+                        ) : (
+                            <button
+                                onClick={goNext}
+                                className="flex items-center gap-1.5 rounded-lg bg-teal-800 px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-900 transition cursor-pointer"
+                            >
+                                Next
+                                <ChevronRight size={16} />
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
     );
 }
