@@ -819,25 +819,33 @@ export default function AddInmateModal({ isOpen, onClose, onSubmit }: AddInmateM
                 let finalPhotoPath = form.photo_path;
 
                 if (photoFile) {
-                    const formData = new FormData();
-                    formData.append("file", photoFile);
-
                     try {
-                        const response = await fetch("/api/upload-inmate-photo", {
-                            method: "POST",
-                            body: formData,
-                        });
+                        const fileExt = photoFile.name.split('.').pop();
+                        const fileName = `inmate-${Date.now()}.${fileExt}`;
+                        const filePath = `photos/${fileName}`;
 
-                        if (!response.ok) {
-                            const errorData = await response.json();
-                            throw new Error(errorData.error || "Upload failed");
+                        const { error: uploadError } = await supabase.storage
+                            .from("inmate-photos")
+                            .upload(filePath, photoFile);
+
+                        if (uploadError) {
+                            const isBucketNotFound = uploadError.message.toLowerCase().includes("bucket not found") || 
+                                                     ('status' in uploadError && (uploadError as { status: number }).status === 400);
+                            
+                            if (isBucketNotFound) {
+                                throw new Error("Storage bucket 'inmate-photos' not found. Please ensure it exists in your Supabase project.");
+                            }
+                            throw uploadError;
                         }
 
-                        const data = await response.json();
-                        finalPhotoPath = data.filePath;
+                        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+                        const publicUrl = `${supabaseUrl}/storage/v1/object/public/inmate-photos/${filePath}`;
+                        
+                        finalPhotoPath = publicUrl;
                     } catch (uploadError: unknown) {
                         toast.error(`Photo upload failed: ${(uploadError as Error).message}`);
-                        // Continue anyway or return?
+                        setIsSubmitting(false);
+                        return;
                     }
                 }
 
@@ -867,7 +875,7 @@ export default function AddInmateModal({ isOpen, onClose, onSubmit }: AddInmateM
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
             <DialogContent 
-                className="flex w-full max-w-3xl min-w-[500px] h-[650px] flex-col rounded-2xl bg-white shadow-2xl overflow-hidden p-0 border-none"
+                className="flex w-full max-w-5xl min-w-[800px] h-[650px] flex-col rounded-2xl bg-white shadow-2xl overflow-hidden p-0 border-none"
                 showCloseButton={false}
             >
                 {/* ── Header ─────────────────────────────────────────────── */}
@@ -896,7 +904,7 @@ export default function AddInmateModal({ isOpen, onClose, onSubmit }: AddInmateM
                 </div>
 
                 {/* ── Step Indicator ─────────────────────────────────────── */}
-                <div className="flex items-center justify-center gap-x-3 border-b border-slate-100 bg-slate-50 px-6 py-3 overflow-x-auto custom-scrollbar">
+                <div className="flex items-center justify-center gap-x-3 border-b border-slate-100 bg-slate-50 px-6 py-3">
                     {STEPS.map((step, idx) => {
                         const Icon = step.icon;
                         const isCompleted = idx < currentStep;

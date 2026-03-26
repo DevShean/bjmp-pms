@@ -374,7 +374,7 @@ export default function ViewInmateModal({ isOpen, onClose, inmateId }: ViewInmat
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent 
-                className="flex w-full max-w-3xl min-w-[500px] h-[650px] max-h-[90vh] flex-col rounded-2xl bg-white shadow-2xl overflow-hidden border-none p-0"
+                className="flex w-full max-w-5xl min-w-[800px] h-[650px] max-h-[90vh] flex-col rounded-2xl bg-white shadow-2xl overflow-hidden border-none p-0"
                 showCloseButton={false}
             >
                 {/* Header */}
@@ -401,7 +401,7 @@ export default function ViewInmateModal({ isOpen, onClose, inmateId }: ViewInmat
                 </div>
 
                 {/* Step Indicator */}
-                <div className="flex items-center justify-center gap-x-3 border-b border-slate-100 bg-slate-50 px-6 py-3 overflow-x-auto custom-scrollbar scrollbar-hide">
+                <div className="flex items-center justify-center gap-x-3 border-b border-slate-100 bg-slate-50 px-6 py-3">
                     {STEPS.map((step, idx) => {
                         const Icon = step.icon;
                         const isVisited = idx <= currentStep;
