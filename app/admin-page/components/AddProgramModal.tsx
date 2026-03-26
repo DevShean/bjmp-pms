@@ -1,16 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import { format } from "date-fns";
-import { CalendarIcon, X } from "lucide-react";
+import React, { useState } from "react";
+import { format, differenceInWeeks } from "date-fns";
+import { CalendarIcon, X, CheckIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import IconButton from "@/components/ui/IconButton";
-import { CheckIcon } from "lucide-react";
-import { differenceInWeeks } from "date-fns";
 import RehabStaffCombobox from "../../components/RehabStaffCombobox";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+
 
 export interface AddProgramFormData {
     program_name: string;
@@ -161,14 +160,14 @@ export default function AddProgramModal({ isOpen, onClose, onSubmit }: AddProgra
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setForm(prev => ({ ...prev, [name]: value }));
-        setTouched(prev => ({ ...prev, [name]: true }));
-        setErrors(prev => ({ ...prev, [name]: validateField(name as keyof AddProgramFormData, value) }));
+        setForm(prev => ({ ...prev, [name as keyof AddProgramFormData]: value }));
+        setTouched(prev => ({ ...prev, [name as keyof AddProgramFormData]: true }));
+        setErrors(prev => ({ ...prev, [name as keyof AddProgramFormData]: validateField(name as keyof AddProgramFormData, value) }));
     };
 
     const handleFieldChange = (name: string, value: string) => {
         setForm(prev => {
-            const nextForm = { ...prev, [name]: value };
+            const nextForm = { ...prev, [name as keyof AddProgramFormData]: value };
             if (name === "start_date" || name === "end_date") {
                 if (nextForm.start_date && nextForm.end_date) {
                     const start = new Date(nextForm.start_date);
@@ -181,8 +180,8 @@ export default function AddProgramModal({ isOpen, onClose, onSubmit }: AddProgra
             }
             return nextForm;
         });
-        setTouched(prev => ({ ...prev, [name]: true }));
-        setErrors(prev => ({ ...prev, [name]: validateField(name as keyof AddProgramFormData, value) }));
+        setTouched(prev => ({ ...prev, [name as keyof AddProgramFormData]: true }));
+        setErrors(prev => ({ ...prev, [name as keyof AddProgramFormData]: validateField(name as keyof AddProgramFormData, value) }));
     };
 
     const handleSubmit = () => {
@@ -202,154 +201,132 @@ export default function AddProgramModal({ isOpen, onClose, onSubmit }: AddProgra
     };
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <motion.div
-                    key="add-program-modal"
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4"
-                    style={{ backgroundColor: "rgba(0,0,0,0.55)" }}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    onClick={(e) => {
-                        if (e.target === e.currentTarget) handleClose();
-                    }}
-                    aria-modal="true"
-                    role="dialog"
-                    aria-labelledby="modal-title"
-                >
-                    <motion.div
-                        className="relative flex w-full max-w-3xl min-w-125 h-162.5 flex-col rounded-2xl bg-white shadow-2xl overflow-hidden"
-                        initial={{ opacity: 0, scale: 0.94, y: 24 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.94, y: 24 }}
-                        transition={{ type: "spring", duration: 0.38, bounce: 0.18 }}
-                        onClick={(e) => e.stopPropagation()}
+        <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+            <DialogContent 
+                className="flex w-full max-w-3xl min-w-125 h-[650px] max-h-[90vh] flex-col rounded-2xl bg-white shadow-2xl overflow-hidden border-none p-0"
+                showCloseButton={false}
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-slate-200 bg-teal-700 px-6 py-4">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
+                            <CalendarIcon size={18} className="text-white" />
+                        </div>
+                        <div>
+                            <p className="font-lexend text-lg font-semibold text-white leading-tight">
+                                Add New Program
+                            </p>
+                            <p className="text-xs text-teal-100">Program Details</p>
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={handleClose}
+                        className="cursor-pointer rounded-full p-1.5 text-white/80 transition hover:bg-white/20 hover:text-white"
+                        aria-label="Close modal"
                     >
-                        {/* Header */}
-                        <div className="flex items-center justify-between border-b border-slate-200 bg-teal-700 px-6 py-4">
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
-                                    <CalendarIcon size={18} className="text-white" />
-                                </div>
-                                <div>
-                                    <p id="modal-title" className="font-lexend text-lg font-semibold text-white leading-tight">
-                                        Add New Program
-                                    </p>
-                                    <p className="text-xs text-teal-100">Program Details</p>
-                                </div>
+                        <X size={20} />
+                    </button>
+                </div>
+
+                {/* Body */}
+                <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto px-3 py-4 sm:px-6 sm:py-5">
+                    <form className="flex flex-col gap-3">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+                            <div className="flex-1 min-w-0">
+                                <Field label="Program Name" id="program_name" error={touched.program_name ? errors.program_name : undefined} valid={!!(touched.program_name && !errors.program_name)}>
+                                    <input type="text" id="program_name" name="program_name" value={form.program_name} onChange={handleChange} className={inputClass} />
+                                </Field>
                             </div>
-                            <button
-                                type="button"
-                                onClick={handleClose}
-                                className="cursor-pointer rounded-full p-1.5 text-white/80 transition hover:bg-white/20 hover:text-white"
-                                aria-label="Close modal"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        {/* Body */}
-                        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto px-3 py-4 sm:px-6 sm:py-5">
-                            <form className="flex flex-col gap-3">
-                                <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
-                                    <div className="flex-1 min-w-0">
-                                        <Field label="Program Name" id="program_name" error={touched.program_name ? errors.program_name : undefined} valid={!!(touched.program_name && !errors.program_name)}>
-                                            <input type="text" id="program_name" name="program_name" value={form.program_name} onChange={handleChange} className={inputClass} />
-                                        </Field>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <Field label="Program Type" id="program_type" error={touched.program_type ? errors.program_type : undefined} valid={!!(touched.program_type && !errors.program_type)}>
-                                            <Select value={form.program_type} onValueChange={(val) => handleFieldChange("program_type", val || "")}> 
-                                                <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="Select type" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="Educational">Educational</SelectItem>
-                                                    <SelectItem value="Vocational">Vocational</SelectItem>
-                                                    <SelectItem value="Psychological">Psychological</SelectItem>
-                                                    <SelectItem value="Other">Other</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </Field>
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
-                                    <div className="flex-1 min-w-0">
-                                        <Field label="Start Date" id="start_date" error={touched.start_date ? errors.start_date : undefined} valid={!!(touched.start_date && !errors.start_date)}>
-                                            <DatePickerField 
-                                                id="start_date" 
-                                                value={form.start_date} 
-                                                onSelect={(date) => handleFieldChange("start_date", date ? format(date, "yyyy-MM-dd") : "")} 
-                                            />
-                                        </Field>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <Field label="End Date" id="end_date" error={touched.end_date ? errors.end_date : undefined} valid={!!(touched.end_date && !errors.end_date)}>
-                                            <DatePickerField 
-                                                id="end_date" 
-                                                value={form.end_date} 
-                                                onSelect={(date) => handleFieldChange("end_date", date ? format(date, "yyyy-MM-dd") : "")} 
-                                            />
-                                        </Field>
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
-                                    <div className="flex-1 min-w-0">
-                                        <Field label="Duration (Weeks)" id="duration" valid={!!(touched.duration && !errors.duration)}>
-                                            <input type="number" id="duration" name="duration" value={form.duration} onChange={handleChange} className={inputClass + " bg-slate-100 cursor-not-allowed"} readOnly />
-                                        </Field>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <Field label="Capacity" id="capacity" error={touched.capacity ? errors.capacity : undefined} valid={!!(touched.capacity && !errors.capacity)}>
-                                            <input type="number" id="capacity" name="capacity" value={form.capacity} onChange={handleChange} className={inputClass} />
-                                        </Field>
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
-                                    <div className="flex-1 min-w-0">
-                                        <Field label="Location" id="location" error={touched.location ? errors.location : undefined} valid={!!(touched.location && !errors.location)}>
-                                            <input type="text" id="location" name="location" value={form.location} onChange={handleChange} className={inputClass} />
-                                        </Field>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <Field label="Assigned Staff" id="assigned_staff" error={touched.assigned_staff ? errors.assigned_staff : undefined} valid={!!(touched.assigned_staff && !errors.assigned_staff)}>
-                                            <RehabStaffCombobox 
-                                                value={form.assigned_staff} 
-                                                onValueChange={(val) => handleFieldChange("assigned_staff", val)} 
-                                            />
-                                        </Field>
-                                    </div>
-                                </div>
-
-                                <Field label="Description" id="description" error={touched.description ? errors.description : undefined} valid={!!(touched.description && !errors.description)}>
-                                    <textarea id="description" name="description" rows={4} value={form.description} onChange={handleChange} className={textareaClass}></textarea>
+                            <div className="flex-1 min-w-0">
+                                <Field label="Program Type" id="program_type" error={touched.program_type ? errors.program_type : undefined} valid={!!(touched.program_type && !errors.program_type)}>
+                                    <Select value={form.program_type} onValueChange={(val) => handleFieldChange("program_type", val || "")}> 
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Educational">Educational</SelectItem>
+                                            <SelectItem value="Vocational">Vocational</SelectItem>
+                                            <SelectItem value="Psychological">Psychological</SelectItem>
+                                            <SelectItem value="Other">Other</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </Field>
+                            </div>
+                        </div>
 
-                                <Field label="Requirements" id="requirements" error={touched.requirements ? errors.requirements : undefined} valid={!!(touched.requirements && !errors.requirements)}>
-                                    <textarea id="requirements" name="requirements" rows={4} value={form.requirements} onChange={handleChange} className={textareaClass}></textarea>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+                            <div className="flex-1 min-w-0">
+                                <Field label="Start Date" id="start_date" error={touched.start_date ? errors.start_date : undefined} valid={!!(touched.start_date && !errors.start_date)}>
+                                    <DatePickerField 
+                                        id="start_date" 
+                                        value={form.start_date} 
+                                        onSelect={(date) => handleFieldChange("start_date", date ? format(date, "yyyy-MM-dd") : "")} 
+                                    />
                                 </Field>
-                            </form>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <Field label="End Date" id="end_date" error={touched.end_date ? errors.end_date : undefined} valid={!!(touched.end_date && !errors.end_date)}>
+                                    <DatePickerField 
+                                        id="end_date" 
+                                        value={form.end_date} 
+                                        onSelect={(date) => handleFieldChange("end_date", date ? format(date, "yyyy-MM-dd") : "")} 
+                                    />
+                                </Field>
+                            </div>
                         </div>
 
-                        {/* Footer */}
-                        <div className="flex items-center justify-end border-t border-slate-200 bg-slate-50 px-6 py-4 rounded-b-2xl">
-                            <IconButton
-                                onClick={handleSubmit}
-                                icon={<CalendarIcon size={18} />}
-                                colorClass="bg-teal-700 hover:bg-teal-800 text-white"
-                                disabled={false}
-                            >
-                                Add Program
-                            </IconButton>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+                            <div className="flex-1 min-w-0">
+                                <Field label="Duration (Weeks)" id="duration" valid={!!(touched.duration && !errors.duration)}>
+                                    <input type="number" id="duration" name="duration" value={form.duration} onChange={handleChange} className={inputClass + " bg-slate-100 cursor-not-allowed"} readOnly />
+                                </Field>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <Field label="Capacity" id="capacity" error={touched.capacity ? errors.capacity : undefined} valid={!!(touched.capacity && !errors.capacity)}>
+                                    <input type="number" id="capacity" name="capacity" value={form.capacity} onChange={handleChange} className={inputClass} />
+                                </Field>
+                            </div>
                         </div>
-                    </motion.div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+
+                        <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+                            <div className="flex-1 min-w-0">
+                                <Field label="Location" id="location" error={touched.location ? errors.location : undefined} valid={!!(touched.location && !errors.location)}>
+                                    <input type="text" id="location" name="location" value={form.location} onChange={handleChange} className={inputClass} />
+                                </Field>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <Field label="Assigned Staff" id="assigned_staff" error={touched.assigned_staff ? errors.assigned_staff : undefined} valid={!!(touched.assigned_staff && !errors.assigned_staff)}>
+                                    <RehabStaffCombobox 
+                                        value={form.assigned_staff} 
+                                        onValueChange={(val) => handleFieldChange("assigned_staff", val)} 
+                                    />
+                                </Field>
+                            </div>
+                        </div>
+
+                        <Field label="Description" id="description" error={touched.description ? errors.description : undefined} valid={!!(touched.description && !errors.description)}>
+                            <textarea id="description" name="description" rows={4} value={form.description} onChange={handleChange} className={textareaClass}></textarea>
+                        </Field>
+
+                        <Field label="Requirements" id="requirements" error={touched.requirements ? errors.requirements : undefined} valid={!!(touched.requirements && !errors.requirements)}>
+                            <textarea id="requirements" name="requirements" rows={4} value={form.requirements} onChange={handleChange} className={textareaClass}></textarea>
+                        </Field>
+                    </form>
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-end border-t border-slate-200 bg-slate-50 px-6 py-4 rounded-b-2xl">
+                    <IconButton
+                        onClick={handleSubmit}
+                        icon={<CalendarIcon size={18} />}
+                        colorClass="bg-teal-700 hover:bg-teal-800 text-white"
+                        disabled={false}
+                    >
+                        Add Program
+                    </IconButton>
+                </div>
+            </DialogContent>
+        </Dialog>
     );
 }

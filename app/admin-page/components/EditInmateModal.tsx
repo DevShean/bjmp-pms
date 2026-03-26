@@ -1,13 +1,11 @@
-"use client";
-
 import { useState, useCallback, useEffect } from "react";
 import type { PaginationState } from "@tanstack/react-table";
-import { AnimatePresence, motion } from "motion/react";
 import { format } from "date-fns";
 import { X, User, Activity, Phone, GraduationCap, Scale, Package, CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import DegreeCombobox from "../../components/DegreeCombobox";
 import CourseCombobox from "../../components/CourseCombobox";
 import { supabase } from "@/lib/supabase/client";
@@ -715,15 +713,12 @@ export default function EditInmateModal({ isOpen, onClose, onSubmit, inmateId }:
     useEffect(() => {
         if (isOpen) {
             fetchInmateData();
-            document.body.style.overflow = "hidden";
         } else {
-            document.body.style.overflow = "unset";
             setForm(INITIAL_FORM);
             setPagination({ pageIndex: 0, pageSize: 1 });
             setErrors({});
             setPhotoFile(null);
         }
-        return () => { document.body.style.overflow = "unset"; };
     }, [isOpen, fetchInmateData]);
 
     const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -793,76 +788,66 @@ export default function EditInmateModal({ isOpen, onClose, onSubmit, inmateId }:
     const StepComponent = STEP_COMPONENTS[currentStep];
 
     return (
-        <AnimatePresence>
-            {isOpen && (
-                <motion.div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55"
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    onClick={onClose}
-                >
-                    <motion.div
-                        className="relative flex w-full max-w-3xl min-w-[500px] h-[650px] flex-col rounded-2xl bg-white shadow-2xl overflow-hidden"
-                        initial={{ opacity: 0, scale: 0.94, y: 24 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.94, y: 24 }} transition={{ type: "spring", duration: 0.38 }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="flex items-center justify-between border-b bg-teal-700 px-6 py-4 text-white">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 border border-white/20 rounded-full"><StepIcon size={18} /></div>
-                                <div>
-                                    <p className="font-lexend text-lg font-semibold">Edit Inmate Profile</p>
-                                    <p className="text-xs text-teal-100">Step {currentStep + 1} of {STEPS.length} — {stepTitle}</p>
-                                </div>
-                            </div>
-                            <button onClick={onClose} className="cursor-pointer p-1 hover:bg-white/20 rounded-full"><X size={22} /></button>
+        <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent 
+                className="flex w-full max-w-3xl min-w-[500px] h-[650px] flex-col rounded-2xl bg-white shadow-2xl overflow-hidden p-0 border-none"
+                showCloseButton={false}
+            >
+                <div className="flex items-center justify-between border-b bg-teal-700 px-6 py-4 text-white">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 border border-white/20 rounded-full"><StepIcon size={18} /></div>
+                        <div>
+                            <p className="font-lexend text-lg font-semibold">Edit Inmate Profile</p>
+                            <p className="text-xs text-teal-100">Step {currentStep + 1} of {STEPS.length} — {stepTitle}</p>
                         </div>
+                    </div>
+                    <button onClick={onClose} className="cursor-pointer p-1 hover:bg-white/20 rounded-full transition-colors"><X size={22} /></button>
+                </div>
 
-                        <div className="flex items-center justify-center gap-x-3 border-b bg-slate-50 px-6 py-3 overflow-x-auto custom-scrollbar">
-                            {STEPS.map((s, idx) => (
-                                <div key={s.title} className="flex items-center gap-x-3 flex-none">
-                                    <button
-                                        onClick={() => setPagination({ pageIndex: idx, pageSize: 1 })}
-                                        className={`h-8 w-8 rounded-full text-xs font-bold flex items-center justify-center transition shrink-0 ${idx <= currentStep ? 'bg-teal-700 text-white' : 'bg-slate-200 text-slate-500'} cursor-pointer hover:ring-2 ring-teal-500/30`}
-                                        title={s.title}
-                                    >
-                                        <s.icon size={15} />
-                                    </button>
-                                    {idx < STEPS.length - 1 && (
-                                        <div className={`w-8 sm:w-12 h-0.5 rounded transition-colors ${idx < currentStep ? 'bg-teal-400' : 'bg-slate-200'}`} />
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto px-6 py-5">
-                            {isLoading ? (
-                                <div className="h-full flex items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" /></div>
-                            ) : (
-                                <StepComponent form={form} onChange={handleChange} onFieldChange={handleFieldChange} errors={errors} onFileChange={setPhotoFile} />
-                            )}
-                        </div>
-
-                        <div className="flex items-center justify-between border-t bg-slate-50 px-6 py-4">
+                <div className="flex items-center justify-center gap-x-3 border-b bg-slate-50 px-6 py-3 overflow-x-auto custom-scrollbar">
+                    {STEPS.map((s, idx) => (
+                        <div key={s.title} className="flex items-center gap-x-3 flex-none">
                             <button
-                                disabled={currentStep === 0}
-                                onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex - 1 }))}
-                                className="px-4 py-2 border rounded-lg bg-white text-sm font-semibold hover:bg-slate-100 disabled:opacity-40"
+                                onClick={() => setPagination({ pageIndex: idx, pageSize: 1 })}
+                                className={`h-8 w-8 rounded-full text-xs font-bold flex items-center justify-center transition shrink-0 ${idx <= currentStep ? 'bg-teal-700 text-white' : 'bg-slate-200 text-slate-500'} cursor-pointer hover:ring-2 ring-teal-500/30`}
+                                title={s.title}
                             >
-                                Previous
+                                <s.icon size={15} />
                             </button>
-                            {currentStep === STEPS.length - 1 ? (
-                                <button onClick={handleSubmit} disabled={isSubmitting} className="px-6 py-2 bg-teal-700 text-white rounded-lg text-sm font-semibold hover:bg-teal-800 disabled:opacity-50 flex items-center gap-2">
-                                    {isSubmitting ? "Updating..." : "Update Inmate"}
-                                </button>
-                            ) : (
-                                <button onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))} className="px-6 py-2 bg-teal-700 text-white rounded-lg text-sm font-semibold hover:bg-teal-800">
-                                    Next
-                                </button>
+                            {idx < STEPS.length - 1 && (
+                                <div className={`w-8 sm:w-12 h-0.5 rounded transition-colors ${idx < currentStep ? 'bg-teal-400' : 'bg-slate-200'}`} />
                             )}
                         </div>
-                    </motion.div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+                    ))}
+                </div>
+
+                <div className="flex-1 overflow-y-auto px-6 py-5">
+                    {isLoading ? (
+                        <div className="h-full flex items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-600 border-t-transparent" /></div>
+                    ) : (
+                        <StepComponent form={form} onChange={handleChange} onFieldChange={handleFieldChange} errors={errors} onFileChange={setPhotoFile} />
+                    )}
+                </div>
+
+                <div className="flex items-center justify-between border-t bg-slate-50 px-6 py-4">
+                    <button
+                        disabled={currentStep === 0}
+                        onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex - 1 }))}
+                        className="px-4 py-2 border rounded-lg bg-white text-sm font-semibold hover:bg-slate-100 disabled:opacity-40 transition-colors"
+                    >
+                        Previous
+                    </button>
+                    {currentStep === STEPS.length - 1 ? (
+                        <button onClick={handleSubmit} disabled={isSubmitting} className="px-6 py-2 bg-teal-700 text-white rounded-lg text-sm font-semibold hover:bg-teal-800 disabled:opacity-50 flex items-center gap-2 transition-colors">
+                            {isSubmitting ? "Updating..." : "Update Inmate"}
+                        </button>
+                    ) : (
+                        <button onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))} className="px-6 py-2 bg-teal-700 text-white rounded-lg text-sm font-semibold hover:bg-teal-800 transition-colors">
+                            Next
+                        </button>
+                    )}
+                </div>
+            </DialogContent>
+        </Dialog>
     );
 }
