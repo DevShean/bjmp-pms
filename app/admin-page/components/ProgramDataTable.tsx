@@ -239,13 +239,18 @@ export default function ProgramDataTable({ data, onEdit, onDelete, onAssign }: P
           <thead className="bg-slate-50">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
+                {headerGroup.headers.map((header, index) => {
                   const isActions = header.id === "actions";
+                  const isProgramName = index === 0;
                   return (
                     <th
                       key={header.id}
                       className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 ${
-                        isActions ? "sticky right-0 z-10 bg-slate-50 shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)]" : ""
+                        isActions
+                          ? "sticky right-0 z-20 bg-slate-50 shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)]"
+                          : isProgramName
+                          ? "sticky left-0 z-20 bg-slate-50 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.1)]"
+                          : ""
                       }`}
                     >
                       {header.isPlaceholder
@@ -260,14 +265,20 @@ export default function ProgramDataTable({ data, onEdit, onDelete, onAssign }: P
           <tbody className="divide-y divide-slate-100 text-slate-700">
             {table.getRowModel().rows.map((row) => (
               <tr key={row.id} className="hover:bg-teal-50/50 transition-colors group">
-                {row.getVisibleCells().map((cell) => {
+                {row.getVisibleCells().map((cell, index) => {
                   const isActions = cell.column.id === "actions";
-                  const rowBg = row.index % 2 !== 0 ? 'bg-slate-200' : 'bg-white';
+                  const isProgramName = index === 0;
+                  const rowBg = row.index % 2 !== 0 ? "bg-slate-200" : "bg-white";
+                  
                   return (
-                    <td 
-                      key={cell.id} 
-                      className={`whitespace-nowrap px-4 py-3 text-sm ${rowBg} transition-colors group-hover:bg-teal-600/8 ${
-                        isActions ? `sticky right-0 z-10 shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)]` : ""
+                    <td
+                      key={cell.id}
+                      className={`whitespace-nowrap px-4 py-3 text-sm transition-colors group-hover:bg-teal-50 ${rowBg} ${
+                        isActions
+                          ? "sticky right-0 z-10 shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)]"
+                          : isProgramName
+                          ? "sticky left-0 z-10 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.1)]"
+                          : ""
                       }`}
                     >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
