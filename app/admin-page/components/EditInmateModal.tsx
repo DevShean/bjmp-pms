@@ -746,21 +746,58 @@ export default function EditInmateModal({ isOpen, onClose, onSubmit, inmateId }:
             let finalPhotoPath = form.photo_path;
 
             if (photoFile) {
-                const formData = new FormData();
-                formData.append("file", photoFile);
+                try {
+                    // Try to delete old image if it exists and is from Supabase Storage
+                    if (form.photo_path && form.photo_path.includes("inmate-photos")) {
+                        try {
+                            let oldPath = "";
+                            if (form.photo_path.startsWith("http")) {
+                                const url = new URL(form.photo_path);
+                                const pathSegments = url.pathname.split("inmate-photos/");
+                                if (pathSegments.length > 1) {
+                                    oldPath = decodeURIComponent(pathSegments[1]);
+                                }
+                            } else if (form.photo_path.startsWith("/inmate-photos/")) {
+                                // Old local path format - we can't delete these from storage
+                                // but we can extract the path if we ever implement a local delete API
+                                console.log("Old local photo path detected, skipping storage deletion:", form.photo_path);
+                            }
 
-                const response = await fetch("/api/upload-inmate-photo", {
-                    method: "POST",
-                    body: formData,
-                });
+                            if (oldPath) {
+                                await supabase.storage.from("inmate-photos").remove([oldPath]);
+                            }
+                        } catch (e) {
+                            console.error("Failed to parse or delete old photo:", e);
+                        }
+                    }
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || "Upload failed");
+                    const fileExt = photoFile.name.split('.').pop();
+                    const fileName = `inmate-${Date.now()}.${fileExt}`;
+                    const filePath = `photos/${fileName}`;
+
+                    const { error: uploadError } = await supabase.storage
+                        .from("inmate-photos")
+                        .upload(filePath, photoFile);
+
+                    if (uploadError) {
+                        const isBucketNotFound = uploadError.message.toLowerCase().includes("bucket not found") || 
+                                                 ('status' in uploadError && (uploadError as { status: number }).status === 400);
+
+                        if (isBucketNotFound) {
+                            throw new Error("Storage bucket 'inmate-photos' not found. Please ensure it exists in your Supabase project.");
+                        }
+                        throw uploadError;
+                    }
+
+                    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+                    const publicUrl = `${supabaseUrl}/storage/v1/object/public/inmate-photos/${filePath}`;
+                    
+                    finalPhotoPath = publicUrl;
+                } catch (uploadError: unknown) {
+                    toast.error(`Photo upload failed: ${(uploadError as Error).message}`);
+                    setIsSubmitting(false);
+                    return;
                 }
-
-                const data = await response.json();
-                finalPhotoPath = data.filePath;
             }
 
             const payload: Record<string, unknown> = {};
@@ -790,7 +827,7 @@ export default function EditInmateModal({ isOpen, onClose, onSubmit, inmateId }:
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent 
-                className="flex w-full max-w-3xl min-w-[500px] h-[650px] flex-col rounded-2xl bg-white shadow-2xl overflow-hidden p-0 border-none"
+                className="flex w-full max-w-5xl min-w-[800px] h-[650px] flex-col rounded-2xl bg-white shadow-2xl overflow-hidden p-0 border-none"
                 showCloseButton={false}
             >
                 <div className="flex items-center justify-between border-b bg-teal-700 px-6 py-4 text-white">
@@ -804,7 +841,7 @@ export default function EditInmateModal({ isOpen, onClose, onSubmit, inmateId }:
                     <button onClick={onClose} className="cursor-pointer p-1 hover:bg-white/20 rounded-full transition-colors"><X size={22} /></button>
                 </div>
 
-                <div className="flex items-center justify-center gap-x-3 border-b bg-slate-50 px-6 py-3 overflow-x-auto custom-scrollbar">
+                <div className="flex items-center justify-center gap-x-3 border-b bg-slate-50 px-6 py-3">
                     {STEPS.map((s, idx) => (
                         <div key={s.title} className="flex items-center gap-x-3 flex-none">
                             <button
@@ -833,7 +870,7 @@ export default function EditInmateModal({ isOpen, onClose, onSubmit, inmateId }:
                     <button
                         disabled={currentStep === 0}
                         onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex - 1 }))}
-                        className="px-4 py-2 border rounded-lg bg-white text-sm font-semibold hover:bg-slate-100 disabled:opacity-40 transition-colors"
+                        className="cursor-pointer px-4 py-2 border rounded-lg bg-white text-sm font-semibold hover:bg-slate-100 disabled:opacity-40 transition-colors"
                     >
                         Previous
                     </button>
@@ -842,7 +879,7 @@ export default function EditInmateModal({ isOpen, onClose, onSubmit, inmateId }:
                             {isSubmitting ? "Updating..." : "Update Inmate"}
                         </button>
                     ) : (
-                        <button onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))} className="px-6 py-2 bg-teal-700 text-white rounded-lg text-sm font-semibold hover:bg-teal-800 transition-colors">
+                        <button onClick={() => setPagination(prev => ({ ...prev, pageIndex: prev.pageIndex + 1 }))} className="cursor-pointer px-6 py-2 bg-teal-700 text-white rounded-lg text-sm font-semibold hover:bg-teal-800 transition-colors">
                             Next
                         </button>
                     )}

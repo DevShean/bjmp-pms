@@ -5,11 +5,13 @@ import {
     flexRender,
     getCoreRowModel,
     getPaginationRowModel,
+    getFilteredRowModel,
     useReactTable,
     type ColumnDef,
     type PaginationState,
+    type ColumnFiltersState,
 } from "@tanstack/react-table";
-import { Eye, Edit, Trash2, UserPlus, Stethoscope } from "lucide-react";
+import { Eye, Edit, Trash2, UserPlus, Stethoscope, Search, FilterX, ChevronDown } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
 import AdminSidebarLayout from "../components/AdminSidebarLayout";
 import AddInmateModal from "../components/AddInmateModal";
@@ -52,8 +54,8 @@ function statusCountFromRows(rows: InmateRecord[], status: InmateStatus) {
 }
 
 export default function InmateProfilePage() {
-    const [searchField, setSearchField] = useState<"name" | "status" | "gender">("name");
-    const [searchTerm, setSearchTerm] = useState("");
+    const [globalFilter, setGlobalFilter] = useState("");
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isAssignMedicalModalOpen, setIsAssignMedicalModalOpen] = useState(false);
@@ -104,24 +106,8 @@ export default function InmateProfilePage() {
     }, [fetchInmates]);
 
 
-    const filteredRows = useMemo(() => {
-        const keyword = searchTerm.trim().toLowerCase();
-        if (!keyword) {
-            return inmates;
-        }
-
-        return inmates.filter((row) => {
-            if (searchField === "name") {
-                return `${row.firstName} ${row.lastName}`.toLowerCase().includes(keyword);
-            }
-
-            if (searchField === "status") {
-                return row.status.toLowerCase().includes(keyword);
-            }
-
-            return row.gender.toLowerCase().includes(keyword);
-        });
-    }, [searchField, searchTerm, inmates]);
+    const uniqueStatuses = useMemo(() => Array.from(new Set(inmates.map((i) => i.status))).sort(), [inmates]);
+    const uniqueGenders = useMemo(() => Array.from(new Set(inmates.map((i) => i.gender))).sort(), [inmates]);
 
     const columns = useMemo<ColumnDef<InmateRecord>[]>(
         () => [
@@ -205,12 +191,19 @@ export default function InmateProfilePage() {
     );
 
     const table = useReactTable({
-        data: filteredRows,
+        data: inmates,
         columns,
-        state: { pagination },
+        state: { 
+            pagination,
+            globalFilter,
+            columnFilters,
+        },
         onPaginationChange: setPagination,
+        onGlobalFilterChange: setGlobalFilter,
+        onColumnFiltersChange: setColumnFilters,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
     });
 
     const graphCounts = useMemo(
@@ -311,49 +304,83 @@ export default function InmateProfilePage() {
                     </div>
 
                     <div className="flex-1 min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                        <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-4 md:flex-row md:items-center">
-                            <select
-                                value={searchField}
-                                onChange={(event) => {
-                                    setSearchField(event.target.value as "name" | "status" | "gender");
-                                    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-                                }}
-                                className="rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-700 outline-none ring-teal-500 focus:ring-2"
-                            >
-                                <option value="name">Name</option>
-                                <option value="status">Status</option>
-                                <option value="gender">Gender</option>
-                            </select>
+                        <div className="flex flex-col gap-4 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center">
+                            {/* Search Input */}
+                            <div className="relative flex-1 sm:max-w-xs">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                    <Search size={16} />
+                                </div>
+                                <input
+                                    type="text"
+                                    placeholder="Search inmates..."
+                                    value={globalFilter ?? ""}
+                                    onChange={(event) => {
+                                        setGlobalFilter(event.target.value);
+                                        setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+                                    }}
+                                    className="block w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg bg-white text-sm text-slate-700 outline-none ring-teal-500 focus:ring-2 focus:border-teal-500 transition-all placeholder:text-slate-400"
+                                />
+                            </div>
 
-                            <input
-                                type="text"
-                                placeholder="Enter search term..."
-                                value={searchTerm}
-                                onChange={(event) => {
-                                    setSearchTerm(event.target.value);
-                                    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-                                }}
-                                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none ring-teal-500 placeholder:text-slate-400 focus:ring-2"
-                            />
+                            {/* Status Filter */}
+                            <div className="relative sm:w-48">
+                                <select
+                                    value={(table.getColumn("status")?.getFilterValue() as string) ?? ""}
+                                    onChange={(event) => {
+                                        table.getColumn("status")?.setFilterValue(event.target.value || undefined);
+                                        setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+                                    }}
+                                    className="appearance-none block w-full pl-3 pr-10 py-2 border border-slate-300 rounded-lg bg-white text-sm text-slate-700 outline-none ring-teal-500 focus:ring-2 focus:border-teal-500 transition-all cursor-pointer"
+                                >
+                                    <option value="">All Statuses</option>
+                                    {uniqueStatuses.map((status) => (
+                                        <option key={status} value={status}>
+                                            {status}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                                    <ChevronDown size={14} />
+                                </div>
+                            </div>
 
-                            <button
-                                type="button"
-                                className="cursor-pointer rounded-lg bg-teal-700 px-6 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
-                            >
-                                Search
-                            </button>
+                            {/* Gender Filter */}
+                            <div className="relative sm:w-40">
+                                <select
+                                    value={(table.getColumn("gender")?.getFilterValue() as string) ?? ""}
+                                    onChange={(event) => {
+                                        table.getColumn("gender")?.setFilterValue(event.target.value || undefined);
+                                        setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+                                    }}
+                                    className="appearance-none block w-full pl-3 pr-10 py-2 border border-slate-300 rounded-lg bg-white text-sm text-slate-700 outline-none ring-teal-500 focus:ring-2 focus:border-teal-500 transition-all cursor-pointer"
+                                >
+                                    <option value="">All Genders</option>
+                                    {uniqueGenders.map((gender) => (
+                                        <option key={gender} value={gender}>
+                                            {gender}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                                    <ChevronDown size={14} />
+                                </div>
+                            </div>
 
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setSearchField("name");
-                                    setSearchTerm("");
-                                    setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-                                }}
-                                className="cursor-pointer rounded-lg bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-300"
-                            >
-                                Clear
-                            </button>
+                            {/* Clear Filters */}
+                            {(globalFilter || columnFilters.length > 0) && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setGlobalFilter("");
+                                        setColumnFilters([]);
+                                        setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+                                    }}
+                                    className="flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors border border-rose-100 cursor-pointer sm:ml-auto"
+                                >
+                                    <FilterX size={14} />
+                                    Clear Filters
+                                </button>
+                            )}
                         </div>
 
                         <div className="overflow-x-auto">
