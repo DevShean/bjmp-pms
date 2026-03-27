@@ -29,9 +29,10 @@ interface ProgramDataTableProps {
   onEdit?: (program: ProgramRecord) => void;
   onDelete?: (program: ProgramRecord) => void;
   onAssign?: (program: ProgramRecord) => void;
+  initialSearch?: string;
 }
 
-export default function ProgramDataTable({ data, onEdit, onDelete, onAssign }: ProgramDataTableProps) {
+export default function ProgramDataTable({ data, onEdit, onDelete, onAssign, initialSearch = "" }: ProgramDataTableProps) {
   const columns = useMemo<ColumnDef<ProgramRecord>[]>(
     () => [
       {
@@ -125,7 +126,7 @@ export default function ProgramDataTable({ data, onEdit, onDelete, onAssign }: P
     [onEdit, onDelete, onAssign]
   );
 
-  const [globalFilter, setGlobalFilter] = useState("");
+  const [globalFilter, setGlobalFilter] = useState(initialSearch);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   // Derive unique categories for filters

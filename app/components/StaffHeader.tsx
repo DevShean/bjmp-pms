@@ -8,12 +8,18 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Search,
-  Settings,
-  UserCircle2,
   X,
+  Loader2,
+  Users,
+  BookOpen,
+  UserCircle2,
+  LogOut,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type StaffRole, staffRoleConfig } from "./staffNavigation";
+import { supabase } from "@/lib/supabase/client";
+import { getInmateImageUrl } from "@/app/lib/utils/image";
+import Image from "next/image";
 
 type StaffHeaderProps = {
   role: StaffRole;
@@ -26,6 +32,15 @@ type StaffHeaderProps = {
   } | null;
 };
 
+interface SearchResult {
+  id: string;
+  label: string;
+  type: 'inmate' | 'program';
+  href: string;
+  sub?: string;
+  photo?: string;
+}
+
 function SearchBar({
   placeholder,
   isOpen,
@@ -36,7 +51,95 @@ function SearchBar({
   onToggle?: () => void;
 }) {
   const [searchValue, setSearchValue] = useState("");
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [showResults, setShowResults] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!searchValue.trim() || searchValue.length < 2) {
+      setResults([]);
+      setShowResults(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      setShowResults(true);
+      try {
+        const [inmatesRes, programsRes] = await Promise.all([
+          supabase
+            .from('inmates')
+            .select('inmate_id, first_name, last_name, photo_path')
+            .or(`first_name.ilike.%${searchValue}%,last_name.ilike.%${searchValue}%`)
+            .limit(5),
+          supabase
+            .from('programs')
+            .select('program_id, program_name')
+            .ilike('program_name', `%${searchValue}%`)
+            .limit(3)
+        ]);
+
+        const formattedResults: SearchResult[] = [];
+        
+        if (inmatesRes.data) {
+          inmatesRes.data.forEach(inmate => {
+            const name = `${inmate.first_name} ${inmate.last_name}`;
+            formattedResults.push({
+              id: `inm-${inmate.inmate_id}`,
+              label: name,
+              sub: `ID: ${inmate.inmate_id}`,
+              type: 'inmate',
+              href: `/admin-page/inmate-profile?id=${inmate.inmate_id}`,
+              photo: getInmateImageUrl(inmate.photo_path, name)
+            });
+          });
+        }
+
+        if (programsRes.data) {
+          programsRes.data.forEach(prog => {
+            formattedResults.push({
+              id: `prog-${prog.program_id}`,
+              label: prog.program_name,
+              type: 'program',
+              href: '/admin-page/manage-program'
+            });
+          });
+        }
+
+        setResults(formattedResults);
+      } catch (err) {
+        console.error('Search error:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchValue]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev < results.length - 1 ? prev + 1 : prev));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev > 0 ? prev - 1 : prev));
+    } else if (e.key === 'Enter' && selectedIndex >= 0) {
+      e.preventDefault();
+      const selected = results[selectedIndex];
+      if (selected) {
+        router.push(selected.href);
+        setShowResults(false);
+        setSearchValue("");
+        onToggle?.();
+      }
+    } else if (e.key === 'Escape') {
+      setShowResults(false);
+    }
+  };
 
   return (
     <>
@@ -50,6 +153,9 @@ function SearchBar({
             placeholder={placeholder}
             value={searchValue}
             onChange={(event) => setSearchValue(event.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={() => searchValue.length >= 2 && setShowResults(true)}
+            onBlur={() => setTimeout(() => setShowResults(false), 200)}
             className="h-10 w-full rounded-lg border border-[#e2e8f0] bg-[#f8fafd] pl-9 pr-20 text-sm text-[#2f3d5b] outline-none ring-0 placeholder:text-[#9fa9bf] focus:border-[#00154A] focus:bg-white focus:ring-2 focus:ring-[#c3d4f8]"
           />
           <div className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -59,11 +165,26 @@ function SearchBar({
             </kbd>
           </div>
         </div>
+
+        {showResults && (
+           <div className="absolute left-0 right-0 top-full mt-2 z-50 rounded-xl border border-[#e2e8f0] bg-white shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
+              <SearchContent 
+                results={results} 
+                isSearching={isSearching} 
+                selectedIndex={selectedIndex} 
+                onSelect={(href) => {
+                  router.push(href);
+                  setShowResults(false);
+                  setSearchValue("");
+                }}
+              />
+           </div>
+        )}
       </div>
 
       {isOpen && (
-        <div className="fixed inset-x-0 top-0 z-50 animate-in slide-in-from-top-0 fade-in-0 duration-200">
-          <div className="bg-white/95 p-4 backdrop-blur-xl">
+        <div className="fixed inset-x-0 top-0 z-50 animate-in slide-in-from-top-0 fade-in-0 duration-200 h-full bg-slate-900/10 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onToggle?.()}>
+          <div className="bg-white/95 p-4 backdrop-blur-xl shadow-lg border-b border-slate-200">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8191b3]" />
               <input
@@ -72,17 +193,34 @@ function SearchBar({
                 placeholder={placeholder}
                 value={searchValue}
                 onChange={(event) => setSearchValue(event.target.value)}
+                onKeyDown={handleKeyDown}
                 className="h-12 w-full rounded-lg border border-[#e2e8f0] bg-[#f8fafd] pl-10 pr-12 text-base text-[#2f3d5b] outline-none ring-0 placeholder:text-[#9fa9bf] focus:border-[#00154A] focus:ring-2 focus:ring-[#c3d4f8]"
                 autoFocus
               />
               <button
                 onClick={onToggle}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-[#8191b3] transition-colors hover:bg-[#f1f5f9] hover:text-[#00154A]"
+                className="cursor-pointer absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-[#8191b3] transition-colors hover:bg-[#f1f5f9] hover:text-[#00154A]"
                 aria-label="Close search"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
+
+            {searchValue.length >= 2 && (
+               <div className="mt-4 max-h-[70vh] overflow-y-auto">
+                  <SearchContent 
+                    results={results} 
+                    isSearching={isSearching} 
+                    selectedIndex={selectedIndex} 
+                    onSelect={(href) => {
+                      router.push(href);
+                      setShowResults(false);
+                      setSearchValue("");
+                      onToggle?.();
+                    }}
+                  />
+               </div>
+            )}
           </div>
         </div>
       )}
@@ -90,17 +228,75 @@ function SearchBar({
   );
 }
 
+function SearchContent({ results, isSearching, selectedIndex, onSelect }: { 
+  results: SearchResult[], 
+  isSearching: boolean, 
+  selectedIndex: number,
+  onSelect: (href: string) => void 
+}) {
+  if (isSearching) {
+    return (
+      <div className="flex items-center justify-center p-8 text-[#8191b3]">
+        <Loader2 className="h-5 w-5 animate-spin mr-2" />
+        <span className="text-sm">Searching...</span>
+      </div>
+    );
+  }
+
+  if (results.length === 0) {
+    return (
+      <div className="p-8 text-center">
+        <p className="text-sm font-medium text-[#2f3d5b]">No results found</p>
+        <p className="mt-1 text-xs text-[#8191b3]">Try searching for inmate names or IDs</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="py-2">
+      {results.map((result, index) => (
+        <button
+          key={result.id}
+          type="button"
+          onClick={() => onSelect(result.href)}
+          className={`cursor-pointer group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
+            index === selectedIndex ? 'bg-[#f1f5f9]' : 'hover:bg-[#f8fafd]'
+          }`}
+        >
+          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[#8191b3] overflow-hidden">
+            {result.photo ? (
+               <Image 
+                 src={result.photo} 
+                 alt="" 
+                 fill 
+                 className="object-cover"
+                 unoptimized={result.photo.startsWith('data:')}
+               />
+            ) : result.type === 'inmate' ? (
+              <Users size={18} />
+            ) : (
+              <BookOpen size={18} />
+            )}
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span className="truncate text-sm font-medium text-[#00154A]">{result.label}</span>
+            <span className="text-[11px] text-[#8191b3] uppercase tracking-wider font-semibold">
+              {result.type} {result.sub && <span className="lowercase font-normal ml-1">• {result.sub}</span>}
+            </span>
+          </div>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function UserMenu({
   userName,
   userRole,
-  onProfile,
-  onSettings,
   onSignOut,
 }: {
   userName: string;
   userRole: string;
-  onProfile: () => void;
-  onSettings: () => void;
   onSignOut: () => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -122,7 +318,7 @@ function UserMenu({
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="group flex items-center gap-3 rounded-lg px-2 py-1.5 transition-all hover:bg-[#f1f5f9] focus:outline-none focus:ring-2 focus:ring-[#c3d4f8]"
+        className="cursor-pointer group flex items-center gap-3 rounded-lg px-2 py-1.5 transition-all hover:bg-[#f1f5f9] focus:outline-none focus:ring-2 focus:ring-[#c3d4f8]"
       >
         <div className="relative">
           <UserCircle2 className="h-8 w-8 text-[#8191b3] transition-colors group-hover:text-[#00154A]" />
@@ -138,28 +334,7 @@ function UserMenu({
       {isOpen && (
         <div className="absolute right-0 mt-2 w-56 animate-in zoom-in-95 fade-in-0 duration-200">
           <div className="overflow-hidden rounded-xl border border-[#e2e8f0] bg-white py-1 shadow-lg">
-            <button
-              type="button"
-              onClick={() => {
-                onProfile();
-                setIsOpen(false);
-              }}
-              className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-[#2f3d5b] transition-colors hover:bg-[#f8fafd]"
-            >
-              <UserCircle2 className="h-4 w-4 text-[#8191b3]" />
-              <span>Profile</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                onSettings();
-                setIsOpen(false);
-              }}
-              className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-[#2f3d5b] transition-colors hover:bg-[#f8fafd]"
-            >
-              <Settings className="h-4 w-4 text-[#8191b3]" />
-              <span>Settings</span>
-            </button>
+
             <div className="my-1 h-px bg-[#e2e8f0]" />
             <button
               type="button"
@@ -167,9 +342,9 @@ function UserMenu({
                 onSignOut();
                 setIsOpen(false);
               }}
-              className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-[#b91c1c] transition-colors hover:bg-[#fef2f2]"
+              className="cursor-pointer flex w-full items-center gap-2 px-4 py-2.5 text-sm text-[#b91c1c] transition-colors hover:bg-[#fef2f2]"
             >
-              <X className="h-4 w-4" />
+              <LogOut className="h-4 w-4" />
               <span>Sign out</span>
             </button>
           </div>
@@ -242,7 +417,7 @@ export default function StaffHeader({ role, isSidebarCollapsed, onToggleSidebar,
           <button
             type="button"
             onClick={onToggleSidebar}
-            className="group relative flex h-9 w-9 items-center justify-center rounded-lg text-[#5f6f8f] transition-all hover:bg-[#f1f5f9] hover:text-[#00154A] focus:outline-none focus:ring-2 focus:ring-[#c3d4f8]"
+            className="cursor-pointer group relative flex h-9 w-9 items-center justify-center rounded-lg text-[#5f6f8f] transition-all hover:bg-[#f1f5f9] hover:text-[#00154A] focus:outline-none focus:ring-2 focus:ring-[#c3d4f8]"
             aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {isSidebarCollapsed ? (
@@ -255,7 +430,7 @@ export default function StaffHeader({ role, isSidebarCollapsed, onToggleSidebar,
           <button
             type="button"
             onClick={() => setIsMobileSearchOpen(true)}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#5f6f8f] transition-all hover:bg-[#f1f5f9] hover:text-[#00154A] focus:outline-none focus:ring-2 focus:ring-[#c3d4f8] md:hidden"
+            className="cursor-pointer inline-flex h-9 w-9 items-center justify-center rounded-lg text-[#5f6f8f] transition-all hover:bg-[#f1f5f9] hover:text-[#00154A] focus:outline-none focus:ring-2 focus:ring-[#c3d4f8] md:hidden"
             aria-label="Open search"
           >
             <Search className="h-4 w-4" />
@@ -269,17 +444,11 @@ export default function StaffHeader({ role, isSidebarCollapsed, onToggleSidebar,
         </div>
 
         <div className="flex items-center gap-1 sm:gap-2">
-          <button
-            type="button"
-            className="group relative flex h-9 w-9 items-center justify-center rounded-lg bg-[#eef4ff] text-[#2f4b8f] transition-all hover:bg-[#dfe9ff] hover:text-[#00154A] focus:outline-none focus:ring-2 focus:ring-[#c3d4f8]"
-            aria-label="Settings"
-          >
-            <Settings className="h-4 w-4 transition-transform group-hover:scale-110" />
-          </button>
+
 
           <button
             type="button"
-            className="group relative flex h-9 w-9 items-center justify-center rounded-lg bg-[#eef4ff] text-[#2f4b8f] transition-all hover:bg-[#dfe9ff] hover:text-[#00154A] focus:outline-none focus:ring-2 focus:ring-[#c3d4f8]"
+            className="cursor-pointer group relative flex h-9 w-9 items-center justify-center rounded-lg bg-[#eef4ff] text-[#2f4b8f] transition-all hover:bg-[#dfe9ff] hover:text-[#00154A] focus:outline-none focus:ring-2 focus:ring-[#c3d4f8]"
             aria-label="Notifications"
           >
             <Bell className="h-4 w-4 transition-transform group-hover:scale-110" />
@@ -289,8 +458,6 @@ export default function StaffHeader({ role, isSidebarCollapsed, onToggleSidebar,
           <UserMenu
             userName={sessionUser?.name || sessionUser?.username || config.label}
             userRole={sessionUser?.email || config.defaultEmail}
-            onProfile={() => router.push(config.homePath)}
-            onSettings={() => router.push(config.homePath)}
             onSignOut={handleSignOut}
           />
         </div>

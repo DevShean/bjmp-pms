@@ -9,6 +9,7 @@ import ProgressChart from "./ProgressChart";
 import CompletionsChart from "./CompletionsChart";
 import ProgramTable, { ProgramRecord } from "./ProgramTable";
 import EditProgressModal from "./EditProgressModal";
+import { BookUser } from "lucide-react";
 
 interface InmateProgramJoin {
   inmate_program_id: number;
@@ -122,7 +123,10 @@ export default function InmateProgressPage() {
       <section className="space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h1 className="font-lexend text-3xl font-semibold text-slate-800">Program Progress Monitoring</h1>
+            <h1 className="font-lexend text-3xl font-semibold text-slate-800 flex items-center gap-3">
+              Program Progress Monitoring
+              <BookUser className="text-teal-700" size={32} />
+            </h1>
             <p className="mt-1 text-sm text-slate-600">
               Track and update rehabilitation program progress.
             </p>

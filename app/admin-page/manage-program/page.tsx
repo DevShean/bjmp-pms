@@ -11,8 +11,21 @@ import AssignProgramModal from "../components/AssignProgramModal";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 export default function ManageProgramPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center text-slate-500 font-lexend">Loading Programs...</div>}>
+            <ManageProgramPageContent />
+        </Suspense>
+    );
+}
+
+function ManageProgramPageContent() {
+    const searchParams = useSearchParams();
+    const initialSearch = searchParams.get("search") || searchParams.get("id") || "";
+
 	const [programs, setPrograms] = useState<ProgramRecord[]>([]);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -124,6 +137,7 @@ export default function ManageProgramPage() {
 						) : (
 							<ProgramDataTable 
 							data={programs} 
+							initialSearch={initialSearch}
 							onEdit={(p: ProgramRecord) => {
 								setSelectedProgramId(p.id);
 								setIsEditModalOpen(true);
