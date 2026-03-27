@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, Suspense } from "react";
 import {
     flexRender,
     getCoreRowModel,
@@ -11,7 +11,7 @@ import {
     type PaginationState,
     type ColumnFiltersState,
 } from "@tanstack/react-table";
-import { Eye, Edit, Trash2, UserPlus, Stethoscope, Search, FilterX, ChevronDown } from "lucide-react";
+import { Eye, Edit, Trash2, UserPlus, Stethoscope, Search, FilterX, ChevronDown, Users } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
 import AdminSidebarLayout from "../components/AdminSidebarLayout";
 import AddInmateModal from "../components/AddInmateModal";
@@ -21,6 +21,7 @@ import DeleteInmateModal from "../components/DeleteInmateModal";
 import AssignMedicalStaffModal from "../components/AssignMedicalStaffModal";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
 
 type InmateStatus = "Active" | "Released" | "Transferred";
 
@@ -52,9 +53,19 @@ const STATUS_THEME: Record<InmateStatus, { color: string; mutedColor: string }> 
 function statusCountFromRows(rows: InmateRecord[], status: InmateStatus) {
     return rows.filter((row) => row.status === status).length;
 }
-
 export default function InmateProfilePage() {
-    const [globalFilter, setGlobalFilter] = useState("");
+    return (
+        <Suspense fallback={<div className="p-8 text-center text-slate-500 font-lexend">Loading Management Portal...</div>}>
+            <InmateProfilePageContent />
+        </Suspense>
+    );
+}
+
+function InmateProfilePageContent() {
+    const searchParams = useSearchParams();
+    const initialSearch = searchParams.get("id") || searchParams.get("search") || "";
+    
+    const [globalFilter, setGlobalFilter] = useState(initialSearch);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -81,7 +92,7 @@ export default function InmateProfilePage() {
             }
 
             const formatted: InmateRecord[] = (data as SupabaseInmate[] || []).map((item) => ({
-                id: `INM-${String(item.inmate_id).padStart(3, "0")}`,
+                id: String(item.inmate_id),
                 firstName: item.first_name || "",
                 lastName: item.last_name || "",
                 birthdate: item.birthdate || "",
@@ -112,6 +123,11 @@ export default function InmateProfilePage() {
     const columns = useMemo<ColumnDef<InmateRecord>[]>(
         () => [
             {
+                header: "ID",
+                accessorKey: "id",
+                cell: ({ row }) => <span className="font-mono text-xs text-slate-500 font-bold">{row.original.id}</span>
+            },
+            {
                 header: "First Name",
                 accessorKey: "firstName",
             },
@@ -126,10 +142,12 @@ export default function InmateProfilePage() {
             {
                 header: "Gender",
                 accessorKey: "gender",
+                filterFn: 'equals',
             },
             {
                 header: "Status",
                 accessorKey: "status",
+                filterFn: 'equals',
                 cell: ({ row }) => {
                     const status = row.original.status;
                     const theme = STATUS_THEME[status];
@@ -244,7 +262,10 @@ export default function InmateProfilePage() {
             <section className="space-y-6">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div>
-                        <h1 className="font-lexend text-3xl font-semibold text-slate-800">Inmates Management</h1>
+                        <h1 className="font-lexend text-3xl font-semibold text-slate-800 flex items-center gap-3">
+                            Inmates Management
+                            <Users className="text-teal-700" size={32} />
+                        </h1>
                         <p className="mt-1 text-sm text-slate-600">
                             Manage inmate profiles, medical assignments, and records.
                         </p>
@@ -365,7 +386,6 @@ export default function InmateProfilePage() {
                                     <ChevronDown size={14} />
                                 </div>
                             </div>
-
                             {/* Clear Filters */}
                             {(globalFilter || columnFilters.length > 0) && (
                                 <button
@@ -375,7 +395,7 @@ export default function InmateProfilePage() {
                                         setColumnFilters([]);
                                         setPagination((prev) => ({ ...prev, pageIndex: 0 }));
                                     }}
-                                    className="flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors border border-rose-100 cursor-pointer sm:ml-auto"
+                                    className="flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors border border-rose-100 cursor-pointer"
                                 >
                                     <FilterX size={14} />
                                     Clear Filters
@@ -417,24 +437,30 @@ export default function InmateProfilePage() {
                                             </td>
                                         </tr>
                                     ) : (
-                                        table.getRowModel().rows.map((row) => (
-                                            <tr key={row.id} className="hover:bg-teal-50/50 transition-colors group">
-                                                {row.getVisibleCells().map((cell) => {
-                                                    const isActions = cell.column.id === "actions";
-                                                    const rowBg = row.index % 2 !== 0 ? 'bg-slate-200' : 'bg-white';
-                                                    return (
-                                                        <td
-                                                            key={cell.id}
-                                                            className={`px-5 py-3 text-sm text-slate-700 ${rowBg} transition-colors group-hover:bg-teal-600/8 ${
-                                                                isActions ? `role-sticky sticky right-0 z-10 shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)]` : ""
-                                                            }`}
-                                                        >
-                                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                                        </td>
-                                                    );
-                                                })}
-                                            </tr>
-                                        ))
+                                        table.getRowModel().rows.map((row, i) => {
+                                            const isEven = i % 2 !== 0;
+                                            const rowBg = isEven ? 'bg-slate-200' : 'bg-white';
+                                            
+                                            return (
+                                                <tr key={row.id} className={`${rowBg} hover:bg-teal-50 transition-colors group`}>
+                                                    {row.getVisibleCells().map((cell) => {
+                                                        const isActions = cell.column.id === "actions";
+                                                          return (
+                                                            <td
+                                                                key={cell.id}
+                                                                className={`px-5 py-3 text-sm text-slate-700 ${
+                                                                    isActions 
+                                                                        ? `sticky right-0 z-10 ${rowBg} shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)] transition-colors group-hover:bg-teal-50` 
+                                                                        : ""
+                                                                }`}
+                                                            >
+                                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                            </td>
+                                                        );
+                                                    })}
+                                                </tr>
+                                            );
+                                        })
                                     )}
                                 </tbody>
                             </table>

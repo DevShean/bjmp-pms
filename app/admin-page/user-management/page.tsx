@@ -10,6 +10,7 @@ import { Search, Filter, UserPlus } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
 import { supabase } from "../../../lib/supabase/client";
 import { toast } from "sonner";
+import { UserCog } from "lucide-react";
 
 type Role = {
   role_id: number;
@@ -147,8 +148,9 @@ export default function UserManagementPage() {
       <div className="flex flex-col gap-6 p-2 md:p-6 w-full">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex flex-col gap-2">
-            <h1 className="font-lexend text-3xl font-semibold text-slate-800">
+            <h1 className="font-lexend text-3xl font-semibold text-slate-800 flex items-center gap-3">
               User Management
+              <UserCog className="text-teal-700" size={32} />
             </h1>
             <p className="text-sm text-slate-600">
               Manage staff accounts, administrative roles, and system access permissions.

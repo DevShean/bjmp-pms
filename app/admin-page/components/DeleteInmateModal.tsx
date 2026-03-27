@@ -21,16 +21,81 @@ export default function DeleteInmateModal({ isOpen, onClose, onSubmit, inmateId,
         setIsDeleting(true);
         try {
             const numericId = parseInt(inmateId.replace("INM-", ""), 10);
-            const { error } = await supabase.from("inmates").delete().eq("inmate_id", numericId);
+            
+            // 1. Fetch inmate to get photo_path first
+            const { data: inmateData, error: fetchError } = await supabase
+                .from("inmates")
+                .select("photo_path")
+                .eq("inmate_id", numericId)
+                .single();
 
-            if (error) throw error;
+            if (fetchError) throw fetchError;
+
+            // 2. Try to delete from storage if photo exists
+            if (inmateData?.photo_path && inmateData.photo_path.includes("inmate-photos")) {
+                try {
+                    let oldPath = "";
+                    if (inmateData.photo_path.startsWith("http")) {
+                        const url = new URL(inmateData.photo_path);
+                        const pathSegments = url.pathname.split("inmate-photos/");
+                        if (pathSegments.length > 1) {
+                            oldPath = decodeURIComponent(pathSegments[1]);
+                        }
+                    } else if (inmateData.photo_path.startsWith("/inmate-photos/")) {
+                        console.log("Old local photo path detected, skipping storage deletion.");
+                    }
+
+                    if (oldPath) {
+                        await supabase.storage.from("inmate-photos").remove([oldPath]);
+                    }
+                } catch (e) {
+                    console.error("Cleanup error (ignorable):", e);
+                }
+            }
+
+            // 3. Manual Cascade: Delete related records in other tables
+            // This is necessary because the schema doesn't have ON DELETE CASCADE
+            const relatedTables = [
+                "behavior_logs",
+                "incidents",
+                "inmate_programs",
+                "medical_records",
+                "releases",
+                "transfers",
+                "visitations"
+            ];
+
+            for (const table of relatedTables) {
+                const { error: relError } = await supabase
+                    .from(table)
+                    .delete()
+                    .eq("inmate_id", numericId);
+                
+                if (relError) {
+                    console.warn(`Could not clean up ${table}:`, relError.message);
+                    // We continue anyway, the final delete will fail if it's a hard constraint
+                }
+            }
+
+            // 4. Finally, delete the inmate record
+            const { error: deleteError } = await supabase
+                .from("inmates")
+                .delete()
+                .eq("inmate_id", numericId);
+
+            if (deleteError) {
+                if (deleteError.code === "23503") {
+                    throw new Error("Cannot delete inmate: This record is still referenced by other data. Please contact an administrator to clean up database constraints.");
+                }
+                throw deleteError;
+            }
 
             toast.success("Inmate record deleted successfully.");
             onSubmit();
             onClose();
         } catch (err: unknown) {
             console.error("Delete error:", err);
-            toast.error("Failed to delete inmate record.");
+            toast.error(`Delete failed: ${(err as Error).message}`);
         } finally {
             setIsDeleting(false);
         }

@@ -602,16 +602,16 @@ function StepProperty({ form, onChange, onFieldChange, errors, onFileChange }: S
         <div className="flex flex-col gap-6">
             {/* Image preview at the top */}
             <div className="flex justify-center">
-                        {preview && (preview.startsWith("blob:") || preview.startsWith("http")) ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                                src={preview}
-                                alt="Inmate Preview"
-                                className="object-contain w-full h-full"
-                            />
-                        ) : (
-                            <div className="text-slate-400 text-xs text-center p-4">Select a photo to preview</div>
-                        )}
+                {preview ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                        src={preview}
+                        alt="Inmate Preview"
+                        className="h-48 w-48 object-cover rounded-lg border-4 border-white shadow-md"
+                    />
+                ) : (
+                    <div className="h-48 w-48 flex items-center justify-center bg-slate-100 rounded-lg text-slate-400 text-sm italic">No photo</div>
+                )}
             </div>
             {/* File input and fields below */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

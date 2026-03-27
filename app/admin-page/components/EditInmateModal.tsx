@@ -875,7 +875,7 @@ export default function EditInmateModal({ isOpen, onClose, onSubmit, inmateId }:
                         Previous
                     </button>
                     {currentStep === STEPS.length - 1 ? (
-                        <button onClick={handleSubmit} disabled={isSubmitting} className="px-6 py-2 bg-teal-700 text-white rounded-lg text-sm font-semibold hover:bg-teal-800 disabled:opacity-50 flex items-center gap-2 transition-colors">
+                        <button onClick={handleSubmit} disabled={isSubmitting} className="cursor-pointer px-6 py-2 bg-teal-700 text-white rounded-lg text-sm font-semibold hover:bg-teal-800 disabled:opacity-50 flex items-center gap-2 transition-colors">
                             {isSubmitting ? "Updating..." : "Update Inmate"}
                         </button>
                     ) : (
