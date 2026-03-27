@@ -19,13 +19,19 @@ type PdlComboboxProps = {
   value: string;
   onValueChange: (pdlId: string) => void;
   placeholder?: string;
+  showAll?: boolean;
 };
 
 function cn(...classNames: Array<string | false | null | undefined>) {
   return classNames.filter(Boolean).join(" ");
 }
 
-export default function PdlCombobox({ value, onValueChange, placeholder = "Select a PDL" }: PdlComboboxProps) {
+export default function PdlCombobox({ 
+  value, 
+  onValueChange, 
+  placeholder = "Select a PDL",
+  showAll = false
+}: PdlComboboxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
@@ -180,14 +186,14 @@ export default function PdlCombobox({ value, onValueChange, placeholder = "Selec
                 <button
                   type="button"
                   key={item.id}
-                  disabled={item.isAssigned}
+                  disabled={!showAll && item.isAssigned}
                   onClick={() => {
                     onValueChange(item.id);
                     setOpen(false);
                   }}
                   className={cn(
                     "flex w-full items-center justify-between rounded-lg px-2 py-2 text-left transition",
-                    item.isAssigned ? "opacity-50 cursor-not-allowed bg-slate-200/50" : "cursor-pointer hover:bg-slate-50"
+                    (!showAll && item.isAssigned) ? "opacity-50 cursor-not-allowed bg-slate-200/50" : "cursor-pointer hover:bg-slate-50"
                   )}
                 >
                   <span className="flex items-center gap-2">
