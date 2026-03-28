@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useCallback } from "react";
 import OfficerSidebarLayout from "../components/OfficerSidebarLayout";
-import { FileText, PlusCircle } from "lucide-react";
+import { FileText, PlusCircle, FileSpreadsheet } from "lucide-react";
 import BehaviorDistributionChart from "../components/BehaviorDistributionChart";
 import BehaviorLogsTable, { BehaviorLogRecord } from "../components/BehaviorLogsTable";
 import IconButton from "@/components/ui/IconButton";
 import AddBehaviorLogModal, { AddBehaviorLogFormData } from "../components/AddBehaviorLogModal";
 import ViewBehaviorLogModal from "../components/ViewBehaviorLogModal";
+import GenerateReportModal, { GenerateReportData } from "../components/GenerateReportModal";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
@@ -29,6 +30,7 @@ interface BehaviorLogResponse {
 export default function BehaviorLogsPage() {
 	const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 	const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+	const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 	const [selectedLog, setSelectedLog] = useState<BehaviorLogRecord | null>(null);
 	const [logs, setLogs] = useState<BehaviorLogRecord[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -119,6 +121,145 @@ export default function BehaviorLogsPage() {
 		setIsViewModalOpen(true);
 	};
 
+	const handleGenerateReport = async (data: GenerateReportData) => {
+		const loadingToast = toast.loading(`Preparing behavior report from ${data.startDate} to ${data.endDate}...`);
+		
+		try {
+			// Fetch logs for the selected date range
+			const { data: reportData, error } = await supabase
+				.from("behavior_logs")
+				.select(`
+					log_id,
+					log_date,
+					behavior_rating,
+					notes,
+					inmates (first_name, last_name),
+					users (username)
+				`)
+				.gte("log_date", data.startDate)
+				.lte("log_date", data.endDate)
+				.order("log_date", { ascending: false });
+
+			if (error) throw error;
+
+			if (!reportData || reportData.length === 0) {
+				toast.dismiss(loadingToast);
+				toast.info("No behavior logs found for the selected date range.");
+				return;
+			}
+
+			// Generate printable report HTML
+			const printWindow = window.open("", "_blank");
+			if (!printWindow) {
+				toast.dismiss(loadingToast);
+				toast.error("Failed to open print window. Please check your popup settings.");
+				return;
+			}
+
+			const logsHtml = (reportData as unknown as BehaviorLogResponse[]).map(log => `
+				<tr>
+					<td>${log.log_date}</td>
+					<td>${log.inmates?.first_name || ""} ${log.inmates?.last_name || ""}</td>
+					<td>${log.behavior_rating}</td>
+					<td>${log.users?.username || "Unknown"}</td>
+					<td>${log.notes || "No notes"}</td>
+				</tr>
+			`).join('');
+
+			const htmlContent = `
+				<!DOCTYPE html>
+				<html>
+				<head>
+					<title>Behavior Logs Report</title>
+					<style>
+						@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+						body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; line-height: 1.5; }
+						.header { display: flex; align-items: center; justify-content: center; text-align: center; margin-bottom: 30px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; }
+						.logo { width: 90px; height: 90px; }
+						.header-text { margin: 0 40px; }
+						.header-text h1 { font-size: 18px; margin: 0; font-weight: 700; color: #0f172a; }
+						.header-text h2 { font-size: 14px; margin: 4px 0; font-weight: 600; color: #475569; }
+						.header-text h3 { font-size: 13px; margin: 2px 0; font-weight: 500; color: #64748b; }
+						
+						.report-info { text-align: center; margin-bottom: 30px; }
+						.report-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; color: #0f172a; text-transform: uppercase; }
+						.report-date { font-size: 14px; color: #64748b; font-weight: 500; }
+						
+						table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+						th { background: #f8fafc; text-align: left; padding: 12px 15px; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; border-bottom: 2px solid #cbd5e1; }
+						td { padding: 12px 15px; font-size: 13px; color: #334155; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+						
+						.footer { margin-top: 50px; text-align: right; font-size: 12px; color: #94a3b8; }
+						@media print {
+							@page { size: landscape; margin: 0; }
+							body { padding: 2cm; margin: 0; }
+							.no-print { display: none; }
+							table { page-break-inside: auto; }
+							tr { page-break-inside: avoid; page-break-after: auto; }
+							thead { display: table-header-group; }
+						}
+					</style>
+				</head>
+				<body>
+					<div class="header">
+						<img src="/img/logo/logo.png" class="logo" />
+						<div class="header-text">
+							<h1>REPUBLIC OF THE PHILIPPINES</h1>
+							<h2>Department of the Interior and Local Government</h2>
+							<h3>Bureau of Jail Management and Penology</h3>
+							<h3>Regional Office VIII</h3>
+						</div>
+						<img src="/img/logo/bplogo.png" class="logo" />
+					</div>
+					
+					<div class="report-info">
+						<div class="report-title">Behavior Logs Report</div>
+						<div class="report-date">${data.startDate} &mdash; ${data.endDate}</div>
+					</div>
+					
+					<table>
+						<thead>
+							<tr>
+								<th>Date</th>
+								<th>Inmate Name</th>
+								<th>Rating</th>
+								<th>Staff Name</th>
+								<th>Notes</th>
+							</tr>
+						</thead>
+						<tbody>
+							${logsHtml}
+						</tbody>
+					</table>
+					
+					<div class="footer">
+						Generated on ${new Date().toLocaleString()}
+					</div>
+					
+					<script>
+						window.onload = () => {
+							setTimeout(() => {
+								window.print();
+								// Optional: window.close();
+							}, 500);
+						};
+					</script>
+				</body>
+				</html>
+			`;
+
+			printWindow.document.write(htmlContent);
+			printWindow.document.close();
+			
+			toast.dismiss(loadingToast);
+			toast.success("Behavior report ready for printing!");
+		} catch (err) {
+			console.error("Error generating report:", err);
+			toast.dismiss(loadingToast);
+			toast.error("Failed to generate report. Please try again.");
+		}
+	};
+
 	return (
 		<OfficerSidebarLayout>
 			<section className="space-y-6">
@@ -135,6 +276,13 @@ export default function BehaviorLogsPage() {
 					</div>
 
 					<div className="flex flex-wrap items-center gap-3">
+						<IconButton
+							onClick={() => setIsReportModalOpen(true)}
+							icon={<FileSpreadsheet size={18} className="-ml-1" />} 
+							colorClass="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 shadow-sm"
+						>
+							Generate Report
+						</IconButton>
 						<IconButton
 							onClick={() => setIsAddModalOpen(true)}
 							icon={<PlusCircle size={18} className="-ml-1" />} 
@@ -182,6 +330,12 @@ export default function BehaviorLogsPage() {
 				isOpen={isViewModalOpen}
 				onClose={() => setIsViewModalOpen(false)}
 				log={selectedLog}
+			/>
+
+			<GenerateReportModal
+				isOpen={isReportModalOpen}
+				onClose={() => setIsReportModalOpen(false)}
+				onSubmit={handleGenerateReport}
 			/>
 		</OfficerSidebarLayout>
 	);

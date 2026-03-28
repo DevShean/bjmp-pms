@@ -7,8 +7,11 @@ import {
   getCoreRowModel,
   useReactTable,
   getPaginationRowModel,
+  getFilteredRowModel,
+  type ColumnFiltersState,
+  type PaginationState,
 } from "@tanstack/react-table";
-import { Search, User, ShieldCheck, Calendar, StickyNote, Eye } from "lucide-react";
+import { Search, User, ShieldCheck, Calendar, StickyNote, Eye, ChevronDown, FilterX } from "lucide-react";
 
 export interface BehaviorLogRecord {
   id: string;
@@ -37,6 +40,10 @@ export default function BehaviorLogsTable({
   onView?: (log: BehaviorLogRecord) => void
 }) {
   const [globalFilter, setGlobalFilter] = useState("");
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
+
+  const uniqueRatings = useMemo(() => Array.from(new Set(data.map((i) => i.rating))).sort(), [data]);
 
   const columns = useMemo<ColumnDef<BehaviorLogRecord>[]>(
     () => [
@@ -80,6 +87,7 @@ export default function BehaviorLogsTable({
       {
         header: "RATING",
         accessorKey: "rating",
+        filterFn: 'equals',
         cell: ({ row }) => {
           const theme = RATING_THEME[row.original.rating];
           return (
@@ -127,12 +135,17 @@ export default function BehaviorLogsTable({
   const table = useReactTable({
     data,
     columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     state: {
       globalFilter,
+      columnFilters,
+      pagination,
     },
     onGlobalFilterChange: setGlobalFilter,
+    onColumnFiltersChange: setColumnFilters,
+    onPaginationChange: setPagination,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
   });
 
   return (
@@ -147,10 +160,49 @@ export default function BehaviorLogsTable({
             type="text"
             placeholder="Search logs..."
             value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
+            onChange={(e) => {
+              setGlobalFilter(e.target.value);
+              setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+            }}
             className="block w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg bg-white text-sm text-slate-700 outline-none ring-teal-500 focus:ring-2 focus:border-teal-500 transition-all placeholder:text-slate-400"
           />
         </div>
+
+        <div className="relative sm:w-48">
+          <select
+            value={(table.getColumn("rating")?.getFilterValue() as string) ?? ""}
+            onChange={(event) => {
+              table.getColumn("rating")?.setFilterValue(event.target.value || undefined);
+              setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+            }}
+            className="appearance-none block w-full pl-3 pr-10 py-2 border border-slate-300 rounded-lg bg-white text-sm text-slate-700 outline-none ring-teal-500 focus:ring-2 focus:border-teal-500 transition-all cursor-pointer"
+          >
+            <option value="">All Ratings</option>
+            {uniqueRatings.map((rating) => (
+              <option key={rating} value={rating}>
+                {rating}
+              </option>
+            ))}
+          </select>
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+            <ChevronDown size={14} />
+          </div>
+        </div>
+
+        {(globalFilter || columnFilters.length > 0) && (
+          <button
+            type="button"
+            onClick={() => {
+              setGlobalFilter("");
+              setColumnFilters([]);
+              setPagination((prev) => ({ ...prev, pageIndex: 0 }));
+            }}
+            className="flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors border border-rose-100 cursor-pointer"
+          >
+            <FilterX size={14} />
+            Clear Filters
+          </button>
+        )}
       </div>
 
       <div className="overflow-x-auto">
@@ -161,7 +213,9 @@ export default function BehaviorLogsTable({
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="px-5 py-3 text-left text-sm font-semibold text-slate-700"
+                    className={`px-5 py-3 text-left text-sm font-semibold text-slate-700 ${
+                      header.id === "actions" ? "sticky right-0 z-10 bg-slate-50" : ""
+                    }`}
                   >
                     {header.isPlaceholder
                       ? null
@@ -188,26 +242,59 @@ export default function BehaviorLogsTable({
                 </td>
               </tr>
             ) : (
-              table.getRowModel().rows.map((row) => (
-                <tr key={row.id} className="hover:bg-teal-50 transition-colors group">
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-5 py-3 text-sm text-slate-700">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </tr>
-              ))
+              table.getRowModel().rows.map((row, i) => {
+                const isEven = i % 2 !== 0;
+                const rowBg = isEven ? "bg-slate-200" : "bg-white";
+
+                return (
+                  <tr key={row.id} className={`${rowBg} hover:bg-teal-50 transition-colors group`}>
+                    {row.getVisibleCells().map((cell) => {
+                      const isActions = cell.column.id === "actions";
+                      return (
+                        <td
+                          key={cell.id}
+                          className={`px-5 py-3 text-sm text-slate-700 ${
+                            isActions
+                              ? `sticky right-0 z-10 ${rowBg} shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)] transition-colors group-hover:bg-teal-50`
+                              : ""
+                          }`}
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
       </div>
       
       <div className="flex flex-col gap-3 border-t border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between bg-white">
-        <div className="text-sm text-slate-600">
-          Showing {table.getRowModel().rows.length} logs
+        <div className="flex items-center gap-2 text-sm text-slate-600">
+          <span>Rows per page:</span>
+          <select
+            value={table.getState().pagination.pageSize}
+            onChange={(event) => {
+              table.setPageSize(Number(event.target.value));
+            }}
+            className="cursor-pointer rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-teal-500"
+          >
+            {[5, 10, 20, 50].map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
         </div>
+
         <div className="flex items-center gap-3">
+          <p className="text-sm text-slate-600">
+            Page {table.getState().pagination.pageIndex + 1} of {Math.max(table.getPageCount(), 1)}
+          </p>
           <button
+            type="button"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
             className="cursor-pointer rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 transition-colors"
@@ -215,6 +302,7 @@ export default function BehaviorLogsTable({
             Previous
           </button>
           <button
+            type="button"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
             className="cursor-pointer rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 transition-colors"
