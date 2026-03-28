@@ -12,6 +12,7 @@ import {
   Loader2,
   Users,
   BookOpen,
+  ScrollText,
   UserCircle2,
   LogOut,
 } from "lucide-react";
@@ -32,10 +33,26 @@ type StaffHeaderProps = {
   } | null;
 };
 
+interface ProgramSearchResult {
+  program_id: number;
+  program_name: string;
+}
+
+interface BehaviorLogSearchResult {
+  log_id: number;
+  notes: string;
+  behavior_rating: string;
+  inmates: {
+    first_name: string;
+    last_name: string;
+    photo_path: string;
+  } | null;
+}
+
 interface SearchResult {
   id: string;
   label: string;
-  type: 'inmate' | 'program';
+  type: 'inmate' | 'program' | 'behavior_log';
   href: string;
   sub?: string;
   photo?: string;
@@ -45,10 +62,12 @@ function SearchBar({
   placeholder,
   isOpen,
   onToggle,
+  role,
 }: {
   placeholder: string;
   isOpen?: boolean;
   onToggle?: () => void;
+  role: StaffRole;
 }) {
   const [searchValue, setSearchValue] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -57,6 +76,32 @@ function SearchBar({
   const [showResults, setShowResults] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  const getSearchResultHref = useCallback((type: 'inmate' | 'program' | 'behavior_log', id: number | string) => {
+    if (type === 'inmate') {
+      switch (role) {
+        case 'admin': return `/admin-page/inmate-profile?id=${id}`;
+        case 'officer': return `/officer-page/inmate?id=${id}`;
+        case 'medical': return `/medical-page/inmates-medic?id=${id}`;
+        case 'rehab': return `/rehab-page/inmate-progress?id=${id}`;
+        default: return `/admin-page/inmate-profile?id=${id}`;
+      }
+    } else if (type === 'program') {
+      switch (role) {
+        case 'admin': return `/admin-page/manage-program`;
+        case 'rehab': return `/rehab-page/programs`;
+        default: return `/admin-page/manage-program`;
+      }
+    } else {
+      // behavior_log
+      switch (role) {
+        case 'admin': return `/admin-page/inmate-progress`;
+        case 'officer': return `/officer-page/behavior-logs`;
+        case 'rehab': return `/rehab-page/behavior-logs`;
+        default: return `/admin-page/inmate-progress`;
+      }
+    }
+  }, [role]);
 
   useEffect(() => {
     if (!searchValue.trim() || searchValue.length < 2) {
@@ -69,17 +114,26 @@ function SearchBar({
       setIsSearching(true);
       setShowResults(true);
       try {
-        const [inmatesRes, programsRes] = await Promise.all([
+        const [inmatesRes, programsRes, logsRes] = await Promise.all([
           supabase
             .from('inmates')
             .select('inmate_id, first_name, last_name, photo_path')
             .or(`first_name.ilike.%${searchValue}%,last_name.ilike.%${searchValue}%`)
             .limit(5),
-          supabase
-            .from('programs')
-            .select('program_id, program_name')
-            .ilike('program_name', `%${searchValue}%`)
-            .limit(3)
+          (role === 'admin' || role === 'rehab') 
+            ? supabase
+                .from('programs')
+                .select('program_id, program_name')
+                .ilike('program_name', `%${searchValue}%`)
+                .limit(3)
+            : Promise.resolve({ data: null as ProgramSearchResult[] | null, error: null }),
+          (role === 'admin' || role === 'officer' || role === 'rehab')
+            ? supabase
+                .from('behavior_logs')
+                .select('log_id, notes, behavior_rating, inmates(first_name, last_name, photo_path)')
+                .or(`notes.ilike.%${searchValue}%,behavior_rating.ilike.%${searchValue}%`)
+                .limit(3)
+            : Promise.resolve({ data: null as BehaviorLogSearchResult[] | null, error: null })
         ]);
 
         const formattedResults: SearchResult[] = [];
@@ -92,20 +146,34 @@ function SearchBar({
               label: name,
               sub: `ID: ${inmate.inmate_id}`,
               type: 'inmate',
-              href: `/admin-page/inmate-profile?id=${inmate.inmate_id}`,
+              href: getSearchResultHref('inmate', inmate.inmate_id),
               photo: getInmateImageUrl(inmate.photo_path, name)
             });
           });
         }
 
-        if (programsRes.data) {
-          programsRes.data.forEach(prog => {
+        if (programsRes && programsRes.data) {
+          (programsRes.data as ProgramSearchResult[]).forEach(prog => {
             formattedResults.push({
               id: `prog-${prog.program_id}`,
               label: prog.program_name,
               type: 'program',
-              href: '/admin-page/manage-program'
+              href: getSearchResultHref('program', prog.program_id)
             });
+          });
+        }
+
+        if (logsRes && logsRes.data) {
+          (logsRes.data as BehaviorLogSearchResult[]).forEach(log => {
+             const inmateName = log.inmates ? `${log.inmates.first_name} ${log.inmates.last_name}` : 'Unknown Inmate';
+             formattedResults.push({
+                id: `log-${log.log_id}`,
+                label: `Log: ${inmateName}`,
+                sub: `${log.behavior_rating}${log.notes ? ` - ${log.notes}` : ''}`,
+                type: 'behavior_log',
+                href: getSearchResultHref('behavior_log', log.log_id),
+                photo: log.inmates ? getInmateImageUrl(log.inmates.photo_path, inmateName) : undefined
+             });
           });
         }
 
@@ -118,7 +186,7 @@ function SearchBar({
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchValue]);
+  }, [searchValue, getSearchResultHref, role]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
@@ -274,8 +342,10 @@ function SearchContent({ results, isSearching, selectedIndex, onSelect }: {
                />
             ) : result.type === 'inmate' ? (
               <Users size={18} />
-            ) : (
+            ) : result.type === 'program' ? (
               <BookOpen size={18} />
+            ) : (
+              <ScrollText size={18} />
             )}
           </div>
           <div className="flex flex-col min-w-0">
@@ -440,6 +510,7 @@ export default function StaffHeader({ role, isSidebarCollapsed, onToggleSidebar,
             placeholder={config.searchPlaceholder}
             isOpen={isMobileSearchOpen}
             onToggle={() => setIsMobileSearchOpen(false)}
+            role={role}
           />
         </div>
 
