@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { format } from "date-fns";
-import { CalendarIcon, X, CheckIcon, ClipboardEdit } from "lucide-react";
+import { CalendarIcon, X, ClipboardEdit } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -87,7 +87,7 @@ function validateForm(form: AddBehaviorLogFormData): ValidationErrors {
   return errors;
 }
 
-function Field({ label, id, children, error, valid }: { label: string; id: string; children: React.ReactNode; error?: string; valid?: boolean }) {
+function Field({ label, id, children, error }: { label: string; id: string; children: React.ReactNode; error?: string }) {
   return (
     <div className="flex flex-col gap-1.5 relative">
       <label htmlFor={id} className={`text-xs font-semibold uppercase tracking-wide font-lexend ${error ? 'text-red-500' : 'text-slate-600'}`}>
@@ -95,11 +95,6 @@ function Field({ label, id, children, error, valid }: { label: string; id: strin
       </label>
       <div className="relative">
         {children}
-        {valid && !error && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-teal-600 pointer-events-none">
-            <CheckIcon size={16} strokeWidth={3} />
-          </span>
-        )}
       </div>
       {error && <span className="text-[10px] font-medium text-red-500 mt-0.5">{error}</span>}
     </div>
@@ -190,7 +185,7 @@ export default function AddBehaviorLogModal({ isOpen, onClose, onSubmit }: AddBe
         {/* Body */}
         <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6">
           <form className="flex flex-col gap-5">
-            <Field label="Select Inmate" id="inmate_id" error={touched.inmate_id ? errors.inmate_id : undefined} valid={!!(touched.inmate_id && !errors.inmate_id)}>
+            <Field label="Select Inmate" id="inmate_id" error={touched.inmate_id ? errors.inmate_id : undefined}>
               <PdlCombobox 
                 value={form.inmate_id} 
                 onValueChange={(val) => handleFieldChange("inmate_id", val)} 
@@ -200,7 +195,7 @@ export default function AddBehaviorLogModal({ isOpen, onClose, onSubmit }: AddBe
             </Field>
 
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Log Date" id="log_date" error={touched.log_date ? errors.log_date : undefined} valid={!!(touched.log_date && !errors.log_date)}>
+              <Field label="Log Date" id="log_date" error={touched.log_date ? errors.log_date : undefined}>
                 <DatePickerField 
                   id="log_date" 
                   value={form.log_date} 
@@ -208,7 +203,7 @@ export default function AddBehaviorLogModal({ isOpen, onClose, onSubmit }: AddBe
                 />
               </Field>
 
-              <Field label="Behavior Rating" id="rating" error={touched.rating ? errors.rating : undefined} valid={!!(touched.rating && !errors.rating)}>
+              <Field label="Behavior Rating" id="rating" error={touched.rating ? errors.rating : undefined}>
                 <Select value={form.rating} onValueChange={(val) => handleFieldChange("rating", val ?? "")}> 
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select rating" />
@@ -223,7 +218,7 @@ export default function AddBehaviorLogModal({ isOpen, onClose, onSubmit }: AddBe
               </Field>
             </div>
 
-            <Field label="Note" id="notes" error={touched.notes ? errors.notes : undefined} valid={!!(touched.notes && !errors.notes)}>
+            <Field label="Note" id="notes" error={touched.notes ? errors.notes : undefined}>
               <textarea 
                 id="notes" 
                 name="notes" 
