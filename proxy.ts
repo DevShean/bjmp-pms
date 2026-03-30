@@ -5,11 +5,11 @@ export function proxy(request: NextRequest) {
 
   // Define protected routes and their required roles
   const protectedRoutes = [
-    { path: '/admin-page', role: 'Administrator' },
-    { path: '/officer-page', role: 'Correctional Officer' },
-    { path: '/medical-page', role: 'Medical Staff' },
-    { path: '/rehab-page', role: 'Rehabilitation Staff' },
-    { path: '/visitor-page', role: 'Visitor' },
+    { path: '/admin-page', role: 'Administrator', loginPath: '/admin' },
+    { path: '/officer-page', role: 'Correctional Officer', loginPath: '/admin' },
+    { path: '/medical-page', role: 'Medical Staff', loginPath: '/admin' },
+    { path: '/rehab-page', role: 'Rehabilitation Staff', loginPath: '/admin' },
+    { path: '/visitor-page', role: 'Visitor', loginPath: '/visitor' },
   ];
 
   // Find if current path is protected
@@ -19,26 +19,26 @@ export function proxy(request: NextRequest) {
     const sessionCookie = request.cookies.get('bjmp_session');
 
     if (!sessionCookie) {
-      // No session, redirect to login
+      // No session — redirect to the appropriate login page
       const url = request.nextUrl.clone();
-      url.pathname = '/admin';
+      url.pathname = route.loginPath;
       return NextResponse.redirect(url);
     }
 
     try {
       const session = JSON.parse(decodeURIComponent(sessionCookie.value));
-      
+
       // Verify role access
       if (session.role !== route.role) {
-        // Role mismatch, redirect to login
+        // Role mismatch — redirect to the appropriate login page
         const url = request.nextUrl.clone();
-        url.pathname = '/admin';
+        url.pathname = route.loginPath;
         return NextResponse.redirect(url);
       }
     } catch {
-      // Invalid session cookie
+      // Invalid session cookie — redirect to the appropriate login page
       const url = request.nextUrl.clone();
-      url.pathname = '/admin';
+      url.pathname = route.loginPath;
       return NextResponse.redirect(url);
     }
   }
