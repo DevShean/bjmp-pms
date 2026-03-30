@@ -4,8 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, ChevronRight, LogOut, UserRound } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { type StaffRole, staffRoleConfig } from "./staffNavigation";
+import { supabase } from "@/lib/supabase/client";
 
 type SessionUser = {
   name?: string;
@@ -27,6 +28,49 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
   const pathname = usePathname();
   const [isHovered, setIsHovered] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+  const [dynamicBadges, setDynamicBadges] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (role === "admin") {
+      const fetchCounts = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("visitations")
+            .select("status, notes")
+            .eq("status", "Pending");
+          
+          if (!error && data) {
+            let count = 0;
+            for (const r of data) {
+              let requiresGuardianApproval = false;
+              if (r.notes) {
+                try {
+                  const parsed = JSON.parse(r.notes);
+                  requiresGuardianApproval = !!parsed.pending_guardian_approval;
+                } catch {}
+              }
+              if (!requiresGuardianApproval) count++;
+            }
+            setDynamicBadges((prev) => ({ ...prev, "Visitation Request": count }));
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      };
+
+      fetchCounts();
+
+      const channel = supabase
+        .channel("sidebar-visitations")
+        .on("postgres_changes", { event: "*", schema: "public", table: "visitations" }, fetchCounts)
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [role]);
+
   const effectiveCollapsed = isCollapsed && !isHovered;
   const config = staffRoleConfig[role];
 
@@ -82,6 +126,9 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
             (child) => pathname === child.path || pathname.startsWith(`${child.path}/`),
           );
           const showChildren = hasChildren && !effectiveCollapsed && resolvedExpandedItems[item.name];
+          const badgeCount = dynamicBadges[item.name] !== undefined ? dynamicBadges[item.name] : item.badge;
+          const hasBadge = typeof badgeCount === "number" && badgeCount > 0;
+          const displayBadge = hasBadge ? (badgeCount > 9 ? "•" : badgeCount) : null;
 
           return (
             <div key={item.name} className="space-y-1">
@@ -120,9 +167,9 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
                     >
                       {item.name}
                     </span>
-                    {item.badge && !effectiveCollapsed && (
+                    {hasBadge && !effectiveCollapsed && (
                       <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#2952b3] px-1.5 text-xs font-medium text-white">
-                        {item.badge}
+                        {displayBadge}
                       </span>
                     )}
                     {!effectiveCollapsed && (
@@ -130,7 +177,7 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
                         className={cn("h-4 w-4 transition-transform", resolvedExpandedItems[item.name] && "rotate-180")}
                       />
                     )}
-                    {item.badge && effectiveCollapsed && (
+                    {hasBadge && effectiveCollapsed && (
                       <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#2952b3] ring-2 ring-white" />
                     )}
                   </button>
@@ -159,15 +206,15 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
                     >
                       {item.name}
                     </span>
-                    {item.badge && !effectiveCollapsed && (
+                    {hasBadge && !effectiveCollapsed && (
                       <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#2952b3] px-1.5 text-xs font-medium text-white">
-                        {item.badge}
+                        {displayBadge}
                       </span>
                     )}
                     {(isActive || hasActiveChild) && !effectiveCollapsed && (
                       <ChevronRight className="h-4 w-4 text-[#00154A]" />
                     )}
-                    {item.badge && effectiveCollapsed && (
+                    {hasBadge && effectiveCollapsed && (
                       <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#2952b3] ring-2 ring-white" />
                     )}
                   </Link>

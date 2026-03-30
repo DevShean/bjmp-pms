@@ -114,6 +114,15 @@ export default function GuardianRequestsPage() {
   const [statusFilter, setStatusFilter] = useState<GuardianRequestStatus | "All">("All");
   const [processingId, setProcessingId] = useState<number | null>(null);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
+
   // ── Fetch ──
   const fetchRequests = useCallback(async () => {
     setIsLoading(true);
@@ -273,6 +282,10 @@ export default function GuardianRequestsPage() {
     return matchesSearch && matchesStatus;
   });
 
+  const totalFiltered = filtered.length;
+  const totalPages = Math.ceil(totalFiltered / pageSize);
+  const paginatedRequests = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   return (
     <AdminSidebarLayout>
       <section className="space-y-6">
@@ -386,7 +399,7 @@ export default function GuardianRequestsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filtered.map((req, idx) => {
+                  {paginatedRequests.map((req, idx) => {
                     const isProcessing = processingId === req.requestId;
                     const zebra = idx % 2 === 0 ? "bg-white" : "bg-slate-50/40";
                     return (
@@ -467,6 +480,52 @@ export default function GuardianRequestsPage() {
               </table>
             )}
           </div>
+
+          {/* Pagination */}
+          {totalFiltered > 0 && !isLoading && (
+            <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3 bg-white">
+              <div className="flex items-center gap-6 text-sm text-slate-600">
+                <p>
+                  Page {currentPage} of {totalPages || 1}
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Rows per page:</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="appearance-none border border-slate-200 rounded-md px-2 py-1 pr-6 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all cursor-pointer"
+                  >
+                    {[5, 10, 30, 50].map((size) => (
+                      <option key={size} value={size}>
+                        {size}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className="rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-50 hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </section>
     </AdminSidebarLayout>
