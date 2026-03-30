@@ -4,9 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Bell,
   CalendarDays,
-  ClipboardList,
   House,
   LogOut,
   ShieldCheck,
@@ -37,8 +35,6 @@ const menuItems: MenuItem[] = [
   { name: "Dashboard", path: "/visitor-page", icon: House },
   { name: "Appointments", path: "/visitor-page/appointments", icon: CalendarDays, badge: 2 },
   { name: "Visit Status", path: "/visitor-page/status", icon: ShieldCheck },
-  { name: "Requirements", path: "/visitor-page/requirements", icon: ClipboardList },
-  { name: "Announcements", path: "/visitor-page/announcements", icon: Bell, badge: 3 },
 ];
 
 function cn(...classNames: Array<string | false | null | undefined>) {

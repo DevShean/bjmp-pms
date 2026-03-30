@@ -20,6 +20,7 @@ type PdlComboboxProps = {
   onValueChange: (pdlId: string) => void;
   placeholder?: string;
   showAll?: boolean;
+  excludeType?: "medical" | "guardian" | "none";
 };
 
 function cn(...classNames: Array<string | false | null | undefined>) {
@@ -30,7 +31,8 @@ export default function PdlCombobox({
   value, 
   onValueChange, 
   placeholder = "Select a PDL",
-  showAll = false
+  showAll = false,
+  excludeType = "medical"
 }: PdlComboboxProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -53,17 +55,46 @@ export default function PdlCombobox({
           throw error;
         }
 
-        const { data: medicalRecords, error: medicalError } = await supabase
-          .from("medical_records")
-          .select("inmate_id");
+        let assignedInmateIds = new Set<string>();
 
-        if (medicalError) {
-          console.error("Error fetching medical records:", medicalError);
+        if (excludeType === "medical") {
+          const { data: medicalRecords, error: medicalError } = await supabase
+            .from("medical_records")
+            .select("inmate_id");
+
+          if (medicalError) {
+            console.error("Error fetching medical records:", medicalError);
+          }
+          assignedInmateIds = new Set((medicalRecords || []).map((r) => String(r.inmate_id)));
+        } else if (excludeType === "guardian") {
+          // A guardian is linked via the visitors table (where inmate_id is not null)
+          const { data: visitors, error: visitorError } = await supabase
+            .from("visitors")
+            .select("inmate_id")
+            .not("inmate_id", "is", null);
+
+          if (visitorError) {
+            console.error("Error fetching visitors:", visitorError);
+          }
+
+          // A guardian request could also be pending or approved
+          const { data: requests, error: reqError } = await supabase
+            .from("guardian_requests")
+            .select("inmate_id")
+            .in("status", ["Pending", "Approved"]);
+
+          if (reqError) {
+            console.error("Error fetching requests:", reqError);
+          }
+
+          const ids = [
+            ...(visitors || []).map((v) => String(v.inmate_id)),
+            ...(requests || []).map((r) => String(r.inmate_id)),
+          ];
+          assignedInmateIds = new Set(ids);
         }
 
-        const assignedInmateIds = new Set((medicalRecords || []).map((r) => String(r.inmate_id)));
-
-        const formatted: Pdl[] = (data || []).map((item) => {
+        let formatted: Pdl[] = (data || []).map((item) => {
           const fullName = `${item.first_name} ${item.last_name}`;
           const inmateId = String(item.inmate_id);
           
@@ -75,6 +106,11 @@ export default function PdlCombobox({
             isAssigned: assignedInmateIds.has(inmateId),
           };
         });
+
+        // For guardian selection, if the user explicitly doesn't want to show assigned ones, we can just filter them out
+        if (excludeType === "guardian" && !showAll) {
+          formatted = formatted.filter((item) => !assignedInmateIds.has(item.id));
+        }
 
         if (isMounted) {
           setPdls(formatted);
@@ -96,7 +132,7 @@ export default function PdlCombobox({
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [excludeType, showAll]);
 
   useEffect(() => {
     function onOutsideClick(event: MouseEvent) {

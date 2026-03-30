@@ -822,7 +822,7 @@ export default function ProfilePage() {
                         <PdlCombobox
                           value={selectedPdlId}
                           onValueChange={setSelectedPdlId}
-                          showAll
+                          excludeType="guardian"
                         />
                       </div>
 
