@@ -338,9 +338,9 @@ const NotificationMenu = memo(({ userId }: NotificationMenuProps) => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-80 max-h-[480px] overflow-hidden flex flex-col rounded-2xl border border-[#e2e8f0] bg-white shadow-2xl animate-in zoom-in-95 fade-in-0 duration-200">
-          <div className="flex items-center justify-between border-b border-[#f1f5f9] bg-[#fcfdff] px-4 py-3.5">
-            <h3 className="font-lexend text-sm font-bold text-[#00154A]">Notifications</h3>
+        <div className="absolute right-0 mt-3 w-[280px] sm:w-80 max-h-[480px] overflow-hidden flex flex-col rounded-2xl border border-[#e2e8f0] bg-white shadow-2xl animate-in zoom-in-95 fade-in-0 duration-200">
+          <div className="flex items-center justify-between border-b border-[#f1f5f9] bg-[#fcfdff] px-3 py-3 sm:px-4 sm:py-3.5">
+            <h3 className="font-lexend text-xs sm:text-sm font-bold text-[#00154A]">Notifications</h3>
             {unreadCount > 0 && (
               <button
                 onClick={() => markAsRead()}
@@ -366,7 +366,7 @@ const NotificationMenu = memo(({ userId }: NotificationMenuProps) => {
                 {notifications.map((notif) => (
                   <div
                     key={notif.notification_id}
-                    className={`relative flex gap-3 p-4 transition-colors hover:bg-[#f8fafd] ${
+                    className={`relative flex gap-2.5 sm:gap-3 p-3 sm:p-4 transition-colors hover:bg-[#f8fafd] ${
                       !notif.is_read ? "bg-blue-50/30" : ""
                     }`}
                   >
