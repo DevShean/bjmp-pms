@@ -4,12 +4,12 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import RehabSidebarLayout from "../components/RehabSidebarLayout";
-import RehabStatCard from "../components/RehabStatCard";
+import StatCard from "./StatCard";
 import ProgressChart from "./ProgressChart";
 import CompletionsChart from "./CompletionsChart";
 import ProgramTable, { ProgramRecord } from "./ProgramTable";
 import EditProgressModal from "./EditProgressModal";
-import { BookUser, CheckCircle2, Clock, LayoutList } from "lucide-react";
+import { BookUser } from "lucide-react";
 
 interface InmateProgramJoin {
   inmate_program_id: number;
@@ -118,71 +118,40 @@ export default function RehabInmateProgressPage() {
 
   return (
     <RehabSidebarLayout>
-      <div className="flex flex-col gap-8">
-
-        {/* Header Card */}
-        <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition-all hover:shadow-md">
-          <div className="relative z-10 flex items-center justify-between">
-            <div className="space-y-2">
-              <h1 className="font-lexend text-3xl font-bold tracking-tight text-[#00154A]">
-                Program Progress Monitoring
-              </h1>
-              <p className="text-slate-500">
-                Track and update rehabilitation program progress for all enrolled inmates.
-              </p>
-            </div>
-            <div className="hidden sm:flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 border border-slate-100 shadow-inner">
-              <BookUser className="h-7 w-7 text-slate-400" />
-            </div>
+      <section className="space-y-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h1 className="font-lexend text-3xl font-semibold text-slate-800 flex items-center gap-3">
+              Program Progress Monitoring
+              <BookUser className="text-teal-700" size={32} />
+            </h1>
+            <p className="mt-1 text-sm text-slate-600">
+              Track and update rehabilitation program progress.
+            </p>
           </div>
-          <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-teal-50/50 blur-2xl" />
-        </section>
+        </div>
 
-        {/* Stats Grid */}
-        <section className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-          <RehabStatCard
-            title="Total Programs"
-            value={totalCount}
-            icon={LayoutList}
-            iconColor="text-indigo-600"
-            iconBg="bg-indigo-600"
-            valueColor="text-[#00154A]"
-          />
-          <RehabStatCard
-            title="Completed"
-            value={completedCount}
-            icon={CheckCircle2}
-            iconColor="text-emerald-600"
-            iconBg="bg-emerald-600"
-            valueColor="text-emerald-600"
-          />
-          <RehabStatCard
-            title="Ongoing"
-            value={ongoingCount}
-            icon={Clock}
-            iconColor="text-amber-500"
-            iconBg="bg-amber-500"
-            valueColor="text-amber-600"
-          />
-        </section>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard title="Total Programs" value={totalCount} tone="text-slate-900" />
+          <StatCard title="Completed" value={completedCount} tone="text-green-600" />
+          <StatCard title="Ongoing" value={ongoingCount} tone="text-yellow-600" />
+        </div>
 
-        {/* Charts + Table Row */}
-        <section className="flex flex-col gap-6 lg:flex-row">
-          <div className="lg:max-w-[300px] w-full rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div className="flex flex-col gap-6 lg:flex-row">
+          <div className="lg:max-w-[280px] w-full">
             <ProgressChart ongoing={ongoingCount} completed={completedCount} dropped={droppedCount} />
           </div>
-
-          <div className="flex-1 min-w-0 rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div className="flex-1 min-w-0">
             {isLoading ? (
-              <div className="flex h-64 items-center justify-center">
-                <div className="flex flex-col items-center gap-3">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-[#2952b3]" />
+              <div className="flex h-64 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-teal-600" />
                   <p className="text-sm text-slate-500 font-medium">Loading progress records...</p>
                 </div>
               </div>
             ) : (
-              <ProgramTable
-                data={programData}
+              <ProgramTable 
+                data={programData} 
                 onEdit={(record) => {
                   setSelectedRecord(record);
                   setIsEditModalOpen(true);
@@ -190,16 +159,12 @@ export default function RehabInmateProgressPage() {
               />
             )}
           </div>
-        </section>
+        </div>
 
-        {/* Completions Chart */}
-        <section className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-          <CompletionsChart data={monthlyCompletionsData} />
-        </section>
+        <CompletionsChart data={monthlyCompletionsData} />
+      </section>
 
-      </div>
-
-      <EditProgressModal
+      <EditProgressModal 
         isOpen={isEditModalOpen}
         onClose={() => {
           setIsEditModalOpen(false);
