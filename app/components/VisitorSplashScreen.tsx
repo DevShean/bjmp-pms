@@ -3,18 +3,20 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 
-export default function VisitorSplashScreen() {
-  const [systemReady, setSystemReady] = useState(false);
+export default function VisitorSplashScreen({ isReady }: { isReady?: boolean }) {
+  const [internalReady, setInternalReady] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setSystemReady(true);
+      setInternalReady(true);
     }, 2500);
 
     return () => {
       window.clearTimeout(timer);
     };
   }, []);
+
+  const systemReady = isReady ?? internalReady;
 
   return (
     <div className="fixed inset-0 z-9999 flex min-h-dvh items-center justify-center overflow-hidden bg-[linear-gradient(180deg,#0b1422_0%,#14263f_55%,#1f364f_100%)] px-6">

@@ -11,17 +11,20 @@ import {
   UserRound,
   ChevronRight,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type SessionUser = {
+  userId?: string | number;
   name?: string;
   username?: string;
   email?: string;
+  photo_url?: string | null;
 };
 
 type VisitorSidebarProps = {
   sessionUser?: SessionUser | null;
   isCollapsed?: boolean;
+  onMobileClose?: () => void;
 };
 
 type MenuItem = {
@@ -33,7 +36,7 @@ type MenuItem = {
 
 const menuItems: MenuItem[] = [
   { name: "Dashboard", path: "/visitor-page", icon: House },
-  { name: "Appointments", path: "/visitor-page/appointments", icon: CalendarDays, badge: 2 },
+  { name: "Appointments", path: "/visitor-page/appointments", icon: CalendarDays },
   { name: "Visit Status", path: "/visitor-page/status", icon: ShieldCheck },
 ];
 
@@ -41,22 +44,54 @@ function cn(...classNames: Array<string | false | null | undefined>) {
   return classNames.filter(Boolean).join(" ");
 }
 
-export default function VisitorSidebar({ sessionUser, isCollapsed = false }: VisitorSidebarProps) {
+export default function VisitorSidebar({ sessionUser, isCollapsed = false, onMobileClose }: VisitorSidebarProps) {
   const pathname = usePathname();
   const [isHovered, setIsHovered] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const [initialCollapsed] = useState(isCollapsed);
+  const [hasToggled, setHasToggled] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (isMounted && !hasToggled && isCollapsed !== initialCollapsed) {
+      const timer = setTimeout(() => setHasToggled(true), 0);
+      return () => clearTimeout(timer);
+    }
+  }, [isCollapsed, isMounted, initialCollapsed, hasToggled]);
 
   const effectiveCollapsed = isCollapsed && !isHovered;
+  // On mobile, we only show the sidebar if it has been toggled OR if it's not collapsed.
+  // BUT the key is that on initial mount, even if !isCollapsed, we keep it hidden on mobile.
+  const showMobile = isMounted && hasToggled && !isCollapsed;
 
   return (
-    <aside
-      className={cn(
-        "sticky top-0 flex h-screen shrink-0 flex-col bg-linear-to-b from-[#f8fbff] via-[#f4f8ff] to-[#eef4ff] transition-all duration-300 ease-in-out",
-        effectiveCollapsed ? "w-18" : "w-64",
-        "border-r border-[#d9e3fb]"
-      )}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+    <>
+      {/* Mobile Overlay */}
+      <div 
+        className={cn(
+          "fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm transition-opacity md:hidden",
+          showMobile ? "opacity-100" : "opacity-0 pointer-events-none"
+        )}
+        onClick={onMobileClose}
+        aria-hidden="true"
+      />
+
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 flex h-screen shrink-0 flex-col bg-linear-to-b from-[#f8fbff] via-[#f4f8ff] to-[#eef4ff] transition-all duration-300 ease-in-out md:sticky md:top-0",
+          // Mobile logic: stay hidden (-translate-x-full) by default until toggled
+          // Desktop logic: translate-x-0 always, width by isCollapsed
+          showMobile ? "translate-x-0 w-64 shadow-2xl md:shadow-none" : "-translate-x-full md:translate-x-0",
+          isCollapsed ? "md:w-18" : "md:w-64",
+          "border-r border-[#d9e3fb]"
+        )}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
       {/* Logo Section */}
       <div className="flex items-center gap-3 border-b border-[#e2e8f0] px-4 py-5">
         <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-[#e8eefb] p-1.5">
@@ -94,6 +129,11 @@ export default function VisitorSidebar({ sessionUser, isCollapsed = false }: Vis
             <Link
               key={item.name}
               href={item.path}
+              onClick={() => {
+                if (window.innerWidth < 768 && onMobileClose) {
+                  onMobileClose();
+                }
+              }}
               className={cn(
                 "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all",
                 isActive
@@ -144,9 +184,20 @@ export default function VisitorSidebar({ sessionUser, isCollapsed = false }: Vis
         {/* User Info */}
         <div className="flex items-center gap-3 rounded-xl border border-[#dbe6ff] bg-white/85 px-2.5 py-2.5 shadow-[0_6px_18px_rgba(0,40,120,0.08)]">
           <div className="relative shrink-0">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-linear-to-br from-[#15337b] to-[#2952b3] text-white shadow-sm">
-              <UserRound className="h-5 w-5" />
-            </div>
+            {sessionUser?.photo_url ? (
+              <div className="relative h-9 w-9 overflow-hidden rounded-lg ring-2 ring-[#dbe6ff]">
+                <Image
+                  src={sessionUser.photo_url}
+                  alt="Profile"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            ) : (
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-linear-to-br from-[#15337b] to-[#2952b3] text-white shadow-sm">
+                <UserRound className="h-5 w-5" />
+              </div>
+            )}
             <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-[#2d6a4f]" />
           </div>
 
@@ -182,6 +233,7 @@ export default function VisitorSidebar({ sessionUser, isCollapsed = false }: Vis
           </span>
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
