@@ -11,6 +11,7 @@ import { supabase } from "../../lib/supabase/client";
 type RoleKey = "administrator" | "correctionalOfficer" | "medicalStaff" | "rehabilitationStaff";
 
 type UserRoleRecord = {
+  user_id: number;
   email: string;
   password: string;
   roles: {
@@ -118,7 +119,7 @@ export default function AdminAuthClient() {
 
       const { data: userRecord, error: userError } = await supabase
         .from("users")
-        .select("email, password, roles!inner(role_name)")
+        .select("user_id, email, password, roles!inner(role_name)")
         .eq("email", email)
         .single<UserRoleRecord>();
 
@@ -148,6 +149,7 @@ export default function AdminAuthClient() {
       // Set session cookie (Expires in 24 hours)
       const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString();
       document.cookie = `bjmp_session=${encodeURIComponent(JSON.stringify({
+        userId: userRecord.user_id,
         role: userRecord.roles.role_name,
         email: userRecord.email
       }))}; path=/; expires=${expires}; SameSite=Lax`;

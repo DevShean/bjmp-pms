@@ -1,207 +1,494 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import RehabSidebarLayout from "../components/RehabSidebarLayout";
-import ReportStatCard from "../components/RehabStatCard";
+import StatCard from "../inmate-progress/StatCard";
 import { 
-  Users, 
-  CheckCircle2, 
-  Clock, 
-  Star, 
   FileDown, 
   XCircle, 
   Info, 
   FileBarChart,
-  Calendar
+  CalendarIcon,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { supabase } from "@/lib/supabase/client";
+import { toast } from "sonner";
+
+// ─── Interfaces ────────────────────────────────────────────────────────
+
+interface ReportInmateProgram {
+  start_date: string | null;
+  end_date: string | null;
+  progress: string;
+  inmates: {
+    first_name: string | null;
+    last_name: string | null;
+    inmate_id: number | null;
+  } | {
+    first_name: string | null;
+    last_name: string | null;
+    inmate_id: number | null;
+  }[] | null;
+  programs: {
+    program_name: string | null;
+  } | {
+    program_name: string | null;
+  }[] | null;
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────
+
+const inputClass = "flex w-full cursor-pointer items-center justify-between rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none transition hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-teal-500";
+
+function DatePickerField({ 
+  id, 
+  value, 
+  onSelect,
+  placeholder = "Select date"
+}: { 
+  id: string; 
+  value: string; 
+  onSelect: (date: Date | undefined) => void;
+  placeholder?: string;
+}) {
+  const selected = value ? new Date(value + "T12:00:00") : undefined;
+  return (
+    <div className="w-full">
+      <Popover>
+        <PopoverTrigger id={id} className={inputClass}>
+          <span className={selected ? "text-slate-800 font-medium" : "text-slate-400"}>
+            {selected ? format(selected, "PPP") : placeholder}
+          </span>
+          <CalendarIcon className="size-4 shrink-0 text-slate-400" />
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={selected}
+            onSelect={onSelect}
+            className="[&_button]:cursor-pointer"
+            fromYear={2000}
+            toYear={2100}
+            captionLayout="dropdown"
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
+// ─── Main Page ───────────────────────────────────────────────────────────
 
 export default function ReportPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [filterMonth, setFilterMonth] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  
+  const [stats, setStats] = useState({
+    total: 0,
+    completed: 0,
+    ongoing: 0,
+    avgRating: 0,
+  });
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const [
+        { count: totalCount },
+        { count: completedCount },
+        { count: ongoingCount },
+        { data: behaviorData }
+      ] = await Promise.all([
+        supabase.from("inmate_programs").select("*", { count: "exact", head: true }),
+        supabase.from("inmate_programs").select("*", { count: "exact", head: true }).eq("progress", "Completed"),
+        supabase.from("inmate_programs").select("*", { count: "exact", head: true }).eq("progress", "Ongoing"),
+        supabase.from("behavior_logs").select("behavior_rating")
+      ]);
+
+      // Calculate avg behavior rating (Excellent=4, Good=3, Fair=2, Poor=1)
+      let avg = 0;
+      if (behaviorData && behaviorData.length > 0) {
+        const ratingMap: Record<string, number> = { Excellent: 4, Good: 3, Fair: 2, Poor: 1 };
+        const sum = behaviorData.reduce((acc, curr) => acc + (ratingMap[curr.behavior_rating] || 0), 0);
+        avg = sum / behaviorData.length;
+      }
+
+      setStats({
+        total: totalCount || 0,
+        completed: completedCount || 0,
+        ongoing: ongoingCount || 0,
+        avgRating: parseFloat(avg.toFixed(1)),
+      });
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   const handleClearFilters = () => {
     setStartDate("");
     setEndDate("");
     setFilterMonth("");
+    setStatusFilter("");
   };
 
-  const handleDownload = () => {
-    // Placeholder for CSV generation logic
-    console.log("Downloading CSV report...", { startDate, endDate, filterMonth });
-    alert("CSV Report generation started. In a real application, this would download a file with filtered data.");
+  const handleGenerateReport = async () => {
+    setIsGenerating(true);
+    const loadingToast = toast.loading("Preparing comprehensive rehabilitation report...");
+
+    try {
+      let query = supabase
+        .from("inmate_programs")
+        .select(`
+          start_date,
+          end_date,
+          progress,
+          inmates (first_name, last_name, inmate_id),
+          programs (program_name)
+        `);
+
+      // Apply Filters
+      if (filterMonth) {
+        const date = new Date(filterMonth + "-01T12:00:00");
+        const monthStart = format(startOfMonth(date), "yyyy-MM-dd");
+        const monthEnd = format(endOfMonth(date), "yyyy-MM-dd");
+        query = query.gte("start_date", monthStart).lte("start_date", monthEnd);
+      } else {
+        if (startDate) query = query.gte("start_date", startDate);
+        if (endDate) query = query.lte("start_date", endDate);
+      }
+
+      if (statusFilter) {
+        query = query.eq("progress", statusFilter);
+      }
+
+      const { data: reportData, error } = await query.order("start_date", { ascending: false });
+
+      if (error) throw error;
+
+      if (!reportData || reportData.length === 0) {
+        toast.dismiss(loadingToast);
+        toast.info("No records found for the selected reporting period.");
+        setIsGenerating(false);
+        return;
+      }
+
+      // Generate HTML report
+      const printWindow = window.open("", "_blank");
+      if (!printWindow) {
+        toast.dismiss(loadingToast);
+        toast.error("Popup blocked. Please allow popups to view the report.");
+        setIsGenerating(false);
+        return;
+      }
+
+      const rowsHtml = (reportData as ReportInmateProgram[]).map((record) => {
+        // Handle both object and array returns from Supabase joins
+        const inmate = Array.isArray(record.inmates) ? record.inmates[0] : record.inmates;
+        const program = Array.isArray(record.programs) ? record.programs[0] : record.programs;
+        
+        const inmateId = inmate?.inmate_id || "N/A";
+        const fullName = inmate ? `${inmate.first_name || ""} ${inmate.last_name || ""}`.trim() : "Unknown Inmate";
+        const programName = program?.program_name || "Unknown Program";
+
+        return `
+          <tr>
+            <td>${record.start_date || "N/A"}</td>
+            <td>${inmateId}</td>
+            <td>${fullName}</td>
+            <td>${programName}</td>
+            <td><span class="status-badge ${record.progress.toLowerCase()}">${record.progress}</span></td>
+            <td>${record.end_date || "-"}</td>
+          </tr>
+        `;
+      }).join("");
+
+      const dateRangeMsg = filterMonth 
+        ? format(new Date(filterMonth + "-01T12:00:00"), "MMMM yyyy") 
+        : (startDate && endDate) 
+        ? `${startDate} to ${endDate}` 
+        : "Complete History";
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Rehabilitation Progress Report</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+            @page { size: landscape; margin: 0mm; }
+            body { font-family: 'Inter', sans-serif; padding: 1.5cm; color: #1e293b; line-height: 1.5; background: white; }
+            .header { display: flex; align-items: center; justify-content: center; text-align: center; margin-bottom: 30px; border-bottom: 3px solid #0d9488; padding-bottom: 20px; }
+            .logo { width: 85px; height: 85px; }
+            .header-text { margin: 0 40px; }
+            .header-text h1 { font-size: 18px; margin: 0; font-weight: 700; color: #0f172a; text-transform: uppercase; }
+            .header-text h2 { font-size: 14px; margin: 4px 0; font-weight: 600; color: #475569; }
+            .header-text h3 { font-size: 13px; margin: 2px 0; font-weight: 500; color: #64748b; }
+            
+            .report-meta { text-align: center; margin-bottom: 40px; }
+            .report-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; color: #0f172a; text-transform: uppercase; letter-spacing: -0.025em; }
+            .report-period { font-size: 15px; color: #0d9488; font-weight: 600; }
+            
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            th { background: #f8fafc; text-align: left; padding: 14px 15px; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; border-bottom: 2px solid #0d9488; letter-spacing: 0.05em; }
+            td { padding: 12px 15px; font-size: 13px; color: #334155; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
+            
+            .status-badge { padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+            .status-badge.completed { background: #f0fdf4; color: #15803d; }
+            .status-badge.ongoing { background: #fffbeb; color: #b45309; }
+            .status-badge.dropped { background: #fef2f2; color: #b91c1c; }
+
+            .footer { margin-top: 60px; display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid #e2e8f0; pt: 20px; font-size: 11px; color: #94a3b8; }
+            .signature-block { width: 220px; text-align: center; border-top: 1.5px solid #1e293b; pt: 8px; margin-top: 40px; color: #0f172a; font-weight: 600; font-size: 13px; }
+
+            @media print {
+              body { padding: 1.5cm; }
+              .no-print { display: none; }
+              table { page-break-inside: auto; }
+              tr { page-break-inside: avoid; page-break-after: auto; }
+              thead { display: table-header-group; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <img src="/img/logo/logo.png" class="logo" />
+            <div class="header-text">
+              <h1>REPUBLIC OF THE PHILIPPINES</h1>
+              <h2>Department of the Interior and Local Government</h2>
+              <h3>Bureau of Jail Management and Penology</h3>
+              <h3>Rehabilitation Operations Unit</h3>
+            </div>
+            <img src="/img/logo/bplogo.png" class="logo" />
+          </div>
+          
+          <div class="report-meta">
+            <div class="report-title">Inmate Program Progress Report</div>
+            <div class="report-period">Reporting Period: ${dateRangeMsg}</div>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>Start Date</th>
+                <th>Inmate ID</th>
+                <th>Full Name</th>
+                <th>Program Name</th>
+                <th>Status</th>
+                <th>End Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+          
+          <div style="display: flex; justify-content: flex-end; margin-top: 40px;">
+            <div style="text-align: center;">
+              <div class="signature-block">Duty Rehabilitation Officer</div>
+              <p style="font-size: 10px; color: #64748b; margin-top: 4px;">Official Signature Over Printed Name</p>
+            </div>
+          </div>
+
+          <div class="footer">
+            <div>BJMP-PMS | Rehab Analytics System</div>
+            <div>Official Report Generated on ${new Date().toLocaleString()}</div>
+          </div>
+          
+          <script>
+            function startPrint() {
+              window.print();
+            }
+            if (document.readyState === 'complete') {
+              setTimeout(startPrint, 500);
+            } else {
+              window.addEventListener('load', () => setTimeout(startPrint, 500));
+            }
+          </script>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+      
+      toast.dismiss(loadingToast);
+      toast.success("Rehabilitation report generated successfully!");
+    } catch (err) {
+      console.error("Report generation error:", err);
+      toast.dismiss(loadingToast);
+      toast.error("Failed to generate report dataset.");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
     <RehabSidebarLayout>
-      <div className="flex flex-col gap-8">
-        {/* Header Card */}
-        <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition-all hover:shadow-md">
-          <div className="relative z-10 flex items-center justify-between">
-            <div className="space-y-2">
-              <h1 className="font-lexend text-3xl font-bold tracking-tight text-[#00154A]">
-                Reports & Analytics
-              </h1>
-              <p className="text-slate-500">
-                Generate comprehensive reports on rehabilitation program progress
-              </p>
-            </div>
-            <div className="hidden sm:flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 border border-slate-100 shadow-inner">
-              <FileBarChart className="h-7 w-7 text-slate-400" />
-            </div>
+      <section className="space-y-8">
+        
+        {/* Header */}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between px-2">
+          <div className="space-y-1">
+            <h1 className="font-lexend text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
+              Reports & Analytics
+              <FileBarChart className="text-teal-700" size={32} />
+            </h1>
+            <p className="text-slate-500 max-w-2xl">
+              Monitor rehabilitation program performance, inmate completions, and average behavior ratings across your facility.
+            </p>
           </div>
-          {/* Subtle background decoration */}
-          <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-blue-50/50 blur-2xl" />
-        </section>
+        </div>
 
         {/* Stats Grid */}
-        <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <ReportStatCard
-            title="Total Inmates in Programs"
-            value="2"
-            icon={Users}
-            iconColor="text-indigo-600"
-            iconBg="bg-indigo-600"
-          />
-          <ReportStatCard
-            title="Completed Programs"
-            value="1"
-            icon={CheckCircle2}
-            iconColor="text-emerald-600"
-            iconBg="bg-emerald-600"
-            valueColor="text-emerald-600"
-          />
-          <ReportStatCard
-            title="Ongoing Programs"
-            value="1"
-            icon={Clock}
-            iconColor="text-amber-500"
-            iconBg="bg-amber-500"
-            valueColor="text-amber-600"
-          />
-          <ReportStatCard
-            title="Average Behavior Rating"
-            value="4.0/4"
-            icon={Star}
-            iconColor="text-blue-500"
-            iconBg="bg-blue-500"
-          />
-        </section>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 px-2">
+          <StatCard title="Total Enrollment" value={stats.total} tone="text-slate-900" />
+          <StatCard title="Completions" value={stats.completed} tone="text-emerald-600" />
+          <StatCard title="Ongoing" value={stats.ongoing} tone="text-teal-600" />
+          <StatCard title="Avg Behavior" value={stats.avgRating} tone="text-blue-600" />
+        </div>
 
-        {/* Report Generator Card */}
-        <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition-all hover:shadow-md">
-          <div className="mb-8 flex items-center justify-between">
-            <div className="space-y-1">
-              <h2 className="text-xl font-bold text-[#00154A]">
-                Generate Inmate Progress Report
+        {/* Generation Form */}
+        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition-all hover:shadow-md">
+          <div className="mb-10 flex items-center justify-between">
+            <div className="space-y-1 text-left">
+              <h2 className="font-lexend text-xl font-bold text-slate-900 leading-tight">
+                Export Progress Data
               </h2>
               <p className="text-sm text-slate-500">
-                Download a comprehensive CSV report of inmate program progress and behavior evaluations
+                Configure your filters and export a comprehensive CSV report for external analysis.
               </p>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400">
-              <FileDown className="h-5 w-5" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
+              <FileDown className="h-6 w-6" />
             </div>
           </div>
 
           <div className="space-y-8">
             <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
               <div className="md:col-span-12">
-                <p className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-400">
-                  Filter Report By:
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 text-left">
+                  Report Filtering Bounds
                 </p>
               </div>
 
               {/* Start Date */}
-              <div className="md:col-span-4">
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+              <div className="md:col-span-3 flex flex-col gap-2">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 font-lexend text-left">
                   Start Date
                 </label>
-                <div className="relative">
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 pr-10 text-slate-600 transition-all focus:border-blue-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-50/50"
-                  />
-                  <Calendar className="absolute right-3 top-3.5 h-4 w-4 text-slate-400 pointer-events-none" />
-                </div>
+                <DatePickerField
+                  id="start_date"
+                  value={startDate}
+                  onSelect={(date) => {
+                    setStartDate(date ? format(date, "yyyy-MM-dd") : "");
+                    setFilterMonth(""); // Clear month if specific dates selected
+                  }}
+                  placeholder="Select opening date..."
+                />
               </div>
 
               {/* End Date */}
-              <div className="md:col-span-4">
-                <label className="mb-2 block text-sm font-medium text-slate-700">
+              <div className="md:col-span-3 flex flex-col gap-2">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 font-lexend text-left">
                   End Date
                 </label>
-                <div className="relative">
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 pr-10 text-slate-600 transition-all focus:border-blue-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-50/50"
-                  />
-                  <Calendar className="absolute right-3 top-3.5 h-4 w-4 text-slate-400 pointer-events-none" />
-                </div>
+                <DatePickerField
+                  id="end_date"
+                  value={endDate}
+                  onSelect={(date) => {
+                    setEndDate(date ? format(date, "yyyy-MM-dd") : "");
+                    setFilterMonth("");
+                  }}
+                  placeholder="Select closing date..."
+                />
               </div>
 
               {/* Month Filter */}
-              <div className="md:col-span-4">
-                <label className="mb-2 block text-sm font-medium text-slate-700">
-                  Or Filter by Month
+              <div className="md:col-span-3 flex flex-col gap-2">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 font-lexend text-left">
+                  Month Interval
                 </label>
                 <div className="relative">
                   <input
                     type="month"
                     value={filterMonth}
-                    onChange={(e) => setFilterMonth(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 pr-10 text-slate-600 transition-all focus:border-blue-300 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-50/50"
-                    placeholder="-------- ----"
+                    onChange={(e) => {
+                      setFilterMonth(e.target.value);
+                      setStartDate(""); // Clear specific dates if month selected
+                      setEndDate("");
+                    }}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-700 outline-none transition hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-teal-500"
                   />
-                  <Calendar className="absolute right-3 top-3.5 h-4 w-4 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Status Filter */}
+              <div className="md:col-span-3 flex flex-col gap-2">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 font-lexend text-left">
+                  Progress Status
+                </label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-700 outline-none transition hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-teal-500 cursor-pointer"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="Ongoing">Ongoing Only</option>
+                  <option value="Completed">Completed Only</option>
+                  <option value="Dropped">Dropped Only</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-blue-50 bg-blue-50/30 p-5">
+              <div className="flex items-start gap-4">
+                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-blue-600 shadow-xs">
+                  <Info className="h-4 w-4" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide text-left">Dataset Schema</h4>
+                  <p className="text-xs leading-relaxed text-slate-500 text-left">
+                    Report exports include inmate rosters, progress timestamps, behavior scores, and case notes formatted as compliant CSV for easy spreadsheet integration.
+                  </p>
                 </div>
               </div>
             </div>
 
-            <p className="text-xs italic text-slate-400">
-              Tip: Use Start/End dates for inclusive date range filtering, or use the Month filter for a specific month
-            </p>
-
-            <div className="flex flex-wrap items-center gap-4 pt-2">
+            <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-slate-100">
               <Button 
-                onClick={handleDownload}
-                className="h-12 rounded-xl bg-[#2952b3] px-8 font-semibold text-white shadow-lg shadow-blue-900/10 transition-all hover:bg-[#1a3a8a] hover:shadow-xl active:scale-[0.98]"
+                onClick={handleGenerateReport}
+                disabled={isGenerating}
+                className="cursor-pointer h-12 rounded-xl bg-teal-700 px-8 font-semibold text-white shadow-lg shadow-teal-900/10 transition-all hover:bg-teal-800 hover:shadow-xl active:scale-[0.98] disabled:opacity-70 disabled:cursor-wait"
               >
-                <FileDown className="mr-2 h-5 w-5" />
-                Download CSV Report
+                {isGenerating ? (
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                ) : (
+                  <FileDown className="mr-2 h-5 w-5" />
+                )}
+                {isGenerating ? "Processing..." : "Generate Printable Report"}
               </Button>
               <Button
                 variant="outline"
                 onClick={handleClearFilters}
-                className="h-12 rounded-xl border-slate-200 bg-white px-8 font-medium text-slate-600 transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-[0.98]"
+                className="cursor-pointer h-12 rounded-xl border-slate-200 bg-white px-8 font-medium text-slate-600 transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-[0.98]"
               >
                 <XCircle className="mr-2 h-5 w-5" />
-                Clear Filters
+                Clear All
               </Button>
             </div>
           </div>
-
-          {/* Report Contents Info Box */}
-          <div className="mt-12 rounded-2xl border border-blue-50 bg-blue-50/30 p-6">
-            <div className="flex items-start gap-4">
-              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100/50 text-blue-600">
-                <Info className="h-5 w-5" />
-              </div>
-              <div className="space-y-1">
-                <h4 className="font-semibold text-slate-800">Report Contents</h4>
-                <p className="text-sm leading-relaxed text-slate-600">
-                  The report includes inmate names, program details, progress status, behavior ratings, and evaluation notes in CSV format for easy analysis.
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
+        </div>
+      </section>
     </RehabSidebarLayout>
   );
 }
