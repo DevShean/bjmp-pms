@@ -286,10 +286,10 @@ export default function AdminPage() {
                 />
                 <QuickAction 
                   title="Database Health" 
-                  desc="System integrity status" 
+                  desc={dbStatus === "stable" ? "All Systems Operational" : dbStatus === "checking" ? "Verifying integrity..." : "Connection Unstable"} 
                   icon={Database} 
-                  href="#" 
-                  color="bg-emerald-600" 
+                  href="/admin-page/audit-logs" 
+                  color={dbStatus === "stable" ? "bg-emerald-600" : dbStatus === "checking" ? "bg-slate-400" : "bg-rose-600"} 
                 />
               </div>
             </div>

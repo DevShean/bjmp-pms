@@ -404,7 +404,7 @@ export default function VisitationRequestsPage() {
             ) : (
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/60">
+                  <tr className="border-b border-slate-100 bg-slate-100">
                     <th className="py-3 pl-6 pr-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                       Visitor / Relation
                     </th>
@@ -428,7 +428,7 @@ export default function VisitationRequestsPage() {
                 <tbody className="divide-y divide-slate-100">
                   {paginatedRequests.map((req, idx) => {
                     const isProcessing = processingId === req.visitId;
-                    const zebra = idx % 2 === 0 ? "bg-white" : "bg-slate-50/40";
+                    const zebra = idx % 2 === 0 ? "bg-white" : "bg-slate-200";
                     return (
                       <tr key={req.visitId} className={`${zebra} transition-colors hover:bg-blue-50/30`}>
                         {/* Visitor */}
