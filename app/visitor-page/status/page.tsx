@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabase/client";
 import { toast } from "sonner";
-import { Loader2, ShieldCheck, Clock, CheckCircle2, XCircle, Search, Filter, Lock, Calendar } from "lucide-react";
+import { Loader2, ShieldCheck, Clock, CheckCircle2, XCircle, Search, Filter, Lock } from "lucide-react";
 import { useVisitor } from "../layout";
 
 type VisitRecord = {
@@ -224,10 +224,10 @@ export default function VisitStatusPage() {
                 No requests found matching your criteria.
               </div>
             ) : (
-              <>
-                <table className="w-full text-sm text-left hidden md:table">
+              <div className="overflow-x-auto pb-4 scrollbar-thin scrollbar-track-slate-50 scrollbar-thumb-slate-200">
+                <table className="w-full text-sm text-left min-w-[700px]">
                   <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50/60">
+                    <tr className="border-b border-slate-100 bg-slate-100">
                       <th className="py-3 pl-6 pr-4 font-semibold uppercase tracking-wide text-slate-500 text-[10px]">
                         Visit Details
                       </th>
@@ -244,7 +244,7 @@ export default function VisitStatusPage() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {paginatedRequests.map((req, idx) => (
-                      <tr key={req.visitId} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50/40"} hover:bg-blue-50/30 transition-colors`}>
+                      <tr key={req.visitId} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-200"} hover:bg-blue-50/30 transition-colors`}>
                         <td className="py-4 pl-6 pr-4">
                           <p className="font-medium text-slate-800">{req.visitType}</p>
                           <p className="text-xs text-slate-500 mt-0.5">Visiting: <span className="font-medium">{req.inmateName}</span></p>
@@ -272,45 +272,7 @@ export default function VisitStatusPage() {
                     ))}
                   </tbody>
                 </table>
-
-                <div className="md:hidden flex flex-col divide-y divide-slate-100">
-                  {paginatedRequests.map((req) => (
-                    <div key={req.visitId} className="flex flex-col gap-4 p-5 bg-white hover:bg-slate-50/50 transition-colors">
-                      <div className="flex justify-between items-start gap-3">
-                        <div className="min-w-0">
-                          <p className="font-semibold text-slate-800 text-sm leading-tight truncate">{req.visitType}</p>
-                          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
-                            Visiting: <span className="font-bold text-slate-700">{req.inmateName}</span>
-                          </p>
-                        </div>
-                        <div className="shrink-0 scale-90 origin-top-right">
-                          <StatusBadge status={req.status} requiresGuardianApproval={req.requiresGuardianApproval} />
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-xl bg-slate-50/80 p-3.5 border border-slate-100/50">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Appointment</span>
-                          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-                            <Calendar className="h-3.5 w-3.5 text-blue-500" />
-                            {new Date(req.scheduledDate).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })}
-                          </div>
-                          <div className="flex items-center gap-1.5 text-[10px] font-medium text-slate-500 mt-0.5">
-                            <Clock className="h-3 w-3" />
-                            {new Date(req.scheduledDate).toLocaleTimeString("en-PH", { hour: "numeric", minute: "2-digit" })}
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-0.5 border-l border-slate-200 pl-6">
-                          <span className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Submitted</span>
-                          <p className="text-xs font-medium text-slate-600">
-                            {new Date(req.createdAt).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
+              </div>
             )}
           </div>
 
