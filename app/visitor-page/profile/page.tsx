@@ -26,6 +26,8 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useVisitor } from "../layout";
+import { CropImageDialog } from "@/components/CropImageDialog";
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -88,6 +90,9 @@ export default function ProfilePage() {
   });
 
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [isCropDialogOpen, setIsCropDialogOpen] = useState(false);
+
 
   useEffect(() => {
     if (!sessionUser) return;
@@ -169,34 +174,51 @@ export default function ProfilePage() {
   const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0 || !sessionUser) return;
     const file = e.target.files[0];
+    
+    // Create preview URL for the cropper
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImageToCrop(reader.result as string);
+      setIsCropDialogOpen(true);
+    };
+    reader.readAsDataURL(file);
+    
+    // Reset input value so same file can be picked again
+    e.target.value = "";
+  };
+
+  const handleCropComplete = async (croppedImageBlob: Blob) => {
+    if (!sessionUser) return;
 
     try {
       setIsUploadingPhoto(true);
-      const fileExt = file.name.split(".").pop();
+      const fileExt = "jpg"; // We export as jpeg from getCroppedImg
       const fileName = `${sessionUser.userId}-${Date.now()}.${fileExt}`;
       const filePath = `visitors/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("profiles")
-        .upload(filePath, file);
+        .upload(filePath, croppedImageBlob, {
+          contentType: "image/jpeg",
+        });
 
       if (uploadError) throw uploadError;
 
       if (profile.photo_url && profile.photo_url.includes("profiles")) {
         try {
-            let oldPath = "";
-            if (profile.photo_url.startsWith("http")) {
-                const url = new URL(profile.photo_url);
-                const pathSegments = url.pathname.split("profiles/");
-                if (pathSegments.length > 1) {
-                    oldPath = decodeURIComponent(pathSegments[1]);
-                }
+          let oldPath = "";
+          if (profile.photo_url.startsWith("http")) {
+            const url = new URL(profile.photo_url);
+            const pathSegments = url.pathname.split("profiles/");
+            if (pathSegments.length > 1) {
+              oldPath = decodeURIComponent(pathSegments[1]);
             }
-            if (oldPath) {
-                await supabase.storage.from("profiles").remove([oldPath]);
-            }
+          }
+          if (oldPath) {
+            await supabase.storage.from("profiles").remove([oldPath]);
+          }
         } catch (e) {
-            console.error("Failed to parse or delete old photo:", e);
+          console.error("Failed to parse or delete old photo:", e);
         }
       }
 
@@ -219,9 +241,10 @@ export default function ProfilePage() {
       toast.error("Failed to upload photo. Please try again.");
     } finally {
       setIsUploadingPhoto(false);
-      e.target.value = "";
+      setImageToCrop(null);
     }
   };
+
 
   const handleSendCode = async () => {
     if (!sessionUser) return;
@@ -662,6 +685,12 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+      <CropImageDialog
+        image={imageToCrop}
+        open={isCropDialogOpen}
+        onOpenChange={setIsCropDialogOpen}
+        onCropComplete={handleCropComplete}
+      />
     </main>
   );
 }

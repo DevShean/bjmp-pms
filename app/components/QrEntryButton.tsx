@@ -39,7 +39,7 @@ export default function QrEntryButton({
       `,
       confirmButtonText: "Close",
       confirmButtonColor: "#1e4b8f",
-      width: 420,
+      width: "min(420px, 92vw)",
     });
   };
 
