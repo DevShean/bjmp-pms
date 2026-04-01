@@ -107,7 +107,7 @@ export default function UserDataTable({ data, onEdit, onDelete }: UserDataTableP
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-slate-200">
-          <thead className="bg-slate-50">
+          <thead className="bg-slate-100">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (

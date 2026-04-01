@@ -145,17 +145,17 @@ export default function UserManagementPage() {
 
   return (
     <AdminSidebarLayout>
-      <div className="flex flex-col gap-6 p-2 md:p-6 w-full">
+      <section className="space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="flex flex-col gap-2">
-            <h1 className="font-lexend text-3xl font-semibold text-slate-800 flex items-center gap-3">
+            <h1 className="font-lexend text-2xl font-semibold text-slate-800 flex items-center gap-3 sm:text-3xl">
               User Management
-              <UserCog className="text-teal-700" size={32} />
+              <UserCog className="text-teal-700 shrink-0" size={32} />
             </h1>
-            <p className="text-sm text-slate-600">
+            <p className="mt-1 text-sm text-slate-600">
               Manage staff accounts, administrative roles, and system access permissions.
             </p>
-            <div className="inline-flex bg-slate-100/80 p-1 rounded-xl border border-slate-200/50 w-fit">
+            <div className="inline-flex mt-2 bg-slate-100/80 p-1 rounded-xl border border-slate-200/50 w-fit">
               <button
                 onClick={() => setViewMode("Staff")}
                 className={`cursor-pointer px-4 py-1.5 text-sm font-medium rounded-lg transition-all ${
@@ -239,7 +239,7 @@ export default function UserManagementPage() {
             />
           )}
         </div>
-      </div>
+      </section>
 
       <AddUserModal
         isOpen={isModalOpen}

@@ -225,7 +225,7 @@ export default function ProgramTable({ data, onEdit }: ProgramTableProps) {
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
+            <thead className="bg-slate-100">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
@@ -235,9 +235,9 @@ export default function ProgramTable({ data, onEdit }: ProgramTableProps) {
                       <th
                         key={header.id}
                         className={`px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 ${
-                          isInmate ? "sticky left-0 z-20 bg-slate-50 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.1)]" : ""
+                          isInmate ? "sticky left-0 z-20 bg-slate-100 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.1)]" : ""
                         } ${
-                          isActions ? "sticky right-0 z-20 bg-slate-50 shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)]" : ""
+                          isActions ? "sticky right-0 z-20 bg-slate-100 shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)]" : ""
                         }`}
                       >
                         {header.isPlaceholder
@@ -262,14 +262,15 @@ export default function ProgramTable({ data, onEdit }: ProgramTableProps) {
                     {row.getVisibleCells().map((cell) => {
                       const isInmate = cell.column.id === "inmateName";
                       const isActions = cell.column.id === "actions";
+                      const zebra = row.index % 2 === 0 ? "bg-white" : "bg-slate-200";
                       
                       return (
                         <td
                           key={cell.id}
-                          className={`whitespace-nowrap px-5 py-3.5 text-sm text-slate-700 transition-colors ${
-                            isInmate ? `sticky left-0 z-10 bg-inherit shadow-[4px_0_10px_-4px_rgba(0,0,0,0.1)] group-hover:bg-teal-50` : ""
+                          className={`whitespace-nowrap px-5 py-3.5 text-sm text-slate-700 transition-colors ${zebra} ${
+                            isInmate ? `sticky left-0 z-10 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.1)] group-hover:bg-teal-50` : ""
                           } ${
-                            isActions ? `sticky right-0 z-10 bg-inherit shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)] group-hover:bg-teal-50` : ""
+                            isActions ? `sticky right-0 z-10 shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)] group-hover:bg-teal-50` : ""
                           } ${!isInmate && !isActions ? `group-hover:bg-teal-50/50` : ""}`}
                         >
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}

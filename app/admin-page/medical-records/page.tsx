@@ -13,15 +13,13 @@ import {
 export default function MedicalRecordsPage() {
   return (
     <AdminSidebarLayout>
-      <div className="flex flex-col gap-6 w-full">
-        <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white px-5 py-6 shadow-sm md:flex-row md:items-center md:justify-between sm:px-8">
-          <div>
-            <h1 className="font-lexend text-2xl font-semibold text-slate-800 flex items-center gap-3 sm:text-3xl">
-              Medical Records
-              <BriefcaseMedical size={32} className="text-teal-600 shrink-0" />
-            </h1>
-            <p className="mt-1 text-sm text-slate-600">Track inmate health checkups, diagnoses, and medical requirements</p>
-          </div>
+      <section className="space-y-6">
+        <div>
+          <h1 className="font-lexend text-2xl font-semibold text-slate-800 flex items-center gap-3 sm:text-3xl">
+            Medical Records
+            <BriefcaseMedical size={32} className="text-teal-600 shrink-0" />
+          </h1>
+          <p className="mt-1 text-sm text-slate-600">Track inmate health checkups, diagnoses, and medical requirements</p>
         </div>
 
         {/* Filter Section */}
@@ -140,7 +138,7 @@ export default function MedicalRecordsPage() {
 
           </div>
         </div>
-      </div>
+      </section>
     </AdminSidebarLayout>
   );
 }
