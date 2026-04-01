@@ -124,14 +124,14 @@ export function CropImageDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="w-full sm:flex-1 h-11 rounded-xl border-slate-200 font-medium text-slate-600 hover:bg-slate-50"
+            className="cursor-pointer w-full sm:flex-1 h-11 rounded-xl border-slate-200 font-medium text-slate-600 hover:bg-slate-50"
           >
             Cancel
           </Button>
           <Button
             onClick={handleCrop}
             disabled={isCropping}
-            className="w-full sm:flex-1 h-11 rounded-xl bg-blue-600 font-bold text-white shadow-lg shadow-blue-200 hover:bg-blue-700 disabled:opacity-70"
+            className="cursor-pointer w-full sm:flex-1 h-11 rounded-xl bg-blue-600 font-bold text-white shadow-lg shadow-blue-200 hover:bg-blue-700 disabled:opacity-70"
           >
             {isCropping ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
