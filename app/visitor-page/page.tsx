@@ -358,79 +358,49 @@ export default function VisitorPage() {
                   History is empty. You have not submitted any visitation requests yet.
                 </div>
               ) : (
-                <div className="w-full">
-                  <table className="w-full text-xs text-left hidden md:table">
-                    <thead>
-                      <tr className="border-b border-slate-100 bg-slate-50/80">
-                        <th className="py-3.5 pl-6 pr-4 font-semibold uppercase tracking-wider text-slate-500 text-[10px]">
-                          Visit Details
-                        </th>
-                        <th className="px-4 py-3.5 font-semibold uppercase tracking-wider text-slate-500 text-[10px]">
-                          Requested Date
-                        </th>
-                        <th className="px-4 py-3.5 font-semibold uppercase tracking-wider text-slate-500 text-[10px]">
-                          Status
-                        </th>
-                        <th className="py-3.5 pl-4 pr-6 text-right font-semibold uppercase tracking-wider text-slate-500 text-[10px]">
-                          Submitted On
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {paginatedVisits.map((req, idx) => (
-                        <tr key={req.visitId} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50/30"} hover:bg-blue-50/30 transition-colors`}>
-                          <td className="py-3.5 pl-6 pr-4">
-                            <p className="font-semibold text-slate-800 text-xs">{req.visitType}</p>
-                            <p className="text-[10px] text-slate-500 mt-0.5">Visiting: <span className="font-medium text-slate-600">{req.inmateName}</span></p>
-                          </td>
-                          <td className="px-4 py-3.5">
-                            <p className="font-medium text-slate-700">
-                              {new Date(req.scheduledDate).toLocaleDateString("en-PH", {
-                                year: "numeric", month: "short", day: "numeric"
-                              })}
-                            </p>
-                          </td>
-                          <td className="px-4 py-3.5">
-                            <StatusBadge status={req.status} requiresGuardianApproval={req.requiresGuardianApproval} />
-                          </td>
-                          <td className="py-3.5 pl-4 pr-6 text-right text-[10px] text-slate-400 font-medium">
-                            {new Date(req.createdAt).toLocaleDateString("en-PH", { month: "short", day: "numeric" })}
-                          </td>
+                <>
+                  <div className="w-full overflow-x-auto pb-4 scrollbar-thin scrollbar-track-slate-50 scrollbar-thumb-slate-200">
+                    <table className="w-full text-xs text-left min-w-[600px]">
+                      <thead>
+                        <tr className="border-b border-slate-100 bg-slate-100">
+                          <th className="py-3.5 pl-6 pr-4 font-semibold uppercase tracking-wider text-slate-500 text-[10px]">
+                            Visit Details
+                          </th>
+                          <th className="px-4 py-3.5 font-semibold uppercase tracking-wider text-slate-500 text-[10px]">
+                            Requested Date
+                          </th>
+                          <th className="px-4 py-3.5 font-semibold uppercase tracking-wider text-slate-500 text-[10px]">
+                            Status
+                          </th>
+                          <th className="py-3.5 pl-4 pr-6 text-right font-semibold uppercase tracking-wider text-slate-500 text-[10px]">
+                            Submitted On
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  
-                  <div className="md:hidden flex flex-col divide-y divide-slate-100">
-                    {paginatedVisits.map((req) => (
-                      <div key={req.visitId} className="flex flex-col gap-3 p-4 bg-white hover:bg-slate-50/50 transition-colors">
-                        <div className="flex justify-between items-start gap-3">
-                          <div className="min-w-0">
-                            <p className="font-semibold text-slate-800 text-sm leading-tight truncate">{req.visitType}</p>
-                            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
-                              Visiting: <span className="font-bold text-slate-700">{req.inmateName}</span>
-                            </p>
-                          </div>
-                          <div className="shrink-0 scale-90 origin-top-right">
-                            <StatusBadge status={req.status} requiresGuardianApproval={req.requiresGuardianApproval} />
-                          </div>
-                        </div>
-                        <div className="flex justify-between items-end border-t border-slate-50 pt-3 mt-1">
-                          <div>
-                            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold mb-0.5">Requested Date</p>
-                            <p className="font-medium text-slate-700 text-sm">
-                              {new Date(req.scheduledDate).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold mb-0.5">Submitted On</p>
-                            <p className="text-xs text-slate-400 font-medium">
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {paginatedVisits.map((req, idx) => (
+                          <tr key={req.visitId} className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-200"} hover:bg-blue-50/30 transition-colors`}>
+                            <td className="py-3.5 pl-6 pr-4">
+                              <p className="font-semibold text-slate-800 text-xs">{req.visitType}</p>
+                              <p className="text-[10px] text-slate-500 mt-0.5">Visiting: <span className="font-medium text-slate-600">{req.inmateName}</span></p>
+                            </td>
+                            <td className="px-4 py-3.5">
+                              <p className="font-medium text-slate-700">
+                                {new Date(req.scheduledDate).toLocaleDateString("en-PH", {
+                                  year: "numeric", month: "short", day: "numeric"
+                                })}
+                              </p>
+                            </td>
+                            <td className="px-4 py-3.5">
+                              <StatusBadge status={req.status} requiresGuardianApproval={req.requiresGuardianApproval} />
+                            </td>
+                            <td className="py-3.5 pl-4 pr-6 text-right text-[10px] text-slate-400 font-medium">
                               {new Date(req.createdAt).toLocaleDateString("en-PH", { month: "short", day: "numeric" })}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
 
                   <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3 bg-white">
@@ -467,8 +437,9 @@ export default function VisitorPage() {
                       </button>
                     </div>
                   </div>
-                </div>
-              )}
+                </>
+              )
+              }
             </div>
           </div>
         </div>
