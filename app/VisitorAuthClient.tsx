@@ -2,11 +2,10 @@
 
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import {
-  ArrowRight,
-  CircleHelp,
   Construction,
   Eye,
   EyeOff,
+  Facebook,
   LockKeyhole,
   LogIn,
   Mail,
@@ -45,12 +44,12 @@ type UserRoleRecord = {
 
 const authCopy = {
   login: {
-    title: "Visitor Sign In",
-    description: "Access your visit requests, schedules, and approval status.",
+    heading: "Welcome Back",
+    description: "Sign in to access the BJMP Visitor Dashboard",
   },
   register: {
-    title: "Visitor Registration",
-    description: "Create a visitor profile to request and manage facility visits.",
+    heading: "Create Account",
+    description: "Register a visitor profile to request facility visits",
   },
 } as const;
 
@@ -78,47 +77,13 @@ export default function VisitorAuthClient() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-5 py-6 sm:px-8 sm:py-8">
-      <main className="glass-panel animate-rise-in grid w-full max-w-5xl overflow-hidden rounded-4xl shadow-[0_24px_70px_-28px_rgba(24,49,92,0.48)] lg:grid-cols-[1.1fr_1fr]">
-        {/* ── Left panel ── */}
-        <section
-          className="relative hidden bg-cover bg-center p-10 text-white lg:flex lg:flex-col lg:justify-between"
-          style={{ backgroundImage: "url('/img/images/jailbureau-bg.png')" }}
-        >
-          <div className="absolute inset-0 bg-black/40" />
-          <div className="relative space-y-5">
-            <div className="inline-flex items-center rounded-full border border-white/35 px-4 py-1 text-xs tracking-[0.2em] uppercase">
-              Bureau of Jail Management and Penology
-            </div>
-            <h1 className="font-lexend max-w-sm text-4xl leading-tight font-bold">
-              Visitor Management Portal
-            </h1>
-            <p className="max-w-md text-sm leading-7 text-blue-100">
-              Register visitors, review scheduled visits, and keep facility entry records organized
-              in one secure portal.
-            </p>
-          </div>
-          <div className="relative grid gap-4 text-sm text-blue-50">
-            <article className="rounded-2xl border border-white/20 bg-white/10 p-4">
-              <p className="font-lexend text-base font-semibold">Visit Scheduling</p>
-              <p className="mt-1 text-blue-100">
-                Track approved appointments, preferred dates, and visit windows.
-              </p>
-            </article>
-            <article className="rounded-2xl border border-white/20 bg-white/10 p-4">
-              <p className="font-lexend text-base font-semibold">Identity Verification</p>
-              <p className="mt-1 text-blue-100">
-                Store visitor identity details for faster screening and gate checks.
-              </p>
-            </article>
-          </div>
-        </section>
-
-        {/* ── Right panel ── */}
-        <section className="bg-(--surface) p-6 sm:p-8">
-          <div className="mx-auto w-full max-w-md space-y-5">
+    <div className="h-screen overflow-hidden">
+      <main className="animate-rise-in grid h-screen lg:grid-cols-[0.8fr_1.2fr]">
+        {/* ── Left panel — Form ── */}
+        <section className="flex items-center justify-center overflow-y-auto bg-(--surface) p-8 sm:p-10 lg:p-12">
+          <div className="mx-auto flex h-full w-full max-w-md flex-col">
             {/* Logo + heading */}
-            <div className="space-y-3 text-center">
+            <div className="space-y-1 text-center">
               <motion.div
                 animate={{ scale: 1, opacity: 1 }}
                 initial={{ scale: 0.94, opacity: 0 }}
@@ -127,12 +92,16 @@ export default function VisitorAuthClient() {
                 <Image
                   src="/img/logo/logo.png"
                   alt="BJMP Logo"
-                  width={86}
-                  height={86}
-                  className="mx-auto h-21.5 w-21.5 object-contain"
+                  width={78}
+                  height={78}
+                  className="mx-auto h-19.5 w-19.5 object-contain"
                   priority
                 />
+                <p className="font-lexend mt-1 text-sm font-bold tracking-wide text-[#1a2744]">
+                  BJMP - PMS
+                </p>
               </motion.div>
+
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
                   key={activeTab}
@@ -141,17 +110,19 @@ export default function VisitorAuthClient() {
                   exit={{ opacity: 0, y: shouldReduceMotion ? 0 : -10 }}
                   transition={contentTransition}
                 >
-                  <h2 className="font-lexend text-4xl font-bold tracking-tight text-primary">
-                    {authCopy[activeTab].title}
+                  <h2 className="font-lexend text-3xl font-bold tracking-tight text-[#1a2744]">
+                    {authCopy[activeTab].heading}
                   </h2>
-                  <p className="mt-2 text-sm text-[#5f6f8f]">{authCopy[activeTab].description}</p>
+                  <p className="mt-1.5 text-sm text-[#5f6f8f]">
+                    {authCopy[activeTab].description}
+                  </p>
                 </motion.div>
               </AnimatePresence>
             </div>
 
             {/* Tab switcher */}
             <LayoutGroup id="auth-tabs">
-              <div className="relative grid grid-cols-2 gap-2 rounded-xl bg-(--primary-soft) p-1.5">
+              <div className="relative mt-5 grid grid-cols-2 gap-2 rounded-xl bg-(--primary-soft) p-1.5">
                 <AuthTabButton
                   active={activeTab === "login"}
                   onClick={() => setActiveTab("login")}
@@ -172,7 +143,7 @@ export default function VisitorAuthClient() {
             </LayoutGroup>
 
             {/* Forms */}
-            <div className="relative min-h-96 sm:min-h-92">
+            <div className="relative mt-5 flex-1">
               <AnimatePresence mode="wait" initial={false}>
                 {activeTab === "login" ? (
                   <motion.div
@@ -198,8 +169,60 @@ export default function VisitorAuthClient() {
               </AnimatePresence>
             </div>
 
-            <p className="text-center text-xs text-[#64718f]">
-              2026 BJMP Visitor Portal. Registration is subject to facility approval.
+            {/* Footer — contact icons */}
+            <div className="mt-6 flex flex-col items-center gap-2">
+              <p className="text-xs text-[#64718f]">Get in touch with us</p>
+              <div className="flex gap-3">
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-(--line) text-[#5f6f8f] transition hover:bg-(--primary-soft) hover:text-(--primary-accent)">
+                  <Mail size={16} aria-hidden="true" />
+                </span>
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-(--line) text-[#5f6f8f] transition hover:bg-(--primary-soft) hover:text-(--primary-accent)">
+                  <Facebook size={16} aria-hidden="true" />
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Right panel — Branding ── */}
+        <section
+          className="relative hidden overflow-hidden bg-cover bg-center p-10 text-white lg:flex lg:flex-col lg:justify-between"
+          style={{ backgroundImage: "url('/img/images/jailbureau-bg.png')" }}
+        >
+          <div className="absolute inset-0 bg-linear-to-br from-[#0c1e44]/70 via-[#0f2b5e]/60 to-[#0c1e44]/70" />
+
+          {/* Top */}
+          <div className="relative space-y-5">
+            <div className="inline-flex items-center rounded-full bg-[#2563eb] px-5 py-1.5 text-xs font-semibold tracking-[0.15em] uppercase text-white shadow">
+              Welcome to BJMP-PMS
+            </div>
+            <h1 className="font-lexend max-w-md text-4xl leading-tight font-bold">
+              Bureau of Jail Management{" "}
+              <span className="text-[#60a5fa]">and Penology</span>
+            </h1>
+            <div className="flex flex-wrap gap-2 text-xs font-semibold">
+              <span className="rounded-md bg-white/10 px-3 py-1.5 backdrop-blur">
+                Visitor Portal
+              </span>
+              <span className="rounded-md bg-[#2563eb] px-3 py-1.5 shadow">
+                Penology Management
+              </span>
+              <span className="rounded-md bg-white/10 px-3 py-1.5 backdrop-blur">
+                Information System
+              </span>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="relative space-y-4">
+            <p className="max-w-lg text-sm leading-7 text-blue-100">
+              The BJMP Penology Management System is an integrated online platform that streamlines
+              visitor registration, inmate records management, rehabilitation programs, and facility
+              operations — promoting transparency, accountability, and efficient jail management.
+            </p>
+            <p className="text-xs text-blue-200/70">
+              Bureau of Jail Management and Penology — Department of the Interior and Local
+              Government
             </p>
           </div>
         </section>
@@ -307,13 +330,13 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   };
 
   return (
-    <form className="flex min-h-96 flex-col gap-4 sm:min-h-92" onSubmit={onSubmit} noValidate>
+    <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
       <InputField
         id="email"
-        label="Email Address"
+        label="Username or Email Address"
         type="email"
-        placeholder="Enter your email address"
-        icon={<Mail size={18} aria-hidden="true" />}
+        placeholder="Enter your username/email"
+        icon={<UserRound size={18} aria-hidden="true" />}
         disabled={isSubmitting}
       />
       <InputField
@@ -326,12 +349,18 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
       />
 
       <div className="flex items-center justify-between text-sm">
+        <label className="inline-flex cursor-pointer items-center gap-2 text-[#5f6f8f]">
+          <input
+            type="checkbox"
+            className="h-4 w-4 rounded border-[#cad4e8] accent-(--primary-accent)"
+          />
+          <span>Remember me</span>
+        </label>
         <Dialog>
           <DialogTrigger
-            className="cursor-pointer inline-flex items-center gap-1 font-semibold text-primary hover:underline"
+            className="cursor-pointer inline-flex items-center gap-1 font-semibold text-(--primary-accent) hover:underline"
           >
-            <CircleHelp size={14} aria-hidden="true" />
-            Forgot Password?
+            Forgot password?
           </DialogTrigger>
           <DialogContent className="sm:max-w-md gap-3 overflow-hidden" showCloseButton={false}>
             {/* Decorative top gradient bar */}
@@ -381,7 +410,7 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="font-lexend flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-base font-semibold text-white transition hover:bg-[#0a1f49] disabled:cursor-not-allowed disabled:opacity-70"
+        className="font-lexend flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#2563eb] px-4 py-3.5 text-base font-semibold text-white shadow-lg shadow-blue-500/25 transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-70"
       >
         <LogIn size={18} aria-hidden="true" />
         {isSubmitting ? "Signing in…" : "Sign In"}
@@ -489,7 +518,7 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
   };
 
   return (
-    <form className="flex min-h-96 flex-col gap-4 sm:min-h-92" onSubmit={onSubmit} noValidate>
+    <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>
       <InputField
         id="userName"
         label="Username"
@@ -523,16 +552,14 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
         disabled={isSubmitting}
       />
 
-      <div className="mt-auto pt-2">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="cursor-pointer font-lexend flex w-full items-center justify-center gap-2 rounded-xl bg-(--success) px-4 py-3 text-base font-semibold text-white transition hover:bg-[#285f31] disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          <ArrowRight size={18} aria-hidden="true" />
-          {isSubmitting ? "Registering…" : "Register"}
-        </button>
-      </div>
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="cursor-pointer font-lexend flex w-full items-center justify-center gap-2 rounded-xl bg-[#2563eb] px-4 py-3.5 text-base font-semibold text-white shadow-lg shadow-blue-500/25 transition hover:bg-[#1d4ed8] disabled:cursor-not-allowed disabled:opacity-70"
+      >
+        <UserPlus size={18} aria-hidden="true" />
+        {isSubmitting ? "Registering…" : "Register"}
+      </button>
     </form>
   );
 }
@@ -555,22 +582,19 @@ function InputField({ id, label, type, placeholder, icon, disabled = false }: In
 
   return (
     <label className="space-y-2 text-sm" htmlFor={id}>
-      <span className="font-lexend text-primary">{label}</span>
+      <span className="font-lexend inline-flex items-center gap-1.5 text-[#1a2744]">
+        {icon ? <span className="text-[#8191b3]">{icon}</span> : null}
+        {label}
+      </span>
       <div className="relative">
-        {icon ? (
-          <span className="pointer-events-none absolute inset-y-0 left-3 inline-flex items-center text-[#8191b3]">
-            {icon}
-          </span>
-        ) : null}
         <input
           id={id}
           name={id}
           type={resolvedType}
           placeholder={placeholder}
           disabled={disabled}
-          className="w-full rounded-xl border border-(--line) bg-(--surface-strong) px-3 py-3 text-[#2f3d5b] outline-none transition placeholder:text-[#9fa9bf] focus:border-(--primary-accent) focus:ring-2 focus:ring-[#c3d4f8] disabled:opacity-60"
+          className="w-full rounded-xl border border-(--line) bg-(--surface-strong) px-4 py-3 text-[#2f3d5b] outline-none transition placeholder:text-[#9fa9bf] focus:border-(--primary-accent) focus:ring-2 focus:ring-[#c3d4f8] disabled:opacity-60"
           style={{
-            ...(icon ? { paddingLeft: "2.55rem" } : {}),
             ...(isPassword ? { paddingRight: "2.85rem" } : {}),
           }}
         />
