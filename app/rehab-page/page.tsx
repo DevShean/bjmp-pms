@@ -38,26 +38,28 @@ function StatCard({
   href: string;
 }) {
   return (
-    <Link href={href} className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-teal-200 hover:shadow-md active:scale-[0.98]">
+    <Link href={href} className="group relative flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-teal-200 hover:shadow-md active:scale-[0.98]">
       <div className={`absolute -right-4 -top-4 size-24 rounded-full opacity-5 transition-transform group-hover:scale-110 ${color.replace('text-', 'bg-')}`} />
       
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm font-medium text-slate-500">{title}</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{value}</p>
-          {trend && (
-            <div className="mt-2 flex items-center gap-1 text-xs font-medium text-emerald-600">
-              <TrendingUp size={12} />
-              <span>{trend}</span>
-            </div>
-          )}
+          <div className="mt-2 flex items-center gap-2">
+            <p className="text-3xl font-bold text-slate-900">{value}</p>
+            {trend && (
+              <div className="flex items-center gap-1 text-xs font-medium text-emerald-600">
+                <TrendingUp size={12} />
+                <span>{trend}</span>
+              </div>
+            )}
+          </div>
         </div>
         <div className={`rounded-xl p-2.5 ${color.replace('text-', 'bg-').replace('-600', '-50')} ${color}`}>
           <Icon size={24} />
         </div>
       </div>
       
-      <div className="mt-4 flex items-center gap-1 text-xs font-medium text-teal-600 transition-all group-hover:gap-2">
+      <div className="mt-auto pt-4 flex items-center gap-1 text-xs font-medium text-teal-600 transition-all group-hover:gap-2">
         View details <ChevronRight size={12} />
       </div>
     </Link>
@@ -199,15 +201,15 @@ export default function RehabPage() {
             </p>
           </div>
           
-          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 shadow-sm">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-50 text-teal-600">
-              <Clock size={20} />
+          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-teal-50 text-teal-600">
+              <Clock size={14} />
             </div>
-            <div>
-              <p className="text-xs font-medium text-slate-500">Server Time</p>
-              <p className="text-sm font-bold text-slate-900">
+            <div className="min-w-0">
+              <p className="text-[10px] font-medium text-slate-500 leading-none">Server Time</p>
+              <p className="mt-0.5 text-xs font-bold text-slate-900 tabular-nums whitespace-nowrap">
                 {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                <span className="ml-2 font-medium text-slate-400">
+                <span className="ml-1.5 font-medium text-slate-400">
                   {currentTime.toLocaleDateString([], { month: 'short', day: 'numeric' })}
                 </span>
               </p>
