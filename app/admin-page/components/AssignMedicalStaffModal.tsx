@@ -111,7 +111,7 @@ export default function AssignMedicalStaffModal({ isOpen, onClose, onSubmit }: A
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent 
-        className="flex w-full max-w-lg min-w-[350px] flex-col rounded-2xl bg-white shadow-2xl overflow-hidden p-0 border-none"
+        className="flex w-full max-w-lg min-w-87.5 flex-col rounded-2xl bg-white shadow-2xl overflow-hidden p-0 border-none"
         showCloseButton={false}
       >
         {/* Header */}

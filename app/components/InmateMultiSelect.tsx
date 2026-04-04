@@ -108,7 +108,7 @@ export default function InmateMultiSelect({
     <div className="relative w-full" ref={containerRef}>
       <div 
         onClick={() => setOpen((prev) => !prev)}
-        className="cursor-pointer min-h-[42px] flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-left text-sm shadow-sm transition hover:border-blue-300 focus-within:ring-2 ring-blue-500/20"
+        className="cursor-pointer min-h-10.5 flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-left text-sm shadow-sm transition hover:border-blue-300 focus-within:ring-2 ring-blue-500/20"
       >
         <div className="flex flex-wrap gap-1.5 flex-1 min-w-0 pr-2">
           {selectedIds.length === 0 ? (
@@ -121,7 +121,7 @@ export default function InmateMultiSelect({
                   key={id} 
                   className="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 animate-in fade-in scale-95 duration-200"
                 >
-                  <span className="truncate max-w-[120px]">{inmate?.name || id}</span>
+                  <span className="truncate max-w-30">{inmate?.name || id}</span>
                   <X 
                     size={13} 
                     className="cursor-pointer hover:text-blue-900" 

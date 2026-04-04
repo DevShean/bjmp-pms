@@ -5,6 +5,7 @@ import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/r
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { LogIn, Building2, Eye, EyeOff, KeyRound, Mail, ShieldCheck, UserRound } from "lucide-react";
+import { toast } from "sonner";
 import AppSplashScreen from "../components/AppSplashScreen";
 import { supabase } from "../../lib/supabase/client";
 
@@ -17,11 +18,6 @@ type UserRoleRecord = {
   roles: {
     role_name: string;
   };
-};
-
-type AuthFeedback = {
-  type: "error" | "success" | "warning";
-  message: string;
 };
 
 const roleCopy: Record<RoleKey, { title: string; subtitle: string; actionLabel: string }> = {
@@ -51,7 +47,6 @@ export default function AdminAuthClient() {
   const [showSplash, setShowSplash] = useState(true);
   const [activeRole, setActiveRole] = useState<RoleKey>("administrator");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [authFeedback, setAuthFeedback] = useState<AuthFeedback | null>(null);
   const shouldReduceMotion = useReducedMotion();
   const router = useRouter();
 
@@ -65,20 +60,6 @@ export default function AdminAuthClient() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!authFeedback) {
-      return;
-    }
-
-    const feedbackTimer = window.setTimeout(() => {
-      setAuthFeedback(null);
-    }, 3000);
-
-    return () => {
-      window.clearTimeout(feedbackTimer);
-    };
-  }, [authFeedback]);
-
   const panelTransition = shouldReduceMotion
     ? { duration: 0 }
     : { duration: 0.32, ease: [0.22, 1, 0.36, 1] as const };
@@ -90,13 +71,14 @@ export default function AdminAuthClient() {
     const email = String(formData.get("staffEmail") || "").trim().toLowerCase();
     const password = String(formData.get("staffPassword") || "");
 
-    setAuthFeedback(null);
-
     if (!email || !password) {
-      setAuthFeedback({
-        type: "warning",
-        message: "Enter both email and password to continue.",
-      });
+      toast.warning("Enter both email and password to continue.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.warning("Please enter a valid email address.");
       return;
     }
 
@@ -141,10 +123,7 @@ export default function AdminAuthClient() {
         throw new Error(`This account is assigned to ${userRecord.roles.role_name}, not the selected portal.`);
       }
 
-      setAuthFeedback({
-        type: "success",
-        message: `Welcome back, ${userRecord.roles.role_name}. Redirecting...`,
-      });
+      toast.success(`Welcome back, ${userRecord.roles.role_name}. Redirecting...`);
 
       // Set session cookie (Expires in 24 hours)
       const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString();
@@ -156,10 +135,7 @@ export default function AdminAuthClient() {
 
       router.push(roleRoutes[resolvedRole]);
     } catch (error) {
-      setAuthFeedback({
-        type: "error",
-        message: error instanceof Error ? error.message : "An unexpected authentication error occurred.",
-      });
+      toast.error(error instanceof Error ? error.message : "An unexpected authentication error occurred.");
     } finally {
       setIsSubmitting(false);
     }
@@ -221,20 +197,22 @@ export default function AdminAuthClient() {
                   priority
                 />
               </motion.div>
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={activeRole}
-                  initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: shouldReduceMotion ? 0 : -10 }}
-                  transition={panelTransition}
-                >
-                  <h2 className="font-lexend text-4xl font-bold tracking-tight text-primary">
-                    {roleCopy[activeRole].title}
-                  </h2>
-                  <p className="mt-2 text-sm text-[#5f6f8f]">{roleCopy[activeRole].subtitle}</p>
-                </motion.div>
-              </AnimatePresence>
+              <div className="flex min-h-26 flex-col items-center justify-center">
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={activeRole}
+                    initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: shouldReduceMotion ? 0 : -10 }}
+                    transition={panelTransition}
+                  >
+                    <h2 className="font-lexend text-3xl font-bold tracking-tight text-primary">
+                      {roleCopy[activeRole].title}
+                    </h2>
+                    <p className="mt-2 text-sm text-[#5f6f8f]">{roleCopy[activeRole].subtitle}</p>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
             </div>
 
             <LayoutGroup id="role-tabs">
@@ -282,7 +260,7 @@ export default function AdminAuthClient() {
                 exit={{ opacity: 0, x: shouldReduceMotion ? 0 : 16, filter: "blur(6px)" }}
                 transition={panelTransition}
               >
-                <form className="flex flex-col gap-4" onSubmit={onSubmit}>          
+                <form className="flex flex-col gap-4" onSubmit={onSubmit} noValidate>          
                   <InputField
                     id="staffEmail"
                     label="Email"
@@ -299,19 +277,6 @@ export default function AdminAuthClient() {
                     placeholder="Enter your password"
                     icon={<KeyRound size={18} aria-hidden="true" />}
                   />
-                  {authFeedback ? (
-                    <div
-                      className={`rounded-xl border px-4 py-3 text-sm ${
-                        authFeedback.type === "success"
-                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                          : authFeedback.type === "warning"
-                            ? "border-amber-200 bg-amber-50 text-amber-700"
-                            : "border-rose-200 bg-rose-50 text-rose-700"
-                      }`}
-                    >
-                      {authFeedback.message}
-                    </div>
-                  ) : null}
                   <div className="pt-2">
                     <button
                       type="submit"

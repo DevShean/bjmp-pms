@@ -266,7 +266,7 @@ export default function AppointmentPage() {
                   Type of Visit
                 </label>
                 <Popover open={visitTypeOpen} onOpenChange={setVisitTypeOpen}>
-                  <PopoverTrigger className="flex w-full items-center justify-between h-[46px] rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100 hover:bg-slate-50 hover:border-blue-300 shadow-none data-[state=open]:ring-4 data-[state=open]:ring-blue-100 data-[state=open]:border-blue-400 data-[state=open]:bg-white cursor-pointer">
+                  <PopoverTrigger className="flex w-full items-center justify-between h-11.5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100 hover:bg-slate-50 hover:border-blue-300 shadow-none data-[state=open]:ring-4 data-[state=open]:ring-blue-100 data-[state=open]:border-blue-400 data-[state=open]:bg-white cursor-pointer">
                     <span className="truncate">{visitType || "Select type"}</span>
                     <ChevronsUpDown className="h-4 w-4 shrink-0 text-slate-400" />
                   </PopoverTrigger>
@@ -298,7 +298,7 @@ export default function AppointmentPage() {
                     Relationship to Inmate
                   </label>
                   <Popover open={relationshipOpen} onOpenChange={setRelationshipOpen}>
-                    <PopoverTrigger className="flex w-full items-center justify-between h-[46px] rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100 hover:bg-slate-50 hover:border-blue-300 shadow-none data-[state=open]:ring-4 data-[state=open]:ring-blue-100 data-[state=open]:border-blue-400 data-[state=open]:bg-white cursor-pointer">
+                    <PopoverTrigger className="flex w-full items-center justify-between h-11.5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none transition-all focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100 hover:bg-slate-50 hover:border-blue-300 shadow-none data-[state=open]:ring-4 data-[state=open]:ring-blue-100 data-[state=open]:border-blue-400 data-[state=open]:bg-white cursor-pointer">
                       <span className="truncate">{relationship || "Select relationship"}</span>
                       <ChevronsUpDown className="h-4 w-4 shrink-0 text-slate-400" />
                     </PopoverTrigger>
@@ -327,7 +327,7 @@ export default function AppointmentPage() {
 
               {isGuardian && (
                 <div className="space-y-2 flex flex-col justify-end">
-                  <div className="h-[46px] w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 flex items-center">
+                  <div className="h-11.5 w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 flex items-center">
                     You are the Guardian of this PDL
                   </div>
                 </div>

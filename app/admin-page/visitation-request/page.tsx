@@ -443,7 +443,7 @@ export default function VisitationRequestsPage() {
                         <td className="px-4 py-4">
                           <p className="font-medium text-slate-800">{req.pdlName}</p>
                           <p className="text-xs text-slate-500">ID #{req.inmateId}</p>
-                          <p className="text-xs text-slate-400 mt-0.5 max-w-[120px] truncate">{req.cellBlock}</p>
+                          <p className="text-xs text-slate-400 mt-0.5 max-w-30 truncate">{req.cellBlock}</p>
                         </td>
                         {/* Visit Details */}
                         <td className="px-4 py-4">

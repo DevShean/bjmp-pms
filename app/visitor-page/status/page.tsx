@@ -225,7 +225,7 @@ export default function VisitStatusPage() {
               </div>
             ) : (
               <div className="overflow-x-auto pb-4 scrollbar-thin scrollbar-track-slate-50 scrollbar-thumb-slate-200">
-                <table className="w-full text-sm text-left min-w-[700px]">
+                <table className="w-full text-sm text-left min-w-175">
                   <thead>
                     <tr className="border-b border-slate-100 bg-slate-100">
                       <th className="py-3 pl-6 pr-4 font-semibold uppercase tracking-wide text-slate-500 text-[10px]">

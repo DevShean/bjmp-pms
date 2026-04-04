@@ -846,7 +846,7 @@ export default function AddInmateModal({ isOpen, onClose, onSubmit }: AddInmateM
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
             <DialogContent 
-                className="flex w-full max-w-5xl min-w-[800px] h-[650px] flex-col rounded-2xl bg-white shadow-2xl overflow-hidden p-0 border-none"
+                className="flex w-full max-w-5xl min-w-200 h-162.5 flex-col rounded-2xl bg-white shadow-2xl overflow-hidden p-0 border-none"
                 showCloseButton={false}
             >
                 {/* ── Header ─────────────────────────────────────────────── */}

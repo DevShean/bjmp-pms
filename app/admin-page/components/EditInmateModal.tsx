@@ -827,7 +827,7 @@ export default function EditInmateModal({ isOpen, onClose, onSubmit, inmateId }:
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent 
-                className="flex w-full max-w-5xl min-w-[800px] h-[650px] flex-col rounded-2xl bg-white shadow-2xl overflow-hidden p-0 border-none"
+                className="flex w-full max-w-5xl min-w-200 h-162.5 flex-col rounded-2xl bg-white shadow-2xl overflow-hidden p-0 border-none"
                 showCloseButton={false}
             >
                 <div className="flex items-center justify-between border-b bg-teal-700 px-6 py-4 text-white">
