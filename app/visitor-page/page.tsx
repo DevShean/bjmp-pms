@@ -220,7 +220,7 @@ export default function VisitorPage() {
               <p className="text-blue-200/90 font-medium tracking-wide text-sm mb-1 uppercase">
                 {currentDate}
               </p>
-              <h1 className="font-lexend text-xl font-bold text-white md:text-3xl mt-1 truncate max-w-70 sm:max-w-md" title={`Welcome back, ${sessionUser?.name || "Visitor"}`}>
+              <h1 className="font-lexend text-xl font-bold text-white md:text-3xl mt-1">
                 Welcome back, {sessionUser?.name || "Visitor"}
               </h1>
               <p className="mt-3 text-blue-100/90 text-xs md:text-sm max-w-xl">
