@@ -51,6 +51,7 @@ interface Notification {
 
 interface NotificationMenuProps {
   userId?: string | number;
+  role?: StaffRole;
 }
 
 interface ProgramSearchResult {
@@ -444,11 +445,30 @@ function UserMenu({
   );
 }
 
-const NotificationMenu = memo(({ userId }: NotificationMenuProps) => {
+const NotificationMenu = memo(({ userId, role = 'admin' }: NotificationMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  function getNotificationHref(type: string): string {
+    switch (type) {
+      case 'visitation_request':
+        return role === 'admin' ? '/admin-page/visitation-request' : '/officer-page/visitation-request';
+      case 'guardian_request':
+        return '/admin-page/guardian-requests';
+      case 'alert':
+        return '/admin-page/audit-logs';
+      default:
+        switch (role) {
+          case 'officer': return '/officer-page';
+          case 'medical': return '/medical-page';
+          case 'rehab': return '/rehab-page';
+          default: return '/admin-page';
+        }
+    }
+  }
 
   const fetchNotifications = useCallback(async () => {
     if (!userId) return;
@@ -532,7 +552,7 @@ const NotificationMenu = memo(({ userId }: NotificationMenuProps) => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-[280px] sm:w-80 max-h-[480px] overflow-hidden flex flex-col rounded-2xl border border-[#e2e8f0] bg-white shadow-2xl animate-in zoom-in-95 fade-in-0 duration-200">
+        <div className="absolute right-0 mt-3 w-70 sm:w-80 max-h-120 overflow-hidden flex flex-col rounded-2xl border border-[#e2e8f0] bg-white shadow-2xl animate-in zoom-in-95 fade-in-0 duration-200">
           <div className="flex items-center justify-between border-b border-[#f1f5f9] bg-[#fcfdff] px-3 py-3 sm:px-4 sm:py-3.5">
             <h3 className="font-lexend text-xs sm:text-sm font-bold text-[#00154A]">Notifications</h3>
             {unreadCount > 0 && (
@@ -558,9 +578,15 @@ const NotificationMenu = memo(({ userId }: NotificationMenuProps) => {
             ) : (
               <div className="divide-y divide-[#f1f5f9]">
                 {notifications.map((notif) => (
-                  <div
+                  <button
                     key={notif.notification_id}
-                    className={`relative flex gap-2.5 sm:gap-3 p-3 sm:p-4 transition-colors hover:bg-[#f8fafd] ${
+                    type="button"
+                    onClick={async () => {
+                      if (!notif.is_read) await markAsRead(notif.notification_id);
+                      setIsOpen(false);
+                      router.push(getNotificationHref(notif.type));
+                    }}
+                    className={`relative w-full text-left flex gap-2.5 sm:gap-3 p-3 sm:p-4 transition-colors hover:bg-[#f0f6ff] cursor-pointer ${
                       !notif.is_read ? "bg-blue-50/30" : ""
                     }`}
                   >
@@ -587,7 +613,7 @@ const NotificationMenu = memo(({ userId }: NotificationMenuProps) => {
                         {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true })}
                       </div>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -694,7 +720,7 @@ export default function StaffHeader({ role, isSidebarCollapsed, onToggleSidebar,
 
 
           {/* Notifications button */}
-          <NotificationMenu userId={sessionUser?.userId} />
+          <NotificationMenu userId={sessionUser?.userId} role={role} />
 
           <UserMenu
             userName={sessionUser?.name || sessionUser?.username || config.label}

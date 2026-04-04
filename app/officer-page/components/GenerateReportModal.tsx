@@ -117,12 +117,6 @@ export default function GenerateReportModal({ isOpen, onClose, onSubmit }: Gener
         {/* Body */}
         <div className="flex-1 min-h-0 overflow-y-auto px-6 py-8">
           <div className="flex flex-col gap-6">
-            <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
-               <p className="text-xs text-blue-800 leading-relaxed">
-                 Select the starting and ending dates for the behavior log report. The generated report will include all behavior observations within this duration.
-               </p>
-            </div>
-
             <div className="grid grid-cols-1 gap-5">
               <Field label="Starting Date" id="start_date">
                 <DatePickerField 
@@ -139,6 +133,12 @@ export default function GenerateReportModal({ isOpen, onClose, onSubmit }: Gener
                   onSelect={(date) => setEndDate(date ? format(date, "yyyy-MM-dd") : "")} 
                 />
               </Field>
+
+              <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
+               <p className="text-xs text-blue-800 leading-relaxed">
+                 Select the starting and ending dates for the behavior log report. The generated report will include all behavior observations within this duration.
+               </p>
+            </div>
             </div>
           </div>
         </div>

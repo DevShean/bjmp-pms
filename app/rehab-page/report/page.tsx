@@ -7,10 +7,11 @@ import StatCard from "../inmate-progress/StatCard";
 import { 
   FileDown, 
   XCircle, 
-  Info, 
   FileBarChart,
   CalendarIcon,
-  Loader2
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -75,6 +76,84 @@ function DatePickerField({
             toYear={2100}
             captionLayout="dropdown"
           />
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function MonthPickerField({
+  id,
+  value,
+  onSelect,
+  placeholder = "Select month",
+}: {
+  id: string;
+  value: string;
+  onSelect: (month: string) => void;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [year, setYear] = useState(() => value ? parseInt(value.split("-")[0]) : new Date().getFullYear());
+
+  const selectedYear = value ? parseInt(value.split("-")[0]) : null;
+  const selectedMonth = value ? parseInt(value.split("-")[1]) - 1 : null;
+  const displayValue = value ? format(new Date(value + "-01T12:00:00"), "MMMM yyyy") : null;
+
+  return (
+    <div className="w-full">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger id={id} className={inputClass}>
+          <span className={displayValue ? "text-slate-800 font-medium" : "text-slate-400"}>
+            {displayValue ?? placeholder}
+          </span>
+          <CalendarIcon className="size-4 shrink-0 text-slate-400" />
+        </PopoverTrigger>
+        <PopoverContent className="w-60 p-3" align="start">
+          {/* Year navigation */}
+          <div className="flex items-center justify-between mb-3">
+            <button
+              type="button"
+              onClick={() => setYear((y) => y - 1)}
+              className="cursor-pointer p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
+            >
+              <ChevronLeft size={15} />
+            </button>
+            <span className="text-sm font-semibold text-slate-800">{year}</span>
+            <button
+              type="button"
+              onClick={() => setYear((y) => y + 1)}
+              className="cursor-pointer p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors"
+            >
+              <ChevronRight size={15} />
+            </button>
+          </div>
+          {/* Month grid */}
+          <div className="grid grid-cols-3 gap-1.5">
+            {MONTHS.map((month, idx) => {
+              const isSelected = selectedYear === year && selectedMonth === idx;
+              return (
+                <button
+                  key={month}
+                  type="button"
+                  onClick={() => {
+                    const mm = String(idx + 1).padStart(2, "0");
+                    onSelect(`${year}-${mm}`);
+                    setOpen(false);
+                  }}
+                  className={`cursor-pointer rounded-lg py-2 text-xs font-medium transition-colors ${
+                    isSelected
+                      ? "bg-teal-700 text-white"
+                      : "text-slate-700 hover:bg-teal-50 hover:text-teal-700"
+                  }`}
+                >
+                  {month}
+                </button>
+              );
+            })}
+          </div>
         </PopoverContent>
       </Popover>
     </div>
@@ -418,18 +497,16 @@ export default function ReportPage() {
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-600 font-lexend text-left">
                   Month Interval
                 </label>
-                <div className="relative">
-                  <input
-                    type="month"
-                    value={filterMonth}
-                    onChange={(e) => {
-                      setFilterMonth(e.target.value);
-                      setStartDate(""); // Clear specific dates if month selected
-                      setEndDate("");
-                    }}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-700 outline-none transition hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-teal-500"
-                  />
-                </div>
+                <MonthPickerField
+                  id="filter_month"
+                  value={filterMonth}
+                  onSelect={(month) => {
+                    setFilterMonth(month);
+                    setStartDate("");
+                    setEndDate("");
+                  }}
+                  placeholder="Select month..."
+                />
               </div>
 
               {/* Status Filter */}
@@ -447,20 +524,6 @@ export default function ReportPage() {
                   <option value="Completed">Completed Only</option>
                   <option value="Dropped">Dropped Only</option>
                 </select>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-blue-50 bg-blue-50/30 p-5">
-              <div className="flex items-start gap-4">
-                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-blue-600 shadow-xs">
-                  <Info className="h-4 w-4" />
-                </div>
-                <div className="space-y-1">
-                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide text-left">Dataset Schema</h4>
-                  <p className="text-xs leading-relaxed text-slate-500 text-left">
-                    Report exports include inmate rosters, progress timestamps, behavior scores, and case notes formatted as compliant CSV for easy spreadsheet integration.
-                  </p>
-                </div>
               </div>
             </div>
 
