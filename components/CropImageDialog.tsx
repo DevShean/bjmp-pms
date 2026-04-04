@@ -64,7 +64,7 @@ export function CropImageDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[92vw] max-w-[420px] p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] gap-0">
+      <DialogContent className="w-[92vw] max-w-105 p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] gap-0">
         <DialogHeader className="text-left">
           <DialogTitle className="font-lexend text-xl font-bold text-slate-800 md:text-2xl">
             Crop Profile Photo

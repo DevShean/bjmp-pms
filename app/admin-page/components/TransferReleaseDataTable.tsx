@@ -12,7 +12,7 @@ import {
   type ColumnFiltersState,
 } from "@tanstack/react-table";
 import { useMemo, useState, useEffect, memo } from "react";
-import { ArrowRightLeft, Search, FilterX, ChevronDown } from "lucide-react";
+import { ArrowRightLeft, Search, FilterX, ChevronDown, LayoutGrid, Users } from "lucide-react";
 
 import Image from "next/image";
 
@@ -90,6 +90,7 @@ export default function TransferReleaseDataTable({
         filterFn: "equals",
         cell: ({ row }) => (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-slate-200">
+            <LayoutGrid size={12} className="text-slate-500" />
             {row.original.currentBlock}
           </span>
         ),
@@ -99,9 +100,10 @@ export default function TransferReleaseDataTable({
         accessorKey: "gender",
         filterFn: "equals",
         cell: ({ row }) => (
-          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
             row.original.gender === "Male" ? "bg-blue-100 text-blue-700" : "bg-pink-100 text-pink-700"
           }`}>
+            <Users size={12} />
             {row.original.gender}
           </span>
         ),

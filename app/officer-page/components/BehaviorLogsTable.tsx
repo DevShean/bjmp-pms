@@ -101,7 +101,7 @@ export default function BehaviorLogsTable({
         header: "NOTES",
         accessorKey: "notes",
         cell: ({ row }) => (
-          <div className="flex items-center gap-2 text-slate-500 max-w-[150px] truncate">
+          <div className="flex items-center gap-2 text-slate-500 max-w-37.5 truncate">
             {row.original.notes ? (
               <>
                 <StickyNote size={14} className="shrink-0" />

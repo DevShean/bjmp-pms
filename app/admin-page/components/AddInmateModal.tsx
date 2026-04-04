@@ -655,46 +655,17 @@ const STEP_COMPONENTS: Array<(props: StepProps) => React.JSX.Element> = [
 type ValidationErrors = Partial<Record<keyof InmateForm, string>>;
 
 function validateField(name: keyof InmateForm, value: string): string {
-    // Add custom validation rules per field as needed
     switch (name) {
         case "first_name":
         case "last_name":
-            if (!value.trim()) return "This field is required.";
-            if (!/^[A-Za-z\s\-'.]+$/.test(value)) return "Only letters and common name characters allowed.";
-            break;
-        case "birthdate":
-            if (!value) return "Birthdate is required.";
-            break;
-        case "gender":
-            if (!value) return "Gender is required.";
+            if (value && !/^[A-Za-z\s\-'.]+$/.test(value)) return "Only letters and common name characters allowed.";
             break;
         case "contact_number":
-            if (!value.trim()) return "Contact number is required.";
-            if (!/^09\d{9}$/.test(value.replace(/[^\d]/g, ""))) return "Format: 09XXXXXXXXX";
+            if (value && !/^09\d{9}$/.test(value.replace(/[^\d]/g, ""))) return "Format: 09XXXXXXXXX";
             break;
         case "emergency_contact_number":
-            if (!value.trim()) return "Emergency contact number is required.";
-            if (!/^09\d{9}$/.test(value.replace(/[^\d]/g, ""))) return "Format: 09XXXXXXXXX";
+            if (value && !/^09\d{9}$/.test(value.replace(/[^\d]/g, ""))) return "Format: 09XXXXXXXXX";
             break;
-        case "educational_attainment":
-            if (!value.trim()) return "Educational attainment is required.";
-            break;
-        case "course":
-            if (!value.trim()) return "Course/Degree is required.";
-            break;
-        case "school_attended":
-            if (!value.trim()) return "School attended is required.";
-            break;
-        case "status":
-            if (!value) return "Status is required.";
-            break;
-        case "admission_date":
-            if (!value) return "Admission date is required.";
-            break;
-        case "photo_path":
-            if (!value) return "Photo is required.";
-            break;
-        // Add more field-specific validation as needed
         default:
             break;
     }
@@ -803,7 +774,7 @@ export default function AddInmateModal({ isOpen, onClose, onSubmit }: AddInmateM
         const validation = validateForm(form);
         setErrors(validation);
         if (Object.keys(validation).length > 0) {
-            toast.error("Please fill out all required fields correctly.");
+            toast.error("Please fix the validation errors before submitting.");
             return;
         }
 

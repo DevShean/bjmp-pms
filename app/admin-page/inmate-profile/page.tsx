@@ -11,7 +11,7 @@ import {
     type PaginationState,
     type ColumnFiltersState,
 } from "@tanstack/react-table";
-import { Eye, Edit, Trash2, UserPlus, Stethoscope, Search, FilterX, ChevronDown, Users } from "lucide-react";
+import { Eye, Edit, Trash2, UserPlus, Stethoscope, Search, FilterX, ChevronDown, Users, Hash, User, Calendar } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
 import AdminSidebarLayout from "../components/AdminSidebarLayout";
 import AddInmateModal from "../components/AddInmateModal";
@@ -125,24 +125,55 @@ function InmateProfilePageContent() {
             {
                 header: "ID",
                 accessorKey: "id",
-                cell: ({ row }) => <span className="font-mono text-xs text-slate-500 font-bold">{row.original.id}</span>
+                cell: ({ row }) => (
+                    <div className="flex items-center gap-1.5">
+                        <Hash size={14} className="text-slate-400" />
+                        <span className="font-mono text-xs text-slate-500 font-bold">{row.original.id}</span>
+                    </div>
+                ),
             },
             {
                 header: "First Name",
                 accessorKey: "firstName",
+                cell: ({ row }) => (
+                    <div className="flex items-center gap-2.5">
+                        <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                            <User size={16} />
+                        </div>
+                        <span className="font-medium text-slate-800">{row.original.firstName}</span>
+                    </div>
+                ),
             },
             {
                 header: "Last Name",
                 accessorKey: "lastName",
+                cell: ({ row }) => (
+                    <div className="flex items-center gap-2 text-slate-600">
+                        <User size={16} className="text-slate-400" />
+                        <span>{row.original.lastName}</span>
+                    </div>
+                ),
             },
             {
                 header: "Birthdate",
                 accessorKey: "birthdate",
+                cell: ({ row }) => (
+                    <div className="flex items-center gap-2 text-slate-600">
+                        <Calendar size={16} className="text-slate-400" />
+                        <span>{row.original.birthdate}</span>
+                    </div>
+                ),
             },
             {
                 header: "Gender",
                 accessorKey: "gender",
                 filterFn: 'equals',
+                cell: ({ row }) => (
+                    <div className="flex items-center gap-2 text-slate-600">
+                        <Users size={16} className="text-slate-400" />
+                        <span>{row.original.gender}</span>
+                    </div>
+                ),
             },
             {
                 header: "Status",
