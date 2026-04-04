@@ -67,7 +67,7 @@ export default function TransferReleaseDataTable({
         header: "INMATE",
         accessorKey: "name",
         cell: ({ row }) => (
-          <div className="flex items-center gap-3 w-full max-w-[250px]">
+          <div className="flex items-center gap-3 w-full max-w-62.5">
             <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-white shadow-sm bg-slate-100">
               <Image
                 src={row.original.imageUrl}
@@ -119,7 +119,7 @@ export default function TransferReleaseDataTable({
           const currentVal = meta?.newBlocks[row.original.id] || "";
           
           return (
-            <div className="w-full max-w-[180px]">
+            <div className="w-full max-w-45">
               <CellInput
                 value={currentVal}
                 onChange={val => meta?.setNewBlocks({ ...meta.newBlocks, [row.original.id]: val })}
@@ -269,7 +269,7 @@ export default function TransferReleaseDataTable({
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow">
         <div className="w-full overflow-x-auto">
-          <table className="w-full min-w-[800px] border-collapse text-left">
+          <table className="w-full min-w-200 border-collapse text-left">
             <thead className="bg-slate-50">
               {table.getHeaderGroups().map(headerGroup => (
                 <tr key={headerGroup.id} className="border-b border-slate-200">

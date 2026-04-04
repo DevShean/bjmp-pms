@@ -220,7 +220,7 @@ export default function VisitorPage() {
               <p className="text-blue-200/90 font-medium tracking-wide text-sm mb-1 uppercase">
                 {currentDate}
               </p>
-              <h1 className="font-lexend text-xl font-bold text-white md:text-3xl mt-1 truncate max-w-[280px] sm:max-w-md" title={`Welcome back, ${sessionUser?.name || "Visitor"}`}>
+              <h1 className="font-lexend text-xl font-bold text-white md:text-3xl mt-1 truncate max-w-70 sm:max-w-md" title={`Welcome back, ${sessionUser?.name || "Visitor"}`}>
                 Welcome back, {sessionUser?.name || "Visitor"}
               </h1>
               <p className="mt-3 text-blue-100/90 text-xs md:text-sm max-w-xl">
@@ -278,7 +278,7 @@ export default function VisitorPage() {
         {/* Next Appointment Section */}
         <div className="space-y-4">
            <h2 className="font-lexend text-lg font-semibold text-slate-800">Your Next Appointment</h2>
-           <div className="rounded-3xl border border-blue-200/60 bg-white p-6 shadow-xl shadow-blue-100/50 relative overflow-hidden h-full min-h-[220px] flex flex-col justify-center">
+           <div className="rounded-3xl border border-blue-200/60 bg-white p-6 shadow-xl shadow-blue-100/50 relative overflow-hidden h-full min-h-55 flex flex-col justify-center">
               <div className="absolute right-0 top-0 -mr-16 -mt-16 text-blue-50 opacity-40 mix-blend-multiply pointer-events-none">
                  <CalendarHeart className="h-64 w-64" />
               </div>
@@ -360,7 +360,7 @@ export default function VisitorPage() {
               ) : (
                 <>
                   <div className="w-full overflow-x-auto pb-4 scrollbar-thin scrollbar-track-slate-50 scrollbar-thumb-slate-200">
-                    <table className="w-full text-xs text-left min-w-[600px]">
+                    <table className="w-full text-xs text-left min-w-150">
                       <thead>
                         <tr className="border-b border-slate-100 bg-slate-100">
                           <th className="py-3.5 pl-6 pr-4 font-semibold uppercase tracking-wider text-slate-500 text-[10px]">

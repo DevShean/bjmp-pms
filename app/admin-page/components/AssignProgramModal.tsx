@@ -101,7 +101,7 @@ export default function AssignProgramModal({ isOpen, onClose, onSubmit, programI
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent 
-                className="flex w-full max-w-2xl min-w-[500px] flex-col rounded-2xl bg-white shadow-2xl overflow-hidden border-none p-0"
+                className="flex w-full max-w-2xl min-w-125 flex-col rounded-2xl bg-white shadow-2xl overflow-hidden border-none p-0"
                 showCloseButton={false}
             >
                 {/* Header */}

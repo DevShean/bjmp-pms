@@ -4,6 +4,7 @@ import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/r
 import {
   ArrowRight,
   CircleHelp,
+  Construction,
   Eye,
   EyeOff,
   LockKeyhole,
@@ -15,15 +16,20 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, type ReactNode, useEffect, useState } from "react";
+import { toast } from "sonner";
 import VisitorSplashScreen from "./components/VisitorSplashScreen";
 import { supabase } from "../lib/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../components/ui/dialog";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-
-type AuthFeedback = {
-  type: "error" | "success" | "warning";
-  message: string;
-};
 
 type UserRoleRecord = {
   user_id: number;
@@ -240,32 +246,10 @@ function AuthTabButton({ active, children, icon, onClick, transition }: AuthTabB
   );
 }
 
-// ─── Feedback banner ──────────────────────────────────────────────────────────
-
-function FeedbackBanner({ feedback }: { feedback: AuthFeedback }) {
-  const styles = {
-    success: "border-emerald-200 bg-emerald-50 text-emerald-700",
-    warning: "border-amber-200 bg-amber-50 text-amber-700",
-    error: "border-rose-200 bg-rose-50 text-rose-700",
-  };
-  return (
-    <div className={`rounded-xl border px-4 py-3 text-sm ${styles[feedback.type]}`}>
-      {feedback.message}
-    </div>
-  );
-}
-
 // ─── Login form ───────────────────────────────────────────────────────────────
 
 function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState<AuthFeedback | null>(null);
-
-  useEffect(() => {
-    if (!feedback) return;
-    const t = window.setTimeout(() => setFeedback(null), 4000);
-    return () => window.clearTimeout(t);
-  }, [feedback]);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -275,13 +259,18 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
     const password = String(formData.get("password") ?? "");
 
     if (!email || !password) {
-      setFeedback({ type: "warning", message: "Please enter your email and password." });
+      toast.warning("Please enter your email and password.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.warning("Please enter a valid email address.");
       return;
     }
 
     try {
       setIsSubmitting(true);
-      setFeedback(null);
 
       const { data: userRecord, error } = await supabase
         .from("users")
@@ -301,7 +290,7 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
         throw new Error("The password you entered is incorrect.");
       }
 
-      setFeedback({ type: "success", message: "Welcome back! Redirecting to your dashboard…" });
+      toast.success("Welcome back! Redirecting to your dashboard…");
 
       // Set session cookie (24 h)
       const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString();
@@ -311,17 +300,14 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
 
       onSuccess();
     } catch (err) {
-      setFeedback({
-        type: "error",
-        message: err instanceof Error ? err.message : "An unexpected error occurred.",
-      });
+      toast.error(err instanceof Error ? err.message : "An unexpected error occurred.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <form className="flex min-h-96 flex-col gap-4 sm:min-h-92" onSubmit={onSubmit}>
+    <form className="flex min-h-96 flex-col gap-4 sm:min-h-92" onSubmit={onSubmit} noValidate>
       <InputField
         id="email"
         label="Email Address"
@@ -340,16 +326,57 @@ function LoginForm({ onSuccess }: { onSuccess: () => void }) {
       />
 
       <div className="flex items-center justify-between text-sm">
-        <button
-          type="button"
-          className="cursor-pointer inline-flex items-center gap-1 font-semibold text-primary hover:underline"
-        >
-          <CircleHelp size={14} aria-hidden="true" />
-          Forgot Password?
-        </button>
-      </div>
+        <Dialog>
+          <DialogTrigger
+            className="cursor-pointer inline-flex items-center gap-1 font-semibold text-primary hover:underline"
+          >
+            <CircleHelp size={14} aria-hidden="true" />
+            Forgot Password?
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md gap-3 overflow-hidden" showCloseButton={false}>
+            {/* Decorative top gradient bar */}
+            <div className="absolute inset-x-0 top-0 h-1.5 bg-linear-to-r from-amber-400 via-orange-400 to-amber-500" />
 
-      {feedback && <FeedbackBanner feedback={feedback} />}
+            <div className="flex flex-col items-center text-center px-2 pt-1">
+              {/* Animated icon with layered rings */}
+              <div className="relative">
+                <span className="absolute inset-0 h-16 w-16 animate-ping rounded-full bg-amber-100 opacity-30" />
+                <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-amber-100 to-orange-100 shadow-lg shadow-amber-200/40 ring-4 ring-white">
+                  <Construction size={30} className="text-amber-500 drop-shadow-sm" aria-hidden="true" />
+                </div>
+              </div>
+
+              {/* Status badge */}
+              <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-linear-to-r from-amber-50 to-orange-50 px-3 py-1 text-xs font-bold tracking-wide uppercase text-amber-700 ring-1 ring-amber-200/80 shadow-sm">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                </span>
+                Coming Soon
+              </div>
+
+              <DialogHeader className="mt-2 items-center gap-1">
+                <DialogTitle className="font-lexend text-lg tracking-tight text-[#1a2744]">
+                  Forgot Password
+                </DialogTitle>
+                <DialogDescription className="max-w-xs text-[#5f6f8f] leading-relaxed">
+                  The password recovery feature is currently under development and will be available soon.
+                </DialogDescription>
+              </DialogHeader>
+
+              {/* Info card */}
+              <div className="mt-2 w-full rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-left">
+                <p className="text-xs font-semibold text-blue-800">Need help right now?</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-blue-600">
+                  Contact your facility administrator to reset your password manually.
+                </p>
+              </div>
+            </div>
+
+            <DialogFooter showCloseButton />
+          </DialogContent>
+        </Dialog>
+      </div>
 
       <button
         type="submit"
@@ -369,13 +396,6 @@ const VISITOR_ROLE_ID = 5;
 
 function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState<AuthFeedback | null>(null);
-
-  useEffect(() => {
-    if (!feedback) return;
-    const t = window.setTimeout(() => setFeedback(null), 5000);
-    return () => window.clearTimeout(t);
-  }, [feedback]);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -388,23 +408,28 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
 
     // ── Client-side validation ──
     if (!username || !email || !password || !confirmPassword) {
-      setFeedback({ type: "warning", message: "Please fill in all fields before registering." });
+      toast.warning("Please fill in all fields before registering.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.warning("Please enter a valid email address.");
       return;
     }
 
     if (password !== confirmPassword) {
-      setFeedback({ type: "error", message: "Passwords do not match. Please try again." });
+      toast.error("Passwords do not match. Please try again.");
       return;
     }
 
     if (password.length < 6) {
-      setFeedback({ type: "warning", message: "Password must be at least 6 characters long." });
+      toast.warning("Password must be at least 6 characters long.");
       return;
     }
 
     try {
       setIsSubmitting(true);
-      setFeedback(null);
 
       // 1. Check if email is already taken
       const { data: existing } = await supabase
@@ -448,10 +473,7 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
         console.error("profiles insert error:", insertProfileError);
       }
 
-      setFeedback({
-        type: "success",
-        message: "Registration successful! You can now sign in to your account.",
-      });
+      toast.success("Registration successful! You can now sign in to your account.");
 
       // Reset form fields
       (event.target as HTMLFormElement).reset();
@@ -460,17 +482,14 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
       const redirectTimer = window.setTimeout(() => onSuccess(), 2000);
       return () => window.clearTimeout(redirectTimer);
     } catch (err) {
-      setFeedback({
-        type: "error",
-        message: err instanceof Error ? err.message : "An unexpected error occurred.",
-      });
+      toast.error(err instanceof Error ? err.message : "An unexpected error occurred.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <form className="flex min-h-96 flex-col gap-4 sm:min-h-92" onSubmit={onSubmit}>
+    <form className="flex min-h-96 flex-col gap-4 sm:min-h-92" onSubmit={onSubmit} noValidate>
       <InputField
         id="userName"
         label="Username"
@@ -503,8 +522,6 @@ function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
         icon={<LockKeyhole size={18} aria-hidden="true" />}
         disabled={isSubmitting}
       />
-
-      {feedback && <FeedbackBanner feedback={feedback} />}
 
       <div className="mt-auto pt-2">
         <button

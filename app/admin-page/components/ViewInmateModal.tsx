@@ -115,7 +115,7 @@ function ViewField({ label, value, isFullWidth }: ViewFieldProps) {
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                 {label}
             </span>
-            <div className="min-h-[38px] w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm text-slate-800">
+            <div className="min-h-9.5 w-full rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm text-slate-800">
                 {value || <span className="text-slate-400 italic">Not specified</span>}
             </div>
         </div>
@@ -374,7 +374,7 @@ export default function ViewInmateModal({ isOpen, onClose, inmateId }: ViewInmat
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent 
-                className="flex w-full max-w-5xl min-w-[800px] h-[650px] max-h-[90vh] flex-col rounded-2xl bg-white shadow-2xl overflow-hidden border-none p-0"
+                className="flex w-full max-w-5xl min-w-200 h-162.5 max-h-[90vh] flex-col rounded-2xl bg-white shadow-2xl overflow-hidden border-none p-0"
                 showCloseButton={false}
             >
                 {/* Header */}

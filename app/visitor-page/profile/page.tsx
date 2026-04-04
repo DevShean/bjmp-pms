@@ -426,7 +426,7 @@ export default function ProfilePage() {
 
                 <div className="space-y-1.5">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                    <h1 className="font-lexend text-xl font-semibold text-white md:text-4xl truncate max-w-[240px] sm:max-w-md" title={displayName}>
+                    <h1 className="font-lexend text-xl font-semibold text-white md:text-4xl truncate max-w-60 sm:max-w-md" title={displayName}>
                       {displayName}
                     </h1>
                     <div className="flex">
@@ -447,7 +447,7 @@ export default function ProfilePage() {
                     </span>
                   </div>
 
-                  <div className="pt-2 max-w-[180px] md:max-w-56">
+                  <div className="pt-2 max-w-45 md:max-w-56">
                     <QrEntryButton
                       visitorName={displayName}
                       profileId={visitorId ? `VIS-${visitorId}` : "VIS-???"}

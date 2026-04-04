@@ -282,7 +282,7 @@ export default function EditProgramModal({ isOpen, onClose, onSubmit, programId 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent 
-                className="flex w-full max-w-3xl min-w-[500px] h-[650px] max-h-[90vh] flex-col rounded-2xl bg-white shadow-2xl overflow-hidden border-none p-0"
+                className="flex w-full max-w-3xl min-w-125 h-162.5 max-h-[90vh] flex-col rounded-2xl bg-white shadow-2xl overflow-hidden border-none p-0"
                 showCloseButton={false}
             >
                 {/* Header */}

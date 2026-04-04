@@ -196,7 +196,7 @@ const UserMenu = memo(
           </div>
 
           <div className="hidden text-left sm:block min-w-0">
-            <p className="max-w-[120px] truncate text-sm font-medium text-[#00154A] transition-all group-hover:text-[#00154A]" title={userName}>
+            <p className="max-w-30 truncate text-sm font-medium text-[#00154A] transition-all group-hover:text-[#00154A]" title={userName}>
               {userName}
             </p>
             <p className="text-xs text-[#5f6f8f]">{userRole}</p>
@@ -338,7 +338,7 @@ const NotificationMenu = memo(({ userId }: NotificationMenuProps) => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-[280px] sm:w-80 max-h-[480px] overflow-hidden flex flex-col rounded-2xl border border-[#e2e8f0] bg-white shadow-2xl animate-in zoom-in-95 fade-in-0 duration-200">
+        <div className="absolute right-0 mt-3 w-70 sm:w-80 max-h-120 overflow-hidden flex flex-col rounded-2xl border border-[#e2e8f0] bg-white shadow-2xl animate-in zoom-in-95 fade-in-0 duration-200">
           <div className="flex items-center justify-between border-b border-[#f1f5f9] bg-[#fcfdff] px-3 py-3 sm:px-4 sm:py-3.5">
             <h3 className="font-lexend text-xs sm:text-sm font-bold text-[#00154A]">Notifications</h3>
             {unreadCount > 0 && (
