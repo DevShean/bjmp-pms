@@ -13,6 +13,10 @@ import {
   XCircle,
   Filter,
   Loader2,
+  User,
+  Users,
+  LayoutGrid,
+  Calendar,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -406,17 +410,30 @@ export default function GuardianRequestsPage() {
                       <tr key={req.requestId} className={`${zebra} transition-colors hover:bg-blue-50/30`}>
                         {/* Visitor */}
                         <td className="py-4 pl-6 pr-4">
-                          <p className="font-medium text-slate-800">{req.visitorName}</p>
-                          <p className="text-xs text-slate-500">{req.visitorEmail}</p>
+                          <div className="flex items-center gap-2.5">
+                            <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 shrink-0">
+                              <User size={16} />
+                            </div>
+                            <div>
+                              <p className="font-medium text-slate-800">{req.visitorName}</p>
+                              <p className="text-xs text-slate-500">{req.visitorEmail}</p>
+                            </div>
+                          </div>
                         </td>
                         {/* PDL */}
                         <td className="px-4 py-4">
-                          <p className="font-medium text-slate-800">{req.pdlName}</p>
-                          <p className="text-xs text-slate-500">ID #{req.inmateId}</p>
+                          <div className="flex items-center gap-2">
+                            <Users size={15} className="text-slate-400 shrink-0" />
+                            <div>
+                              <p className="font-medium text-slate-800">{req.pdlName}</p>
+                              <p className="text-xs text-slate-500">ID #{req.inmateId}</p>
+                            </div>
+                          </div>
                         </td>
                         {/* Cell block */}
                         <td className="px-4 py-4">
-                          <span className="inline-flex items-center rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+                          <span className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+                            <LayoutGrid size={12} className="text-slate-500" />
                             {req.cellBlock}
                           </span>
                         </td>
@@ -425,12 +442,15 @@ export default function GuardianRequestsPage() {
                           <StatusBadge status={req.status} />
                         </td>
                         {/* Requested at */}
-                        <td className="px-4 py-4 text-xs text-slate-500">
-                          {new Date(req.requestedAt).toLocaleDateString("en-PH", {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })}
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                            <Calendar size={13} className="text-slate-400 shrink-0" />
+                            {new Date(req.requestedAt).toLocaleDateString("en-PH", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </div>
                         </td>
                         {/* Actions */}
                         <td className="py-4 pl-4 pr-6 text-right">

@@ -9,7 +9,7 @@ import {
   getPaginationRowModel,
   PaginationState,
 } from "@tanstack/react-table";
-import { User, Edit, Trash2 } from "lucide-react";
+import { User, Edit, Trash2, Mail, ShieldCheck } from "lucide-react";
 
 export interface UserRecord {
   id: string;
@@ -43,15 +43,21 @@ export default function UserDataTable({ data, onEdit, onDelete }: UserDataTableP
       {
         header: "EMAIL",
         accessorKey: "email",
-        cell: ({ row }) => <span className="text-slate-700">{row.original.email}</span>,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2 text-slate-600">
+            <Mail size={15} className="text-slate-400 shrink-0" />
+            <span>{row.original.email}</span>
+          </div>
+        ),
       },
       {
         header: "ROLE",
         accessorKey: "role",
         cell: ({ row }) => (
-          <span className="text-slate-700 font-medium">
-            {row.original.role}
-          </span>
+          <div className="flex items-center gap-2 text-slate-700">
+            <ShieldCheck size={15} className="text-slate-400 shrink-0" />
+            <span className="font-medium">{row.original.role}</span>
+          </div>
         ),
       },
       {

@@ -11,7 +11,7 @@ import {
   PaginationState,
   ColumnFiltersState,
 } from "@tanstack/react-table";
-import { UserPlus, Users, BarChart2, CheckCircle2, Edit, Trash2, Search, FilterX, ChevronDown } from "lucide-react";
+import { UserPlus, Users, BarChart2, CheckCircle2, Edit, Trash2, Search, FilterX, ChevronDown, Tag, Calendar } from "lucide-react";
 
 export interface ProgramRecord {
   id: string;
@@ -48,17 +48,32 @@ export default function ProgramDataTable({ data, onEdit, onDelete, onAssign, ini
       {
         header: "TYPE",
         accessorKey: "type",
-        cell: ({ row }) => <span className="text-slate-700">{row.original.type}</span>,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2 text-slate-700">
+            <Tag size={14} className="text-slate-400 shrink-0" />
+            <span>{row.original.type}</span>
+          </div>
+        ),
       },
       {
         header: "START DATE",
         accessorKey: "startDate",
-        cell: ({ row }) => <span className="text-slate-700">{row.original.startDate}</span>,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2 text-slate-600">
+            <Calendar size={14} className="text-slate-400 shrink-0" />
+            <span>{row.original.startDate}</span>
+          </div>
+        ),
       },
       {
         header: "END DATE",
         accessorKey: "endDate",
-        cell: ({ row }) => <span className="text-slate-700">{row.original.endDate}</span>,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2 text-slate-600">
+            <Calendar size={14} className="text-slate-400 shrink-0" />
+            <span>{row.original.endDate}</span>
+          </div>
+        ),
       },
       {
         header: "ENROLLED/CAPACITY",
