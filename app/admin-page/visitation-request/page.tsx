@@ -12,9 +12,13 @@ import {
   CalendarCheck,
   XCircle,
   Filter,
+  FilterX,
   Loader2,
   Lock,
+  ChevronDown,
+  Check,
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -133,6 +137,8 @@ export default function VisitationRequestsPage() {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [statusFilterOpen, setStatusFilterOpen] = useState(false);
+  const [pageSizeOpen, setPageSizeOpen] = useState(false);
 
   // Reset pagination when filters change
   useEffect(() => {
@@ -370,21 +376,41 @@ export default function VisitationRequestsPage() {
                   />
                 </div>
                 {/* Status filter */}
-                <div className="relative">
-                  <Filter className="pointer-events-none absolute inset-y-0 left-3 h-full w-4 text-slate-400" />
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="pl-9 pr-8 py-2 appearance-none border border-slate-200 rounded-lg text-sm text-slate-700 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all cursor-pointer font-medium"
+                <Popover open={statusFilterOpen} onOpenChange={setStatusFilterOpen}>
+                  <PopoverTrigger className="flex min-w-44 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm font-medium text-slate-700 transition-all focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer">
+                    <Filter className="h-4 w-4 text-slate-400 shrink-0" />
+                    <span className={statusFilter !== "All" ? "text-slate-700" : "text-slate-400"}>
+                      {statusFilter === "All" ? "All Statuses" : statusFilter === "Awaiting Guardian" ? "Awaiting Guardian Email" : statusFilter === "Pending" ? "Pending Review" : statusFilter}
+                    </span>
+                    <ChevronDown size={14} className={`ml-auto shrink-0 text-slate-400 transition-transform ${statusFilterOpen ? "rotate-180" : ""}`} />
+                  </PopoverTrigger>
+                  <PopoverContent align="end" sideOffset={6} className="w-52 p-1">
+                    {[
+                      { value: "All", label: "All Statuses" },
+                      { value: "Pending", label: "Pending Review" },
+                      { value: "Awaiting Guardian", label: "Awaiting Guardian Email" },
+                      { value: "Approved", label: "Approved" },
+                      { value: "Denied", label: "Denied" },
+                      { value: "Completed", label: "Completed" },
+                    ].map(({ value, label }) => (
+                      <button key={value} type="button" onClick={() => { setStatusFilter(value); setStatusFilterOpen(false); }} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                        <span className="flex-1 text-left">{label}</span>
+                        {statusFilter === value && <Check className="h-3.5 w-3.5 text-teal-600" />}
+                      </button>
+                    ))}
+                  </PopoverContent>
+                </Popover>
+                {/* Clear filters */}
+                {(searchTerm || statusFilter !== "All") && (
+                  <button
+                    type="button"
+                    onClick={() => { setSearchTerm(""); setStatusFilter("All"); }}
+                    className="cursor-pointer flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors border border-rose-100"
                   >
-                    <option value="All">All Statuses</option>
-                    <option value="Pending">Pending Review</option>
-                    <option value="Awaiting Guardian">Awaiting Guardian Email</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Denied">Denied</option>
-                    <option value="Completed">Completed</option>
-                  </select>
-                </div>
+                    <FilterX size={14} />
+                    Clear
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -532,20 +558,20 @@ export default function VisitationRequestsPage() {
                 </p>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">Rows per page:</span>
-                  <select
-                    value={pageSize}
-                    onChange={(e) => {
-                      setPageSize(Number(e.target.value));
-                      setCurrentPage(1);
-                    }}
-                    className="appearance-none border border-slate-200 rounded-md px-2 py-1 pr-6 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all cursor-pointer"
-                  >
-                    {[5, 10, 30, 50].map((size) => (
-                      <option key={size} value={size}>
-                        {size}
-                      </option>
-                    ))}
-                  </select>
+                  <Popover open={pageSizeOpen} onOpenChange={setPageSizeOpen}>
+                    <PopoverTrigger className="flex min-w-14 items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-sm cursor-pointer transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20">
+                      <span className="text-slate-700">{pageSize}</span>
+                      <ChevronDown size={14} className={`shrink-0 text-slate-400 transition-transform ${pageSizeOpen ? "rotate-180" : ""}`} />
+                    </PopoverTrigger>
+                    <PopoverContent align="start" sideOffset={6} className="w-20 p-1">
+                      {[5, 10, 30, 50].map((size) => (
+                        <button key={size} type="button" onClick={() => { setPageSize(size); setCurrentPage(1); setPageSizeOpen(false); }} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                          <span className="flex-1 text-left">{size}</span>
+                          {pageSize === size && <Check className="h-3.5 w-3.5 text-teal-600" />}
+                        </button>
+                      ))}
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
               <div className="flex items-center gap-2">

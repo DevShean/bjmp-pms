@@ -120,7 +120,7 @@ export default function EditProgressModal({ isOpen, onClose, onSave, record }: E
         </div>
 
         {/* Body */}
-        <div className="px-6 py-8 space-y-6">
+        <div className="px-6 pt-4 pb-5 space-y-4">
           {/* Program Info (ReadOnly) */}
           <div className="rounded-xl bg-slate-50 border border-slate-200 p-4">
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1 text-left">Current Program</p>

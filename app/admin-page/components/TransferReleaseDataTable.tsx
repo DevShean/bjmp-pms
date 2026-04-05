@@ -12,7 +12,8 @@ import {
   type ColumnFiltersState,
 } from "@tanstack/react-table";
 import { useMemo, useState, useEffect, memo } from "react";
-import { ArrowRightLeft, Search, FilterX, ChevronDown, LayoutGrid, Users } from "lucide-react";
+import { ArrowRightLeft, Search, FilterX, ChevronDown, LayoutGrid, Users, Check } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import Image from "next/image";
 
@@ -45,7 +46,7 @@ const CellInput = memo(function CellInput({ value, onChange }: { value: string, 
       placeholder="e.g. B2"
       value={localVal}
       onChange={e => {
-        const v = e.target.value.toUpperCase();
+        const v = e.target.value;
         setLocalVal(v);
         onChange(v);
       }}
@@ -160,6 +161,9 @@ export default function TransferReleaseDataTable({
   });
   const [globalFilter, setGlobalFilter] = useState("");
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [blockFilterOpen, setBlockFilterOpen] = useState(false);
+  const [genderFilterOpen, setGenderFilterOpen] = useState(false);
+  const [pageSizeOpen, setPageSizeOpen] = useState(false);
 
   // Derive unique blocks for filter
   const uniqueBlocks = useMemo(() => {
@@ -214,42 +218,44 @@ export default function TransferReleaseDataTable({
           </div>
 
           {/* Block Filter */}
-          <div className="relative">
-            <select
-              value={(table.getColumn("currentBlock")?.getFilterValue() as string) ?? ""}
-              onChange={(e) => table.getColumn("currentBlock")?.setFilterValue(e.target.value || undefined)}
-              className="appearance-none block w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 sm:text-sm transition-all shadow-sm cursor-pointer"
-            >
-              <option value="">All Blocks</option>
-              {uniqueBlocks.map((block) => (
-                <option key={block} value={block}>
-                  {block}
-                </option>
+          <Popover open={blockFilterOpen} onOpenChange={setBlockFilterOpen}>
+            <PopoverTrigger className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 cursor-pointer shadow-sm transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 min-w-36">
+              <span className={(table.getColumn("currentBlock")?.getFilterValue() as string) ? "text-slate-700" : "text-slate-400"}>
+                {(table.getColumn("currentBlock")?.getFilterValue() as string) || "All Blocks"}
+              </span>
+              <ChevronDown size={14} className={`text-slate-400 transition-transform shrink-0 ${blockFilterOpen ? "rotate-180" : ""}`} />
+            </PopoverTrigger>
+            <PopoverContent align="start" sideOffset={6} className="w-40 p-1">
+              {["", ...uniqueBlocks].map((block) => (
+                <button key={block || "all"} type="button"
+                  onClick={() => { table.getColumn("currentBlock")?.setFilterValue(block || undefined); setBlockFilterOpen(false); }}
+                  className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                  <span className="flex-1 text-left">{block || "All Blocks"}</span>
+                  {((table.getColumn("currentBlock")?.getFilterValue() as string) ?? "") === block && <Check className="h-3.5 w-3.5 text-teal-600" />}
+                </button>
               ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
-              <ChevronDown size={14} />
-            </div>
-          </div>
+            </PopoverContent>
+          </Popover>
 
           {/* Gender Filter */}
-          <div className="relative">
-            <select
-              value={(table.getColumn("gender")?.getFilterValue() as string) ?? ""}
-              onChange={(e) => table.getColumn("gender")?.setFilterValue(e.target.value || undefined)}
-              className="appearance-none block w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 sm:text-sm transition-all shadow-sm cursor-pointer"
-            >
-              <option value="">All Genders</option>
-              {uniqueGenders.map((gender) => (
-                <option key={gender} value={gender}>
-                  {gender}
-                </option>
+          <Popover open={genderFilterOpen} onOpenChange={setGenderFilterOpen}>
+            <PopoverTrigger className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 cursor-pointer shadow-sm transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 min-w-36">
+              <span className={(table.getColumn("gender")?.getFilterValue() as string) ? "text-slate-700" : "text-slate-400"}>
+                {(table.getColumn("gender")?.getFilterValue() as string) || "All Genders"}
+              </span>
+              <ChevronDown size={14} className={`text-slate-400 transition-transform shrink-0 ${genderFilterOpen ? "rotate-180" : ""}`} />
+            </PopoverTrigger>
+            <PopoverContent align="start" sideOffset={6} className="w-36 p-1">
+              {["", ...uniqueGenders].map((gender) => (
+                <button key={gender || "all"} type="button"
+                  onClick={() => { table.getColumn("gender")?.setFilterValue(gender || undefined); setGenderFilterOpen(false); }}
+                  className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                  <span className="flex-1 text-left">{gender || "All Genders"}</span>
+                  {((table.getColumn("gender")?.getFilterValue() as string) ?? "") === gender && <Check className="h-3.5 w-3.5 text-teal-600" />}
+                </button>
               ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
-              <ChevronDown size={14} />
-            </div>
-          </div>
+            </PopoverContent>
+          </Popover>
 
           {/* Clear Filters */}
           {(globalFilter || columnFilters.length > 0) && (
@@ -323,17 +329,22 @@ export default function TransferReleaseDataTable({
             </p>
             <div className="flex items-center gap-2">
               <span className="font-medium">Rows per page:</span>
-              <select
-                value={table.getState().pagination.pageSize}
-                onChange={(e) => table.setPageSize(Number(e.target.value))}
-                className="border border-slate-200 rounded-md px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all cursor-pointer"
-              >
-                {[5, 10, 20, 50].map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
+              <Popover open={pageSizeOpen} onOpenChange={setPageSizeOpen}>
+                <PopoverTrigger className="flex items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-sm text-slate-700 cursor-pointer transition-all hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 min-w-14">
+                  <span>{table.getState().pagination.pageSize}</span>
+                  <ChevronDown size={12} className={`text-slate-400 transition-transform shrink-0 ${pageSizeOpen ? "rotate-180" : ""}`} />
+                </PopoverTrigger>
+                <PopoverContent align="start" sideOffset={6} className="w-20 p-1">
+                  {[5, 10, 20, 50].map((size) => (
+                    <button key={size} type="button"
+                      onClick={() => { table.setPageSize(size); setPageSizeOpen(false); }}
+                      className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                      <span className="flex-1 text-left">{size}</span>
+                      {table.getState().pagination.pageSize === size && <Check className="h-3.5 w-3.5 text-teal-600" />}
+                    </button>
+                  ))}
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 

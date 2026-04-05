@@ -6,7 +6,8 @@ import UserDataTable, { UserRecord } from "../components/UserDataTable";
 import AddUserModal, { AddUserFormData } from "../components/AddUserModal";
 import EditUserModal, { EditUserFormData } from "../components/EditUserModal";
 import DeleteUserModal from "../components/DeleteUserModal";
-import { Search, Filter, UserPlus } from "lucide-react";
+import { Search, Filter, FilterX, UserPlus, ChevronDown, Check } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import IconButton from "@/components/ui/IconButton";
 import { supabase } from "../../../lib/supabase/client";
 import { toast } from "sonner";
@@ -35,6 +36,7 @@ export default function UserManagementPage() {
   const [editUser, setEditUser] = useState<UserRecord | null>(null);
   const [deleteUser, setDeleteUser] = useState<UserRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [roleFilterOpen, setRoleFilterOpen] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
@@ -204,23 +206,41 @@ export default function UserManagementPage() {
           
           <div className="flex items-center gap-2 w-full sm:w-auto">
             {viewMode === "Staff" && (
-              <div className="relative w-full sm:w-auto">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                  <Filter size={16} />
-                </div>
-                <select
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value)}
-                  className="pl-9 pr-8 py-2 w-full sm:w-48 appearance-none border border-slate-200 rounded-lg text-sm text-slate-700 bg-slate-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500 transition-all cursor-pointer font-medium"
-                >
-                  <option value="All">All Roles</option>
-                  {Array.from(new Set(users.filter(u => u.role !== "Visitor").map(u => u.role)))
-                    .sort()
-                    .map((role) => (
-                      <option key={role} value={role}>{role}</option>
-                    ))}
-                </select>
-              </div>
+              <>
+                <Popover open={roleFilterOpen} onOpenChange={setRoleFilterOpen}>
+                  <PopoverTrigger className="flex min-w-44 items-center gap-2 rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2 text-sm font-medium transition-all focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/50 cursor-pointer">
+                    <Filter size={16} className="text-slate-400 shrink-0" />
+                    <span className={roleFilter !== "All" ? "text-slate-700" : "text-slate-400"}>
+                      {roleFilter === "All" ? "All Roles" : roleFilter}
+                    </span>
+                    <ChevronDown size={14} className={`ml-auto shrink-0 text-slate-400 transition-transform ${roleFilterOpen ? "rotate-180" : ""}`} />
+                  </PopoverTrigger>
+                  <PopoverContent align="start" sideOffset={6} className="w-48 p-1">
+                    <button type="button" onClick={() => { setRoleFilter("All"); setRoleFilterOpen(false); }} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                      <span className="flex-1 text-left">All Roles</span>
+                      {roleFilter === "All" && <Check className="h-3.5 w-3.5 text-teal-600" />}
+                    </button>
+                    {Array.from(new Set(users.filter(u => u.role !== "Visitor").map(u => u.role)))
+                      .sort()
+                      .map((role) => (
+                        <button key={role} type="button" onClick={() => { setRoleFilter(role); setRoleFilterOpen(false); }} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                          <span className="flex-1 text-left">{role}</span>
+                          {roleFilter === role && <Check className="h-3.5 w-3.5 text-teal-600" />}
+                        </button>
+                      ))}
+                  </PopoverContent>
+                </Popover>
+                {(searchTerm || roleFilter !== "All") && (
+                  <button
+                    type="button"
+                    onClick={() => { setSearchTerm(""); setRoleFilter("All"); }}
+                    className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors border border-rose-100"
+                  >
+                    <FilterX size={14} />
+                    Clear
+                  </button>
+                )}
+              </>
             )}
           </div>
         </div>
