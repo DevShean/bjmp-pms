@@ -21,8 +21,10 @@ import {
   Layers, 
   CheckCircle2,
   Clock,
-  XCircle
+  XCircle,
+  Check
 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export interface ProgramRecord {
   id: string;
@@ -61,6 +63,8 @@ export default function ProgramTable({ data, onEdit }: ProgramTableProps) {
   const [globalFilter, setGlobalFilter] = useState("");
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
+  const [statusFilterOpen, setStatusFilterOpen] = useState(false);
+  const [pageSizeOpen, setPageSizeOpen] = useState(false);
 
   const columns = useMemo<ColumnDef<ProgramRecord>[]>(
     () => [
@@ -187,23 +191,26 @@ export default function ProgramTable({ data, onEdit }: ProgramTableProps) {
           </div>
 
           {/* Status Filter */}
-          <div className="relative">
-            <select
-              value={(table.getColumn("status")?.getFilterValue() as string) ?? ""}
-              onChange={(e) => table.getColumn("status")?.setFilterValue(e.target.value || undefined)}
-              className="appearance-none block w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 sm:text-sm transition-all cursor-pointer"
-            >
-              <option value="">All Statuses</option>
+          <Popover open={statusFilterOpen} onOpenChange={setStatusFilterOpen}>
+            <PopoverTrigger className="flex min-w-36 items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm transition-all focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 cursor-pointer">
+              <span className={(table.getColumn("status")?.getFilterValue() as string) ? "text-slate-700" : "text-slate-400"}>
+                {(table.getColumn("status")?.getFilterValue() as string) || "All Statuses"}
+              </span>
+              <ChevronDown size={14} className={`shrink-0 text-slate-400 transition-transform ${statusFilterOpen ? "rotate-180" : ""}`} />
+            </PopoverTrigger>
+            <PopoverContent align="start" sideOffset={6} className="w-48 p-1">
+              <button type="button" onClick={() => { table.getColumn("status")?.setFilterValue(undefined); setStatusFilterOpen(false); }} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                <span className="flex-1 text-left">All Statuses</span>
+                {!(table.getColumn("status")?.getFilterValue() as string) && <Check className="h-3.5 w-3.5 text-teal-600" />}
+              </button>
               {uniqueStatuses.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
+                <button key={status} type="button" onClick={() => { table.getColumn("status")?.setFilterValue(status); setStatusFilterOpen(false); }} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                  <span className="flex-1 text-left">{status}</span>
+                  {(table.getColumn("status")?.getFilterValue() as string) === status && <Check className="h-3.5 w-3.5 text-teal-600" />}
+                </button>
               ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
-              <ChevronDown size={14} />
-            </div>
-          </div>
+            </PopoverContent>
+          </Popover>
 
           {/* Clear Filters */}
           {(globalFilter || columnFilters.length > 0) && (
@@ -289,17 +296,20 @@ export default function ProgramTable({ data, onEdit }: ProgramTableProps) {
           <div className="flex items-center gap-6 text-sm text-slate-600">
             <div className="flex items-center gap-2">
               <span className="font-medium text-slate-500">Rows per page:</span>
-              <select
-                value={table.getState().pagination.pageSize}
-                onChange={(e) => table.setPageSize(Number(e.target.value))}
-                className="cursor-pointer rounded-md border border-slate-200 px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 transition-all"
-              >
-                {[5, 10, 20, 50].map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
+              <Popover open={pageSizeOpen} onOpenChange={setPageSizeOpen}>
+                <PopoverTrigger className="flex min-w-14 items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-sm cursor-pointer transition-all focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20">
+                  <span className="text-slate-700">{table.getState().pagination.pageSize}</span>
+                  <ChevronDown size={14} className={`shrink-0 text-slate-400 transition-transform ${pageSizeOpen ? "rotate-180" : ""}`} />
+                </PopoverTrigger>
+                <PopoverContent align="start" sideOffset={6} className="w-20 p-1">
+                  {[5, 10, 20, 50].map((size) => (
+                    <button key={size} type="button" onClick={() => { table.setPageSize(size); setPageSizeOpen(false); }} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                      <span className="flex-1 text-left">{size}</span>
+                      {table.getState().pagination.pageSize === size && <Check className="h-3.5 w-3.5 text-teal-600" />}
+                    </button>
+                  ))}
+                </PopoverContent>
+              </Popover>
             </div>
             <p className="font-medium">
               Page {table.getState().pagination.pageIndex + 1} of {Math.max(table.getPageCount(), 1)}

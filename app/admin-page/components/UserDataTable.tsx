@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   ColumnDef,
   flexRender,
@@ -9,7 +9,8 @@ import {
   getPaginationRowModel,
   PaginationState,
 } from "@tanstack/react-table";
-import { User, Edit, Trash2, Mail, ShieldCheck } from "lucide-react";
+import { User, Edit, Trash2, Mail, ShieldCheck, ChevronDown, Check } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export interface UserRecord {
   id: string;
@@ -91,6 +92,7 @@ export default function UserDataTable({ data, onEdit, onDelete }: UserDataTableP
   );
 
   const initialPagination = useMemo<PaginationState>(() => ({ pageIndex: 0, pageSize: 10 }), []);
+  const [pageSizeOpen, setPageSizeOpen] = useState(false);
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
@@ -152,17 +154,20 @@ export default function UserDataTable({ data, onEdit, onDelete }: UserDataTableP
           </p>
           <div className="flex items-center gap-2">
             <span>Show</span>
-            <select
-              value={table.getState().pagination.pageSize}
-              onChange={(e) => table.setPageSize(Number(e.target.value))}
-              className="border border-slate-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-teal-500"
-            >
-              {[5, 10, 30].map((pageSize) => (
-                <option key={pageSize} value={pageSize}>
-                  {pageSize}
-                </option>
-              ))}
-            </select>
+            <Popover open={pageSizeOpen} onOpenChange={setPageSizeOpen}>
+              <PopoverTrigger className="flex min-w-14 items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-sm cursor-pointer transition-all focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20">
+                <span className="text-slate-700">{table.getState().pagination.pageSize}</span>
+                <ChevronDown size={14} className={`shrink-0 text-slate-400 transition-transform ${pageSizeOpen ? "rotate-180" : ""}`} />
+              </PopoverTrigger>
+              <PopoverContent align="start" sideOffset={6} className="w-20 p-1">
+                {[5, 10, 30].map((size) => (
+                  <button key={size} type="button" onClick={() => { table.setPageSize(size); setPageSizeOpen(false); }} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                    <span className="flex-1 text-left">{size}</span>
+                    {table.getState().pagination.pageSize === size && <Check className="h-3.5 w-3.5 text-teal-600" />}
+                  </button>
+                ))}
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
         <div className="flex items-center gap-2">

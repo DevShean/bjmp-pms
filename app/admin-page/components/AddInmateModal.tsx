@@ -2,10 +2,10 @@ import { useState, useCallback, useEffect } from "react";
 import React from "react";
 import type { PaginationState } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { X, ChevronLeft, ChevronRight, Check, User, Activity, Phone, GraduationCap, Scale, Package, CalendarIcon } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Check, ChevronDown, User, Activity, Phone, GraduationCap, Scale, Package, CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import DegreeCombobox from "../../components/DegreeCombobox";
 import CourseCombobox from "../../components/CourseCombobox";
@@ -164,6 +164,32 @@ function getTextareaClass(valid: boolean, error: string | undefined) {
     return `${textareaBaseClass} border-slate-300 focus:border-teal-500 focus:ring-2 ring-teal-500`;
 }
 
+function InlineCombobox({ id, value, onChange, options, placeholder, className }: {
+    id?: string;
+    value: string;
+    onChange: (val: string) => void;
+    options: string[];
+    placeholder: string;
+    className?: string;
+}) {
+    const [open, setOpen] = useState(false);
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger id={id} className={`${className} flex items-center justify-between gap-2 cursor-pointer`}>
+                <span className={value ? "text-slate-800" : "text-slate-400"}>{value || placeholder}</span>
+                <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
+            </PopoverTrigger>
+            <PopoverContent align="start" sideOffset={6} className="w-48 p-1">
+                {options.map((opt) => (
+                    <button key={opt} type="button" onClick={() => { onChange(opt); setOpen(false); }} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                        <span className="flex-1 text-left">{opt}</span>
+                        {value === opt && <CheckIcon className="h-3.5 w-3.5 text-teal-600" />}
+                    </button>
+                ))}
+            </PopoverContent>
+        </Popover>
+    );
+}
 
 // ─── Step Renderers ───────────────────────────────────────────────────────────
 interface StepProps {
@@ -318,32 +344,24 @@ function StepPersonal({ form, onChange, onFieldChange, errors }: StepProps) {
                 {errors?.birthdate && <span className="text-xs text-red-500 font-medium mt-0.5">{errors.birthdate}</span>}
             </div>
             <Field label="Gender" id="gender" error={errors?.gender} valid={valid("gender") as boolean}>
-                <Select value={form.gender || ""} onValueChange={(val) => onFieldChange && onFieldChange("gender", val ?? "") }>
-                    <SelectTrigger id="gender" className={getInputClass(valid("gender") as boolean, errors?.gender) + " w-full cursor-pointer"}>
-                        <SelectValue placeholder="Select gender" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="Male">Male</SelectItem>
-                        <SelectItem value="Female">Female</SelectItem>
-                    </SelectContent>
-                </Select>
+                <InlineCombobox
+                    id="gender"
+                    value={form.gender || ""}
+                    onChange={(val) => onFieldChange && onFieldChange("gender", val)}
+                    options={["Male", "Female"]}
+                    placeholder="Select gender"
+                    className={getInputClass(valid("gender") as boolean, errors?.gender)}
+                />
             </Field>
             <Field label="Marital Status" id="marital_status" error={errors?.marital_status} valid={valid("marital_status") as boolean}>
-                <Select
+                <InlineCombobox
+                    id="marital_status"
                     value={form.marital_status || ""}
-                    onValueChange={(val) => onFieldChange && onFieldChange("marital_status", val ?? "")}
-                >
-                    <SelectTrigger id="marital_status" className={getInputClass(valid("marital_status") as boolean, errors?.marital_status) + " w-full cursor-pointer"}>
-                        <SelectValue placeholder="Select marital status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="Single">Single</SelectItem>
-                        <SelectItem value="Married">Married</SelectItem>
-                        <SelectItem value="Widowed">Widowed</SelectItem>
-                        <SelectItem value="Separated">Separated</SelectItem>
-                        <SelectItem value="Divorced">Divorced</SelectItem>
-                    </SelectContent>
-                </Select>
+                    onChange={(val) => onFieldChange && onFieldChange("marital_status", val)}
+                    options={["Single", "Married", "Widowed", "Separated", "Divorced"]}
+                    placeholder="Select marital status"
+                    className={getInputClass(valid("marital_status") as boolean, errors?.marital_status)}
+                />
             </Field>
             <Field label="Place of Birth" id="place_of_birth" error={errors?.place_of_birth} valid={valid("place_of_birth") as boolean}>
                 <input id="place_of_birth" name="place_of_birth" type="text" value={form.place_of_birth} onChange={onChange} placeholder="City, Province" className={getInputClass(valid("place_of_birth") as boolean, errors?.place_of_birth)} />
@@ -396,16 +414,14 @@ function StepPhysical({ form, onChange, onFieldChange, errors }: StepProps) {
                 <input id="eye_color" name="eye_color" type="text" value={form.eye_color} onChange={onChange} placeholder="Brown" className={getInputClass(valid("eye_color") as boolean, errors?.eye_color)} />
             </Field>
             <Field label="Blood Type" id="blood_type" error={errors?.blood_type} valid={valid("blood_type") as boolean}>
-                <Select value={form.blood_type || ""} onValueChange={(val) => onFieldChange?.("blood_type", val ?? "")}> 
-                    <SelectTrigger id="blood_type" className={getInputClass(valid("blood_type") as boolean, errors?.blood_type) + " w-full cursor-pointer"}>
-                        <SelectValue placeholder="Select blood type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {(["A", "B", "AB", "O"] as BloodType[]).map((bt) => (
-                             <SelectItem key={bt} value={bt}>{bt}</SelectItem>
-                         ))}
-                    </SelectContent>
-                </Select>
+                <InlineCombobox
+                    id="blood_type"
+                    value={form.blood_type || ""}
+                    onChange={(val) => onFieldChange?.("blood_type", val)}
+                    options={["A", "B", "AB", "O"]}
+                    placeholder="Select blood type"
+                    className={getInputClass(valid("blood_type") as boolean, errors?.blood_type)}
+                />
             </Field>
             <div className="sm:col-span-2">
                 <Field label="Identifying Marks" id="identifying_marks" error={errors?.identifying_marks} valid={valid("identifying_marks") as boolean}>
@@ -541,16 +557,14 @@ function StepCase({ form, onChange, onFieldChange, errors }: StepProps) {
                 <input id="cell_block" name="cell_block" type="text" value={form.cell_block} onChange={onChange} placeholder="Block A" className={getInputClass(valid("cell_block") as boolean, errors?.cell_block)} />
             </Field>
             <Field label="Inmate Status" id="status" error={errors?.status} valid={valid("status") as boolean}>
-                <Select value={form.status || ""} onValueChange={(val) => onFieldChange?.("status", val ?? "")}> 
-                    <SelectTrigger id="status" className={getInputClass(valid("status") as boolean, errors?.status) + " w-full cursor-pointer"}>
-                        <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="Active">Active</SelectItem>
-                        <SelectItem value="Released">Released</SelectItem>
-                        <SelectItem value="Transferred">Transferred</SelectItem>
-                    </SelectContent>
-                </Select>
+                <InlineCombobox
+                    id="status"
+                    value={form.status || ""}
+                    onChange={(val) => onFieldChange?.("status", val)}
+                    options={["Active", "Released", "Transferred"]}
+                    placeholder="Select status"
+                    className={getInputClass(valid("status") as boolean, errors?.status)}
+                />
             </Field>
             <DatePickerField
                 label="Admission Date"

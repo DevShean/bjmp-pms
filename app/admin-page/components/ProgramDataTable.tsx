@@ -11,7 +11,8 @@ import {
   PaginationState,
   ColumnFiltersState,
 } from "@tanstack/react-table";
-import { UserPlus, Users, BarChart2, CheckCircle2, Edit, Trash2, Search, FilterX, ChevronDown, Tag, Calendar } from "lucide-react";
+import { UserPlus, Users, BarChart2, CheckCircle2, Edit, Trash2, Search, FilterX, ChevronDown, Tag, Calendar, Check } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export interface ProgramRecord {
   id: string;
@@ -143,6 +144,9 @@ export default function ProgramDataTable({ data, onEdit, onDelete, onAssign, ini
 
   const [globalFilter, setGlobalFilter] = useState(initialSearch);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [typeFilterOpen, setTypeFilterOpen] = useState(false);
+  const [statusFilterOpen, setStatusFilterOpen] = useState(false);
+  const [pageSizeOpen, setPageSizeOpen] = useState(false);
 
   // Derive unique categories for filters
   const uniqueTypes = useMemo(() => Array.from(new Set(data.map((p) => p.type))).sort(), [data]);
@@ -196,42 +200,48 @@ export default function ProgramDataTable({ data, onEdit, onDelete, onAssign, ini
           </div>
 
           {/* Type Filter */}
-          <div className="relative">
-            <select
-              value={(table.getColumn("type")?.getFilterValue() as string) ?? ""}
-              onChange={(e) => table.getColumn("type")?.setFilterValue(e.target.value || undefined)}
-              className="appearance-none block w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 sm:text-sm transition-all shadow-sm cursor-pointer"
-            >
-              <option value="">All Types</option>
+          <Popover open={typeFilterOpen} onOpenChange={setTypeFilterOpen}>
+            <PopoverTrigger className="flex min-w-36 items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition-all focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 cursor-pointer">
+              <span className={(table.getColumn("type")?.getFilterValue() as string) ? "text-slate-700" : "text-slate-400"}>
+                {(table.getColumn("type")?.getFilterValue() as string) || "All Types"}
+              </span>
+              <ChevronDown size={14} className={`shrink-0 text-slate-400 transition-transform ${typeFilterOpen ? "rotate-180" : ""}`} />
+            </PopoverTrigger>
+            <PopoverContent align="start" sideOffset={6} className="w-48 p-1">
+              <button type="button" onClick={() => { table.getColumn("type")?.setFilterValue(undefined); setTypeFilterOpen(false); }} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                <span className="flex-1 text-left">All Types</span>
+                {!(table.getColumn("type")?.getFilterValue() as string) && <Check className="h-3.5 w-3.5 text-teal-600" />}
+              </button>
               {uniqueTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
+                <button key={type} type="button" onClick={() => { table.getColumn("type")?.setFilterValue(type); setTypeFilterOpen(false); }} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                  <span className="flex-1 text-left">{type}</span>
+                  {(table.getColumn("type")?.getFilterValue() as string) === type && <Check className="h-3.5 w-3.5 text-teal-600" />}
+                </button>
               ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
-              <ChevronDown size={14} />
-            </div>
-          </div>
+            </PopoverContent>
+          </Popover>
 
           {/* Status Filter */}
-          <div className="relative">
-            <select
-              value={(table.getColumn("status")?.getFilterValue() as string) ?? ""}
-              onChange={(e) => table.getColumn("status")?.setFilterValue(e.target.value || undefined)}
-              className="appearance-none block w-full pl-3 pr-10 py-2 border border-slate-200 rounded-lg bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 sm:text-sm transition-all shadow-sm cursor-pointer"
-            >
-              <option value="">All Statuses</option>
+          <Popover open={statusFilterOpen} onOpenChange={setStatusFilterOpen}>
+            <PopoverTrigger className="flex min-w-36 items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-sm transition-all focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20 cursor-pointer">
+              <span className={(table.getColumn("status")?.getFilterValue() as string) ? "text-slate-700" : "text-slate-400"}>
+                {(table.getColumn("status")?.getFilterValue() as string) || "All Statuses"}
+              </span>
+              <ChevronDown size={14} className={`shrink-0 text-slate-400 transition-transform ${statusFilterOpen ? "rotate-180" : ""}`} />
+            </PopoverTrigger>
+            <PopoverContent align="start" sideOffset={6} className="w-48 p-1">
+              <button type="button" onClick={() => { table.getColumn("status")?.setFilterValue(undefined); setStatusFilterOpen(false); }} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                <span className="flex-1 text-left">All Statuses</span>
+                {!(table.getColumn("status")?.getFilterValue() as string) && <Check className="h-3.5 w-3.5 text-teal-600" />}
+              </button>
               {uniqueStatuses.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
+                <button key={status} type="button" onClick={() => { table.getColumn("status")?.setFilterValue(status); setStatusFilterOpen(false); }} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                  <span className="flex-1 text-left">{status}</span>
+                  {(table.getColumn("status")?.getFilterValue() as string) === status && <Check className="h-3.5 w-3.5 text-teal-600" />}
+                </button>
               ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
-              <ChevronDown size={14} />
-            </div>
-          </div>
+            </PopoverContent>
+          </Popover>
 
           {/* Clear Filters */}
           {(globalFilter || columnFilters.length > 0) && (
@@ -313,17 +323,20 @@ export default function ProgramDataTable({ data, onEdit, onDelete, onAssign, ini
           </p>
           <div className="flex items-center gap-2">
             <span className="font-medium">Rows per page:</span>
-            <select
-              value={table.getState().pagination.pageSize}
-              onChange={(e) => table.setPageSize(Number(e.target.value))}
-              className="border border-slate-200 rounded-md px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all cursor-pointer"
-            >
-              {[5, 10, 30, 50].map((pageSize) => (
-                <option key={pageSize} value={pageSize}>
-                  {pageSize}
-                </option>
-              ))}
-            </select>
+            <Popover open={pageSizeOpen} onOpenChange={setPageSizeOpen}>
+              <PopoverTrigger className="flex min-w-14 items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-sm cursor-pointer transition-all focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20">
+                <span className="text-slate-700">{table.getState().pagination.pageSize}</span>
+                <ChevronDown size={14} className={`shrink-0 text-slate-400 transition-transform ${pageSizeOpen ? "rotate-180" : ""}`} />
+              </PopoverTrigger>
+              <PopoverContent align="start" sideOffset={6} className="w-20 p-1">
+                {[5, 10, 30, 50].map((pageSize) => (
+                  <button key={pageSize} type="button" onClick={() => { table.setPageSize(pageSize); setPageSizeOpen(false); }} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                    <span className="flex-1 text-left">{pageSize}</span>
+                    {table.getState().pagination.pageSize === pageSize && <Check className="h-3.5 w-3.5 text-teal-600" />}
+                  </button>
+                ))}
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
         <div className="flex items-center gap-2">

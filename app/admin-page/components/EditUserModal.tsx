@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, User } from "lucide-react";
+import { X, User, ChevronDown, Check } from "lucide-react";
 import { UserRecord } from "./UserDataTable";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import IconButton from "@/components/ui/IconButton";
 
@@ -45,6 +45,7 @@ export default function EditUserModal({ isOpen, onClose, user, onSubmit, roles }
     ? { username: user.username, email: user.email, role: String(user.role_id) }
     : { username: "", email: "", role: "" };
   const [form, setForm] = useState<EditUserFormData>(initialForm);
+  const [roleOpen, setRoleOpen] = useState(false);
 
   useEffect(() => {
     setForm(initialForm);
@@ -117,18 +118,25 @@ export default function EditUserModal({ isOpen, onClose, user, onSubmit, roles }
             </Field>
 
             <Field label="Role" id="role">
-              <Select value={form.role} onValueChange={(val) => setForm(prev => ({ ...prev, role: val || "" }))}>
-                <SelectTrigger className="w-full bg-slate-50 border-slate-300">
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
+              <Popover open={roleOpen} onOpenChange={setRoleOpen}>
+                <PopoverTrigger
+                  id="role"
+                  className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none transition hover:bg-slate-100"
+                >
+                  <span className={form.role ? "text-slate-800" : "text-slate-400"}>
+                    {form.role ? roles.find(r => String(r.role_id) === form.role)?.role_name : "Select role"}
+                  </span>
+                  <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${roleOpen ? "rotate-180" : ""}`} />
+                </PopoverTrigger>
+                <PopoverContent align="start" sideOffset={6} className="w-48 p-1">
                   {roles.map((r) => (
-                    <SelectItem key={r.role_id} value={String(r.role_id)}>
-                      {r.role_name}
-                    </SelectItem>
+                    <button key={r.role_id} type="button" onClick={() => { setForm(prev => ({ ...prev, role: String(r.role_id) })); setRoleOpen(false); }} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                      <span className="flex-1 text-left">{r.role_name}</span>
+                      {form.role === String(r.role_id) && <Check className="h-3.5 w-3.5 text-teal-600" />}
+                    </button>
                   ))}
-                </SelectContent>
-              </Select>
+                </PopoverContent>
+              </Popover>
             </Field>
           </form>
         </div>

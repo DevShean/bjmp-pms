@@ -2,10 +2,9 @@
 
 import React, { useState } from "react";
 import { format, differenceInWeeks } from "date-fns";
-import { CalendarIcon, X, CheckIcon } from "lucide-react";
+import { CalendarIcon, X, CheckIcon, ChevronDown } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import IconButton from "@/components/ui/IconButton";
 import RehabStaffCombobox from "../../components/RehabStaffCombobox";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -130,6 +129,34 @@ function Field({ label, id, children, error, valid }: { label: string; id: strin
 const inputClass = "w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 transition pr-9 border-slate-300 focus:border-teal-500 focus:ring-2 ring-teal-500";
 const textareaClass = "w-full rounded-lg border bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 transition resize-none pr-9 border-slate-300 focus:border-teal-500 focus:ring-2 ring-teal-500";
 
+function InlineCombobox({ id, value, onChange, options, placeholder }: {
+    id?: string;
+    value: string;
+    onChange: (val: string) => void;
+    options: string[];
+    placeholder: string;
+}) {
+    const [open, setOpen] = useState(false);
+    return (
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger
+                id={id}
+                className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm outline-none transition hover:bg-slate-100"
+            >
+                <span className={value ? "text-slate-800" : "text-slate-400"}>{value || placeholder}</span>
+                <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
+            </PopoverTrigger>
+            <PopoverContent align="start" sideOffset={6} className="w-48 p-1">
+                {options.map((opt) => (
+                    <button key={opt} type="button" onClick={() => { onChange(opt); setOpen(false); }} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                        <span className="flex-1 text-left">{opt}</span>
+                        {value === opt && <CheckIcon className="h-3.5 w-3.5 text-teal-600" />}
+                    </button>
+                ))}
+            </PopoverContent>
+        </Popover>
+    );
+}
 
 export default function AddProgramModal({ isOpen, onClose, onSubmit }: AddProgramModalProps) {
     const [form, setForm] = useState<AddProgramFormData>({
@@ -239,18 +266,14 @@ export default function AddProgramModal({ isOpen, onClose, onSubmit }: AddProgra
                                 </Field>
                             </div>
                             <div className="flex-1 min-w-0">
-                                <Field label="Program Type" id="program_type" error={touched.program_type ? errors.program_type : undefined} valid={!!(touched.program_type && !errors.program_type)}>
-                                    <Select value={form.program_type} onValueChange={(val) => handleFieldChange("program_type", val || "")}> 
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue placeholder="Select type" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Educational">Educational</SelectItem>
-                                            <SelectItem value="Vocational">Vocational</SelectItem>
-                                            <SelectItem value="Psychological">Psychological</SelectItem>
-                                            <SelectItem value="Other">Other</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                <Field label="Program Type" id="program_type" error={touched.program_type ? errors.program_type : undefined}>
+                                    <InlineCombobox
+                                        id="program_type"
+                                        value={form.program_type}
+                                        onChange={(val) => handleFieldChange("program_type", val)}
+                                        options={["Educational", "Vocational", "Psychological", "Other"]}
+                                        placeholder="Select type"
+                                    />
                                 </Field>
                             </div>
                         </div>
