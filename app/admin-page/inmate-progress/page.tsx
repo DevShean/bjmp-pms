@@ -10,6 +10,7 @@ import CompletionsChart from "./CompletionsChart";
 import ProgramTable, { ProgramRecord } from "./ProgramTable";
 import EditProgressModal from "./EditProgressModal";
 import { BookUser } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface InmateProgramJoin {
   inmate_program_id: number;
@@ -40,6 +41,7 @@ export default function InmateProgressPage() {
   const fetchProgressData = useCallback(async () => {
     try {
       setIsLoading(true);
+      await new Promise((resolve) => setTimeout(resolve, 3000));
       const { data, error } = await supabase
         .from("inmate_programs")
         .select(`
@@ -134,9 +136,20 @@ export default function InmateProgressPage() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard title="Total Programs" value={totalCount} tone="text-slate-900" />
-          <StatCard title="Completed" value={completedCount} tone="text-green-600" />
-          <StatCard title="Ongoing" value={ongoingCount} tone="text-yellow-600" />
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm space-y-2">
+                <Skeleton className="h-4 w-28 rounded-md" />
+                <Skeleton className="h-9 w-16 rounded-md" />
+              </div>
+            ))
+          ) : (
+            <>
+              <StatCard title="Total Programs" value={totalCount} tone="text-slate-900" />
+              <StatCard title="Completed" value={completedCount} tone="text-green-600" />
+              <StatCard title="Ongoing" value={ongoingCount} tone="text-yellow-600" />
+            </>
+          )}
         </div>
 
         <div className="flex flex-col gap-6 lg:flex-row">
@@ -145,10 +158,23 @@ export default function InmateProgressPage() {
           </div>
           <div className="flex-1 min-w-0">
             {isLoading ? (
-              <div className="flex h-64 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-teal-600" />
-                  <p className="text-sm text-slate-500 font-medium">Loading progress records...</p>
+              <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                <div className="border-b border-slate-200 bg-slate-50 px-5 py-3 grid grid-cols-6 gap-4">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton key={i} className="h-4 rounded-md" />
+                  ))}
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="px-5 py-3 grid grid-cols-6 gap-4 items-center">
+                      <Skeleton className="h-4 w-24 rounded-md" />
+                      <Skeleton className="h-4 w-28 rounded-md" />
+                      <Skeleton className="h-4 w-20 rounded-md" />
+                      <Skeleton className="h-4 w-20 rounded-md" />
+                      <Skeleton className="h-5 w-16 rounded-full" />
+                      <Skeleton className="h-7 w-16 rounded-md" />
+                    </div>
+                  ))}
                 </div>
               </div>
             ) : (

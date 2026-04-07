@@ -14,6 +14,7 @@ import {
 import { Eye, Edit, Trash2, UserPlus, Stethoscope, Search, FilterX, ChevronDown, Check, Users, Hash, User, Calendar } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import IconButton from "@/components/ui/IconButton";
+import { Skeleton } from "@/components/ui/skeleton";
 import AdminSidebarLayout from "../components/AdminSidebarLayout";
 import AddInmateModal from "../components/AddInmateModal";
 import ViewInmateModal from "../components/ViewInmateModal";
@@ -84,6 +85,7 @@ function InmateProfilePageContent() {
 
     const fetchInmates = useCallback(async () => {
         setIsLoading(true);
+        await new Promise((resolve) => setTimeout(resolve, 3000));
         try {
             const { data, error } = await supabase
                 .from("inmates")
@@ -325,13 +327,37 @@ function InmateProfilePageContent() {
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <SummaryCard title="Total Inmates" value={String(totalForGraph)} tone="text-slate-900" />
-                    <SummaryCard title="Active Inmates" value={String(activeCount)} tone="text-teal-700" />
-                    <SummaryCard title="Released Inmates" value={String(releasedCount)} tone="text-orange-600" />
-                    <SummaryCard title="Transferred Inmates" value={String(transferredCount)} tone="text-blue-700" />
+                    {isLoading ? (
+                        Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm space-y-3">
+                                <Skeleton className="h-4 w-28 rounded-md" />
+                                <Skeleton className="h-9 w-16 rounded-md" />
+                            </div>
+                        ))
+                    ) : (
+                        <>
+                            <SummaryCard title="Total Inmates" value={String(totalForGraph)} tone="text-slate-900" />
+                            <SummaryCard title="Active Inmates" value={String(activeCount)} tone="text-teal-700" />
+                            <SummaryCard title="Released Inmates" value={String(releasedCount)} tone="text-orange-600" />
+                            <SummaryCard title="Transferred Inmates" value={String(transferredCount)} tone="text-blue-700" />
+                        </>
+                    )}
                 </div>
 
                 <div className="flex gap-5">
+                    {isLoading ? (
+                        <div className="max-w-sm min-w-0 w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-4">
+                            <Skeleton className="h-5 w-48 rounded-md" />
+                            <div className="flex items-center justify-center mt-3">
+                                <Skeleton className="h-32 w-32 rounded-full" />
+                            </div>
+                            <div className="space-y-2.5 mt-4">
+                                {Array.from({ length: 3 }).map((_, i) => (
+                                    <Skeleton key={i} className="h-9 w-full rounded-lg" />
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
                     <div className="max-w-sm min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                         <h2 className="font-lexend text-lg font-semibold text-slate-800">Inmate Status Distribution</h2>
 
@@ -358,7 +384,54 @@ function InmateProfilePageContent() {
                             ))}
                         </div>
                     </div>
+                    )}
 
+                    {isLoading ? (
+                        <div className="flex-1 min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                            {/* Toolbar skeleton */}
+                            <div className="flex flex-col gap-4 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center">
+                                <Skeleton className="h-9 w-64 rounded-lg" />
+                                <Skeleton className="h-9 w-48 rounded-lg" />
+                                <Skeleton className="h-9 w-40 rounded-lg" />
+                            </div>
+                            {/* Header row skeleton */}
+                            <div className="border-b border-slate-200 bg-slate-50 px-5 py-3 grid grid-cols-7 gap-4">
+                                {Array.from({ length: 7 }).map((_, i) => (
+                                    <Skeleton key={i} className="h-4 rounded-md" />
+                                ))}
+                            </div>
+                            {/* Row skeletons */}
+                            <div className="divide-y divide-slate-100">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                    <div key={i} className="px-5 py-3 grid grid-cols-7 gap-4 items-center">
+                                        <Skeleton className="h-4 w-8 rounded-md" />
+                                        <div className="flex items-center gap-2">
+                                            <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+                                            <Skeleton className="h-4 w-20 rounded-md" />
+                                        </div>
+                                        <Skeleton className="h-4 w-20 rounded-md" />
+                                        <Skeleton className="h-4 w-24 rounded-md" />
+                                        <Skeleton className="h-4 w-12 rounded-md" />
+                                        <Skeleton className="h-6 w-16 rounded-full" />
+                                        <div className="flex gap-2">
+                                            <Skeleton className="h-7 w-7 rounded-md" />
+                                            <Skeleton className="h-7 w-7 rounded-md" />
+                                            <Skeleton className="h-7 w-7 rounded-md" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            {/* Pagination skeleton */}
+                            <div className="flex items-center justify-between border-t border-slate-200 px-5 py-4">
+                                <Skeleton className="h-8 w-36 rounded-lg" />
+                                <div className="flex items-center gap-3">
+                                    <Skeleton className="h-4 w-20 rounded-md" />
+                                    <Skeleton className="h-8 w-20 rounded-md" />
+                                    <Skeleton className="h-8 w-16 rounded-md" />
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
                     <div className="flex-1 min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                         <div className="flex flex-col gap-4 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center">
                             {/* Search Input */}
@@ -473,13 +546,7 @@ function InmateProfilePageContent() {
                                     ))}
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {isLoading ? (
-                                        <tr>
-                                            <td colSpan={columns.length} className="px-5 py-12 text-center text-sm text-slate-500">
-                                                Loading inmate records...
-                                            </td>
-                                        </tr>
-                                    ) : table.getRowModel().rows.length === 0 ? (
+                                    {table.getRowModel().rows.length === 0 ? (
                                         <tr>
                                             <td colSpan={columns.length} className="px-5 py-12 text-center text-sm text-slate-500">
                                                 No inmate records found.
@@ -567,6 +634,7 @@ function InmateProfilePageContent() {
                             </div>
                         </div>
                     </div>
+                    )}
                 </div>
             </section>
         </AdminSidebarLayout>

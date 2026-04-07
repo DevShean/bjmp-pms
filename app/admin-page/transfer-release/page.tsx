@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeftRight, FileText, Zap, User } from "lucide-react";
 import { getInmateImageUrl } from "../../lib/utils/image";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type InmateCellBlock = {
 	id: string;
@@ -26,6 +27,7 @@ export default function TransferReleasePage() {
 
 	const fetchInmates = useCallback(async () => {
 		setIsLoading(true);
+		await new Promise((resolve) => setTimeout(resolve, 3000));
 		try {
 			const { data, error } = await supabase
 				.from("inmates")
@@ -100,9 +102,23 @@ export default function TransferReleasePage() {
 				</div>
 
 				 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-					 <SummaryCard title="Total Transfers" value={String(totalTransfers)} icon="document" tone="text-teal-700" />
-					 <SummaryCard title="Pending Requests" value={String(thisMonth)} icon="bolt" tone="text-amber-600" />
-					 <SummaryCard title="Total Inmates" value={String(totalInmates)} icon="user" tone="text-teal-700" />
+					 {isLoading ? (
+						 Array.from({ length: 3 }).map((_, i) => (
+							 <div key={i} className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+								 <Skeleton className="h-12 w-12 rounded-xl shrink-0" />
+								 <div className="space-y-2">
+									 <Skeleton className="h-4 w-24 rounded-md" />
+									 <Skeleton className="h-8 w-12 rounded-md" />
+								 </div>
+							 </div>
+						 ))
+					 ) : (
+						 <>
+							 <SummaryCard title="Total Transfers" value={String(totalTransfers)} icon="document" tone="text-teal-700" />
+							 <SummaryCard title="Pending Requests" value={String(thisMonth)} icon="bolt" tone="text-amber-600" />
+							 <SummaryCard title="Total Inmates" value={String(totalInmates)} icon="user" tone="text-teal-700" />
+						 </>
+					 )}
 				 </div>
 
 				 <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden min-w-0">

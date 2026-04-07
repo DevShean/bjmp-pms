@@ -11,7 +11,8 @@ import {
   type ColumnFiltersState,
   type PaginationState,
 } from "@tanstack/react-table";
-import { Search, User, ShieldCheck, Calendar, StickyNote, Eye, ChevronDown, FilterX } from "lucide-react";
+import { Search, User, ShieldCheck, Calendar, StickyNote, Eye, ChevronDown, FilterX, Check } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export interface BehaviorLogRecord {
   id: string;
@@ -42,6 +43,8 @@ export default function BehaviorLogsTable({
   const [globalFilter, setGlobalFilter] = useState("");
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
+  const [ratingFilterOpen, setRatingFilterOpen] = useState(false);
+  const [pageSizeOpen, setPageSizeOpen] = useState(false);
 
   const uniqueRatings = useMemo(() => Array.from(new Set(data.map((i) => i.rating))).sort(), [data]);
 
@@ -168,26 +171,26 @@ export default function BehaviorLogsTable({
           />
         </div>
 
-        <div className="relative sm:w-48">
-          <select
-            value={(table.getColumn("rating")?.getFilterValue() as string) ?? ""}
-            onChange={(event) => {
-              table.getColumn("rating")?.setFilterValue(event.target.value || undefined);
-              setPagination((prev) => ({ ...prev, pageIndex: 0 }));
-            }}
-            className="appearance-none block w-full pl-3 pr-10 py-2 border border-slate-300 rounded-lg bg-white text-sm text-slate-700 outline-none ring-teal-500 focus:ring-2 focus:border-teal-500 transition-all cursor-pointer"
-          >
-            <option value="">All Ratings</option>
+        <Popover open={ratingFilterOpen} onOpenChange={setRatingFilterOpen}>
+          <PopoverTrigger className="flex min-w-40 items-center justify-between gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition cursor-pointer focus:ring-2 focus:border-teal-500 ring-teal-500 sm:w-48">
+            <span className={(table.getColumn("rating")?.getFilterValue() as string) ? "text-slate-700" : "text-slate-400"}>
+              {(table.getColumn("rating")?.getFilterValue() as string) || "All Ratings"}
+            </span>
+            <ChevronDown size={14} className={`shrink-0 text-slate-400 transition-transform ${ratingFilterOpen ? "rotate-180" : ""}`} />
+          </PopoverTrigger>
+          <PopoverContent align="start" sideOffset={6} className="w-40 p-1">
+            <button type="button" onClick={() => { table.getColumn("rating")?.setFilterValue(undefined); setPagination(prev => ({ ...prev, pageIndex: 0 })); setRatingFilterOpen(false); }} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+              <span className="flex-1 text-left">All Ratings</span>
+              {!(table.getColumn("rating")?.getFilterValue() as string) && <Check className="h-3.5 w-3.5 text-teal-600" />}
+            </button>
             {uniqueRatings.map((rating) => (
-              <option key={rating} value={rating}>
-                {rating}
-              </option>
+              <button key={rating} type="button" onClick={() => { table.getColumn("rating")?.setFilterValue(rating); setPagination(prev => ({ ...prev, pageIndex: 0 })); setRatingFilterOpen(false); }} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                <span className="flex-1 text-left">{rating}</span>
+                {(table.getColumn("rating")?.getFilterValue() as string) === rating && <Check className="h-3.5 w-3.5 text-teal-600" />}
+              </button>
             ))}
-          </select>
-          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
-            <ChevronDown size={14} />
-          </div>
-        </div>
+          </PopoverContent>
+        </Popover>
 
         {(globalFilter || columnFilters.length > 0) && (
           <button
@@ -274,19 +277,20 @@ export default function BehaviorLogsTable({
       <div className="flex flex-col gap-3 border-t border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between bg-white">
         <div className="flex items-center gap-2 text-sm text-slate-600">
           <span>Rows per page:</span>
-          <select
-            value={table.getState().pagination.pageSize}
-            onChange={(event) => {
-              table.setPageSize(Number(event.target.value));
-            }}
-            className="cursor-pointer rounded-md border border-slate-300 px-2 py-1 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-teal-500"
-          >
-            {[5, 10, 20, 50].map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
+          <Popover open={pageSizeOpen} onOpenChange={setPageSizeOpen}>
+            <PopoverTrigger className="flex min-w-14 items-center justify-between gap-2 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm cursor-pointer transition-all focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20">
+              <span className="text-slate-700">{table.getState().pagination.pageSize}</span>
+              <ChevronDown size={14} className={`shrink-0 text-slate-400 transition-transform ${pageSizeOpen ? "rotate-180" : ""}`} />
+            </PopoverTrigger>
+            <PopoverContent align="start" sideOffset={6} className="w-20 p-1">
+              {[5, 10, 20, 50].map((size) => (
+                <button key={size} type="button" onClick={() => { table.setPageSize(size); setPageSizeOpen(false); }} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100">
+                  <span className="flex-1 text-left">{size}</span>
+                  {table.getState().pagination.pageSize === size && <Check className="h-3.5 w-3.5 text-teal-600" />}
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div className="flex items-center gap-3">

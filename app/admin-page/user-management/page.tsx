@@ -12,6 +12,7 @@ import IconButton from "@/components/ui/IconButton";
 import { supabase } from "../../../lib/supabase/client";
 import { toast } from "sonner";
 import { UserCog } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Role = {
   role_id: number;
@@ -40,6 +41,7 @@ export default function UserManagementPage() {
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 3000));
     const { data: userData, error: userError } = await supabase
       .from("users")
       .select(`
@@ -248,8 +250,28 @@ export default function UserManagementPage() {
         {/* User DataTable */}
         <div>
           {isLoading ? (
-            <div className="rounded-xl border border-slate-200 bg-white p-12 flex items-center justify-center text-slate-500">
-              <p>Loading users...</p>
+            <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+              {/* Table header skeleton */}
+              <div className="border-b border-slate-200 bg-slate-50 px-5 py-3 grid grid-cols-5 gap-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-4 rounded-md" />
+                ))}
+              </div>
+              {/* Row skeletons */}
+              <div className="divide-y divide-slate-100">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="px-5 py-3 grid grid-cols-5 gap-4 items-center">
+                    <Skeleton className="h-4 w-20 rounded-md" />
+                    <Skeleton className="h-4 w-32 rounded-md" />
+                    <Skeleton className="h-4 w-40 rounded-md" />
+                    <Skeleton className="h-5 w-24 rounded-full" />
+                    <div className="flex gap-2">
+                      <Skeleton className="h-7 w-7 rounded-md" />
+                      <Skeleton className="h-7 w-7 rounded-md" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
             <UserDataTable
