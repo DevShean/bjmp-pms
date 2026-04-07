@@ -1,7 +1,7 @@
 "use client";
 
 import AdminSidebarLayout from "../components/AdminSidebarLayout";
-import { BookOpen, Plus } from "lucide-react";
+import { BookOpen, Plus, BookCheck, BookMarked, LibraryBig } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
 import ProgramDataTable, { ProgramRecord } from "../components/ProgramDataTable";
 import AddProgramModal, { AddProgramFormData } from "../components/AddProgramModal";
@@ -13,6 +13,7 @@ import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ManageProgramPage() {
     return (
@@ -49,6 +50,7 @@ function ManageProgramPageContent() {
 	const fetchPrograms = useCallback(async () => {
 		try {
 			setIsLoading(true);
+			await new Promise((resolve) => setTimeout(resolve, 3000));
 			const { data, error } = await supabase
 				.from("programs")
 				.select("*, inmate_programs(count)")
@@ -129,10 +131,75 @@ function ManageProgramPageContent() {
 						</IconButton>
 					</div>
 
+					{/* ── Status Cards ── */}
+					<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+						{isLoading ? (
+							Array.from({ length: 4 }).map((_, i) => (
+								<div key={i} className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+									<Skeleton className="h-12 w-12 rounded-xl shrink-0" />
+									<div className="space-y-2">
+										<Skeleton className="h-4 w-24 rounded-md" />
+										<Skeleton className="h-8 w-12 rounded-md" />
+									</div>
+								</div>
+							))
+						) : (
+							<>
+								<ProgramStatCard
+									title="Total Programs"
+									value={programs.length}
+									icon={<LibraryBig className="size-6 text-teal-500" />}
+									tone="text-teal-700"
+								/>
+								<ProgramStatCard
+									title="Active Programs"
+									value={programs.filter((p) => p.status === "Active").length}
+									icon={<BookOpen className="size-6 text-emerald-500" />}
+									tone="text-emerald-700"
+								/>
+								<ProgramStatCard
+									title="Completed"
+									value={programs.filter((p) => p.status === "Completed").length}
+									icon={<BookCheck className="size-6 text-blue-500" />}
+									tone="text-blue-700"
+								/>
+								<ProgramStatCard
+									title="Upcoming"
+									value={programs.filter((p) => p.status === "Upcoming").length}
+									icon={<BookMarked className="size-6 text-amber-500" />}
+									tone="text-amber-600"
+								/>
+							</>
+						)}
+					</div>
+
 					<div className="mt-2 text-slate-800">
 						{isLoading ? (
-							<div className="flex justify-center p-12">
-								<p className="text-slate-500">Loading programs...</p>
+							<div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+								{/* Header row */}
+								<div className="border-b border-slate-200 bg-slate-50 px-5 py-3 grid grid-cols-7 gap-4">
+									{Array.from({ length: 7 }).map((_, i) => (
+										<Skeleton key={i} className="h-4 rounded-md" />
+									))}
+								</div>
+								{/* Rows */}
+								<div className="divide-y divide-slate-100">
+									{Array.from({ length: 6 }).map((_, i) => (
+										<div key={i} className="px-5 py-3 grid grid-cols-7 gap-4 items-center">
+											<Skeleton className="h-4 w-28 rounded-md" />
+											<Skeleton className="h-5 w-20 rounded-full" />
+											<Skeleton className="h-4 w-20 rounded-md" />
+											<Skeleton className="h-4 w-20 rounded-md" />
+											<Skeleton className="h-2 w-full rounded-full" />
+											<Skeleton className="h-5 w-16 rounded-full" />
+											<div className="flex gap-2">
+												<Skeleton className="h-7 w-7 rounded-md" />
+												<Skeleton className="h-7 w-7 rounded-md" />
+												<Skeleton className="h-7 w-7 rounded-md" />
+											</div>
+										</div>
+									))}
+								</div>
 							</div>
 						) : (
 							<ProgramDataTable 
@@ -198,5 +265,17 @@ function ManageProgramPageContent() {
 				programName={selectedProgramName}
 			/>
 		</AdminSidebarLayout>
+	);
+}
+
+function ProgramStatCard({ title, value, icon, tone }: { title: string; value: number; icon: React.ReactNode; tone: string }) {
+	return (
+		<article className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+			<div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100">{icon}</div>
+			<div>
+				<p className="text-sm text-slate-500">{title}</p>
+				<p className={`mt-1 text-3xl font-semibold ${tone}`}>{value}</p>
+			</div>
+		</article>
 	);
 }

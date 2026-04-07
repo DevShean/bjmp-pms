@@ -19,6 +19,7 @@ import {
   Check,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -148,6 +149,7 @@ export default function VisitationRequestsPage() {
   // ── Fetch ──
   const fetchRequests = useCallback(async () => {
     setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 3000));
     try {
       const { data, error } = await supabase
         .from("visitations")
@@ -335,24 +337,38 @@ export default function VisitationRequestsPage() {
 
         {/* ── Summary Cards ── */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <SummaryCard
-            title="Total Requests"
-            value={String(totalRequests)}
-            icon={<Users className="size-6 text-blue-500" />}
-            tone="text-blue-700"
-          />
-          <SummaryCard
-            title="Ready for Review"
-            value={String(pendingCount)}
-            icon={<Clock className="size-6 text-amber-500" />}
-            tone="text-amber-600"
-          />
-          <SummaryCard
-            title="Approved Visits"
-            value={String(approvedCount)}
-            icon={<CheckCircle2 className="size-6 text-emerald-500" />}
-            tone="text-emerald-700"
-          />
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+                <Skeleton className="h-12 w-12 rounded-xl shrink-0" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24 rounded-md" />
+                  <Skeleton className="h-8 w-12 rounded-md" />
+                </div>
+              </div>
+            ))
+          ) : (
+            <>
+              <SummaryCard
+                title="Total Requests"
+                value={String(totalRequests)}
+                icon={<Users className="size-6 text-blue-500" />}
+                tone="text-blue-700"
+              />
+              <SummaryCard
+                title="Ready for Review"
+                value={String(pendingCount)}
+                icon={<Clock className="size-6 text-amber-500" />}
+                tone="text-amber-600"
+              />
+              <SummaryCard
+                title="Approved Visits"
+                value={String(approvedCount)}
+                icon={<CheckCircle2 className="size-6 text-emerald-500" />}
+                tone="text-emerald-700"
+              />
+            </>
+          )}
         </div>
 
         {/* ── Table card ── */}
@@ -418,9 +434,36 @@ export default function VisitationRequestsPage() {
           {/* Table */}
           <div className="overflow-x-auto">
             {isLoading ? (
-              <div className="flex items-center justify-center py-16 text-slate-400">
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Loading requests…
+              <div className="divide-y divide-slate-100">
+                {/* Skeleton header */}
+                <div className="grid grid-cols-6 gap-4 border-b border-slate-100 bg-slate-100 px-6 py-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton key={i} className="h-4 rounded-md" />
+                  ))}
+                </div>
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="grid grid-cols-6 gap-4 px-6 py-4 items-center">
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-4 w-28 rounded-md" />
+                      <Skeleton className="h-3 w-32 rounded-md" />
+                      <Skeleton className="h-4 w-16 rounded-md" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-4 w-24 rounded-md" />
+                      <Skeleton className="h-3 w-16 rounded-md" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-4 w-20 rounded-md" />
+                      <Skeleton className="h-3 w-24 rounded-md" />
+                    </div>
+                    <Skeleton className="h-4 w-20 rounded-md" />
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                    <div className="flex justify-end gap-2">
+                      <Skeleton className="h-7 w-16 rounded-lg" />
+                      <Skeleton className="h-7 w-14 rounded-lg" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : filtered.length === 0 ? (
               <div className="py-16 text-center text-sm text-slate-500">
