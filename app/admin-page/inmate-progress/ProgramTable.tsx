@@ -10,6 +10,7 @@ import {
   getFilteredRowModel,
   PaginationState,
   ColumnFiltersState,
+  RowSelectionState,
 } from "@tanstack/react-table";
 import { 
   Search, 
@@ -39,6 +40,7 @@ export interface ProgramRecord {
 interface ProgramTableProps {
   data: ProgramRecord[];
   onEdit?: (record: ProgramRecord) => void;
+  onSelectionChange?: (selectedIds: string[]) => void;
 }
 
 const STATUS_THEME: Record<ProgramRecord["status"], { color: string; bg: string; icon: React.ReactNode }> = {
@@ -59,15 +61,43 @@ const STATUS_THEME: Record<ProgramRecord["status"], { color: string; bg: string;
   },
 };
 
-export default function ProgramTable({ data, onEdit }: ProgramTableProps) {
+export default function ProgramTable({ data, onEdit, onSelectionChange }: ProgramTableProps) {
   const [globalFilter, setGlobalFilter] = useState("");
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
   const [statusFilterOpen, setStatusFilterOpen] = useState(false);
   const [pageSizeOpen, setPageSizeOpen] = useState(false);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const columns = useMemo<ColumnDef<ProgramRecord>[]>(
     () => [
+      {
+        id: "select",
+        header: ({ table }) => (
+          <input
+            type="checkbox"
+            checked={table.getIsAllPageRowsSelected()}
+            ref={(el) => {
+              if (el) el.indeterminate = table.getIsSomePageRowsSelected();
+            }}
+            onChange={table.getToggleAllPageRowsSelectedHandler()}
+            className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-teal-600"
+            aria-label="Select all"
+          />
+        ),
+        cell: ({ row }) => (
+          <input
+            type="checkbox"
+            checked={row.getIsSelected()}
+            onChange={row.getToggleSelectedHandler()}
+            onClick={(e) => e.stopPropagation()}
+            className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-teal-600"
+            aria-label="Select row"
+          />
+        ),
+        enableSorting: false,
+        size: 40,
+      },
       {
         header: "INMATE NAME",
         accessorKey: "inmateName",
@@ -160,6 +190,14 @@ export default function ProgramTable({ data, onEdit }: ProgramTableProps) {
       globalFilter,
       columnFilters,
       pagination,
+      rowSelection,
+    },
+    getRowId: (row) => row.id,
+    enableRowSelection: true,
+    onRowSelectionChange: (updater) => {
+      const next = typeof updater === "function" ? updater(rowSelection) : updater;
+      setRowSelection(next);
+      onSelectionChange?.(Object.keys(next).filter((k) => next[k]));
     },
     onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
@@ -236,12 +274,15 @@ export default function ProgramTable({ data, onEdit }: ProgramTableProps) {
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => {
+                    const isSelect = header.column.id === "select";
                     const isInmate = header.column.id === "inmateName";
                     const isActions = header.column.id === "actions";
                     return (
                       <th
                         key={header.id}
                         className={`px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 ${
+                          isSelect ? "w-10 px-4" : ""
+                        } ${
                           isInmate ? "sticky left-0 z-20 bg-slate-50 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.1)]" : ""
                         } ${
                           isActions ? "sticky right-0 z-20 bg-slate-50 shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)]" : ""
@@ -265,20 +306,33 @@ export default function ProgramTable({ data, onEdit }: ProgramTableProps) {
                 </tr>
               ) : (
                 table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="hover:bg-teal-50/50 transition-colors group">
+                  <tr
+                    key={row.id}
+                    onClick={() => row.toggleSelected()}
+                    className={`cursor-pointer hover:bg-teal-50/50 transition-colors group ${
+                      row.getIsSelected() ? "bg-teal-50" : ""
+                    }`}
+                  >
                     {row.getVisibleCells().map((cell) => {
+                      const isSelect = cell.column.id === "select";
                       const isInmate = cell.column.id === "inmateName";
                       const isActions = cell.column.id === "actions";
-                      const rowBg = row.index % 2 !== 0 ? "bg-slate-200" : "bg-white";
+                      const rowBg = row.getIsSelected()
+                        ? "bg-teal-50"
+                        : row.index % 2 !== 0
+                        ? "bg-slate-200"
+                        : "bg-white";
                       
                       return (
                         <td
                           key={cell.id}
                           className={`whitespace-nowrap px-5 py-3.5 text-sm text-slate-700 transition-colors ${
+                            isSelect ? "w-10 px-4" : ""
+                          } ${
                             isInmate ? `sticky left-0 z-10 ${rowBg} shadow-[4px_0_10px_-4px_rgba(0,0,0,0.1)] group-hover:bg-teal-50` : ""
                           } ${
                             isActions ? `sticky right-0 z-10 ${rowBg} shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.1)] group-hover:bg-teal-50` : ""
-                          } ${!isInmate && !isActions ? `${rowBg} group-hover:bg-teal-50/50` : ""}`}
+                          } ${!isInmate && !isActions && !isSelect ? `${rowBg} group-hover:bg-teal-50/50` : ""}`}
                         >
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </td>
@@ -338,4 +392,4 @@ export default function ProgramTable({ data, onEdit }: ProgramTableProps) {
       </div>
     </div>
   );
-}
+}

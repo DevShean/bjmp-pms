@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, ChevronRight, LogOut, UserRound } from "lucide-react";
+import { ChevronDown, ChevronRight, LogOut} from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { type StaffRole, staffRoleConfig } from "./staffNavigation";
 import { supabase } from "@/lib/supabase/client";
@@ -24,9 +24,8 @@ function cn(...classNames: Array<string | false | null | undefined>) {
   return classNames.filter(Boolean).join(" ");
 }
 
-export default function StaffSidebar({ role, sessionUser, isCollapsed = false }: StaffSidebarProps) {
+export default function StaffSidebar({ role, isCollapsed = false }: StaffSidebarProps) {
   const pathname = usePathname();
-  const [isHovered, setIsHovered] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [dynamicBadges, setDynamicBadges] = useState<Record<string, number>>({});
 
@@ -71,7 +70,7 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
     }
   }, [role]);
 
-  const effectiveCollapsed = isCollapsed && !isHovered;
+  const effectiveCollapsed = isCollapsed;
   const config = staffRoleConfig[role];
 
   const openMap = useMemo(() => {
@@ -93,8 +92,7 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
         effectiveCollapsed ? "w-18" : "w-72",
         "border-r border-[#d9e3fb]"
       )}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+
     >
       <div className="flex items-center gap-3 border-b border-[#e2e8f0] px-4 py-5">
         <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-[#e8eefb] p-1.5">
@@ -248,29 +246,6 @@ export default function StaffSidebar({ role, sessionUser, isCollapsed = false }:
       </nav>
 
       <div className="sticky bottom-0 border-t border-[#d9e3fb] bg-linear-to-r from-[#eef4ff] to-[#f8fbff] p-3">
-        <div className="flex items-center gap-3 rounded-xl border border-[#dbe6ff] bg-white/85 px-2.5 py-2.5 shadow-[0_6px_18px_rgba(0,40,120,0.08)]">
-          <div className="relative shrink-0">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-linear-to-br from-[#15337b] to-[#2952b3] text-white shadow-sm">
-              <UserRound className="h-5 w-5" />
-            </div>
-            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-[#2d6a4f]" />
-          </div>
-
-          <div
-            className={cn(
-              "min-w-0 flex-1 transition-all duration-300",
-              effectiveCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
-            )}
-          >
-            <p className="truncate text-sm font-semibold text-[#00154A]">
-              {sessionUser?.name || sessionUser?.username || config.label}
-            </p>
-            <p className="truncate text-xs text-[#5f6f8f]">
-              {sessionUser?.email || config.defaultEmail}
-            </p>
-          </div>
-        </div>
-
         <button
           type="button"
           className="cursor-pointer group mt-2 flex w-full items-center gap-3 rounded-xl border border-[#dbe6ff] bg-white/70 px-2.5 py-2.5 text-sm font-medium text-[#42557f] transition-all hover:-translate-y-0.5 hover:border-[#f0c7c7] hover:bg-[#fff6f6] hover:text-[#b91c1c] hover:shadow-[0_8px_20px_rgba(185,28,28,0.12)]"
