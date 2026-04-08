@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, memo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, memo } from "react";
 import {
   Bell,
   ChevronDown,
-  Command,
+  LayoutGrid,
   PanelRightClose,
   PanelRightOpen,
   Search,
@@ -96,7 +96,27 @@ function SearchBar({
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [showResults, setShowResults] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const categoryRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const [category, setCategory] = useState<string>("All Category");
+  const [categoryOpen, setCategoryOpen] = useState(false);
+
+  const categories = useMemo(() => {
+    const cats = ["All Category", "Inmates"];
+    if (role === "admin" || role === "rehab") cats.push("Programs");
+    if (role === "admin" || role === "officer" || role === "rehab") cats.push("Behavior Logs");
+    return cats;
+  }, [role]);
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
+        setCategoryOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
 
   const getSearchResultHref = useCallback((type: 'inmate' | 'program' | 'behavior_log', id: number | string) => {
     if (type === 'inmate') {
@@ -131,24 +151,30 @@ function SearchBar({
       return;
     }
 
+    const shouldSearchInmates = category === "All" || category === "Inmates";
+    const shouldSearchPrograms = (category === "All" || category === "Programs") && (role === "admin" || role === "rehab");
+    const shouldSearchLogs = (category === "All" || category === "Behavior Logs") && (role === "admin" || role === "officer" || role === "rehab");
+
     const timer = setTimeout(async () => {
       setIsSearching(true);
       setShowResults(true);
       try {
         const [inmatesRes, programsRes, logsRes] = await Promise.all([
-          supabase
-            .from('inmates')
-            .select('inmate_id, first_name, last_name, photo_path')
-            .or(`first_name.ilike.%${searchValue}%,last_name.ilike.%${searchValue}%`)
-            .limit(5),
-          (role === 'admin' || role === 'rehab') 
+          shouldSearchInmates
+            ? supabase
+                .from('inmates')
+                .select('inmate_id, first_name, last_name, photo_path')
+                .or(`first_name.ilike.%${searchValue}%,last_name.ilike.%${searchValue}%`)
+                .limit(5)
+            : Promise.resolve({ data: null, error: null }),
+          shouldSearchPrograms
             ? supabase
                 .from('programs')
                 .select('program_id, program_name')
                 .ilike('program_name', `%${searchValue}%`)
                 .limit(3)
             : Promise.resolve({ data: null as ProgramSearchResult[] | null, error: null }),
-          (role === 'admin' || role === 'officer' || role === 'rehab')
+          shouldSearchLogs
             ? supabase
                 .from('behavior_logs')
                 .select('log_id, notes, behavior_rating, inmates(first_name, last_name, photo_path)')
@@ -207,7 +233,7 @@ function SearchBar({
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchValue, getSearchResultHref, role]);
+  }, [searchValue, category, getSearchResultHref, role]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
@@ -232,9 +258,43 @@ function SearchBar({
 
   return (
     <>
-      <div className="relative hidden w-72 md:block lg:w-96">
-        <div className="group relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8191b3] transition-colors group-focus-within:text-[#00154A]" />
+      {/* Desktop grouped search */}
+      <div className="relative hidden md:block">
+        <div className="flex shadow-sm -space-x-px">
+          {/* Category dropdown */}
+          <div ref={categoryRef} className="relative z-10 shrink-0">
+            <button
+              type="button"
+              onClick={() => setCategoryOpen((prev) => !prev)}
+              className="inline-flex h-10 w-40 cursor-pointer items-center gap-1.5 rounded-l-lg border border-[#e2e8f0] bg-[#f8fafd] px-3 text-sm font-medium text-[#5f6f8f] whitespace-nowrap transition-colors hover:bg-[#f1f5f9] hover:text-[#00154A] focus:outline-none focus:ring-2 focus:ring-[#c3d4f8]"
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              <span>{category}</span>
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${categoryOpen ? "rotate-180" : ""}`} />
+            </button>
+            {categoryOpen && (
+              <div className="absolute left-0 top-full mt-1.5 z-50 min-w-36 overflow-hidden rounded-lg border border-[#e2e8f0] bg-white shadow-lg animate-in zoom-in-95 fade-in-0 duration-150">
+                <ul className="p-1">
+                  {categories.map((cat) => (
+                    <li key={cat}>
+                      <button
+                        type="button"
+                        onClick={() => { setCategory(cat); setCategoryOpen(false); }}
+                        className={`flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors ${
+                          category === cat ? "bg-[#eef4ff] font-medium text-[#00154A]" : "text-[#5f6f8f] hover:bg-[#f1f5f9] hover:text-[#00154A]"
+                        }`}
+                      >
+                        <span className="flex-1 text-left">{cat}</span>
+                        {category === cat && <Check className="h-3.5 w-3.5 text-[#00154A]" />}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* Search input */}
           <input
             ref={inputRef}
             id="staff-search-input"
@@ -245,37 +305,76 @@ function SearchBar({
             onKeyDown={handleKeyDown}
             onFocus={() => searchValue.length >= 2 && setShowResults(true)}
             onBlur={() => setTimeout(() => setShowResults(false), 200)}
-            className="h-10 w-full rounded-lg border border-[#e2e8f0] bg-[#f8fafd] pl-9 pr-20 text-sm text-[#2f3d5b] outline-none ring-0 placeholder:text-[#9fa9bf] focus:border-[#00154A] focus:bg-white focus:ring-2 focus:ring-[#c3d4f8]"
+            className="h-10 w-44 border border-[#e2e8f0] bg-[#f8fafd] px-3 text-sm text-[#2f3d5b] outline-none placeholder:text-[#9fa9bf] transition-all focus:border-[#00154A] focus:bg-white focus:ring-2 focus:ring-[#c3d4f8] lg:w-60"
           />
-          <div className="absolute right-2 top-1/2 -translate-y-1/2">
-            <kbd className="inline-flex items-center gap-0.5 rounded border border-[#e2e8f0] bg-white px-1.5 py-0.5 text-[10px] font-medium text-[#8191b3]">
-              <Command className="h-3 w-3" />
-              <span>/</span>
-            </kbd>
-          </div>
+
+          {/* Search button */}
+          <button
+            type="button"
+            onClick={() => {
+              if (results.length > 0 && results[0]) {
+                router.push(results[0].href);
+                setShowResults(false);
+                setSearchValue("");
+              } else {
+                inputRef.current?.focus();
+              }
+            }}
+            className="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-r-lg border border-[#e2e8f0] bg-[#f8fafd] px-4 text-sm font-medium text-[#5f6f8f] shadow-sm transition-colors hover:bg-[#f1f5f9] hover:text-[#00154A] focus:outline-none focus:ring-2 focus:ring-[#c3d4f8]"
+          >
+            <Search className="h-4 w-4" />
+            <span>Search</span>
+          </button>
         </div>
 
         {showResults && (
-           <div className="absolute left-0 right-0 top-full mt-2 z-50 rounded-xl border border-[#e2e8f0] bg-white shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
-              <SearchContent 
-                results={results} 
-                isSearching={isSearching} 
-                selectedIndex={selectedIndex} 
-                onSelect={(href) => {
-                  router.push(href);
-                  setShowResults(false);
-                  setSearchValue("");
-                }}
-              />
-           </div>
+          <div className="absolute left-0 right-0 top-full mt-2 z-50 overflow-hidden rounded-xl border border-[#e2e8f0] bg-white shadow-xl animate-in zoom-in-95 duration-200">
+            <SearchContent
+              results={results}
+              isSearching={isSearching}
+              selectedIndex={selectedIndex}
+              onSelect={(href) => {
+                router.push(href);
+                setShowResults(false);
+                setSearchValue("");
+              }}
+            />
+          </div>
         )}
       </div>
 
       {isOpen && (
-        <div className="fixed inset-x-0 top-0 z-50 animate-in slide-in-from-top-0 fade-in-0 duration-200 h-full bg-slate-900/10 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onToggle?.()}>
-          <div className="bg-white/95 p-4 backdrop-blur-xl shadow-lg border-b border-slate-200">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8191b3]" />
+        <div className="fixed inset-x-0 top-0 z-50 h-full animate-in slide-in-from-top-0 fade-in-0 duration-200 bg-slate-900/10 backdrop-blur-sm" onClick={(e) => e.target === e.currentTarget && onToggle?.()}>
+          <div className="border-b border-slate-200 bg-white/95 p-4 shadow-lg backdrop-blur-xl">
+            <div className="flex -space-x-px overflow-hidden rounded-lg shadow-sm">
+              {/* Category (mobile) */}
+              <div className="relative z-10 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setCategoryOpen((prev) => !prev)}
+                  className="inline-flex h-12 cursor-pointer items-center gap-1.5 rounded-l-lg border border-[#e2e8f0] bg-[#f8fafd] px-3 text-sm font-medium text-[#5f6f8f] whitespace-nowrap hover:bg-[#f1f5f9] hover:text-[#00154A]"
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                  <span>{category}</span>
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </button>
+                {categoryOpen && (
+                  <div className="absolute left-0 top-full z-50 mt-1 min-w-36 overflow-hidden rounded-lg border border-[#e2e8f0] bg-white shadow-lg">
+                    <ul className="p-1">
+                      {categories.map((cat) => (
+                        <li key={cat}>
+                          <button type="button" onClick={() => { setCategory(cat); setCategoryOpen(false); }} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-[#5f6f8f] transition-colors hover:bg-[#f1f5f9] hover:text-[#00154A]">
+                            <span className="flex-1 text-left">{cat}</span>
+                            {category === cat && <Check className="h-3.5 w-3.5 text-[#00154A]" />}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Input */}
               <input
                 ref={inputRef}
                 type="text"
@@ -283,12 +382,14 @@ function SearchBar({
                 value={searchValue}
                 onChange={(event) => setSearchValue(event.target.value)}
                 onKeyDown={handleKeyDown}
-                className="h-12 w-full rounded-lg border border-[#e2e8f0] bg-[#f8fafd] pl-10 pr-12 text-base text-[#2f3d5b] outline-none ring-0 placeholder:text-[#9fa9bf] focus:border-[#00154A] focus:ring-2 focus:ring-[#c3d4f8]"
+                className="h-12 flex-1 border border-[#e2e8f0] bg-[#f8fafd] px-3 text-base text-[#2f3d5b] outline-none placeholder:text-[#9fa9bf] transition-all focus:border-[#00154A] focus:ring-2 focus:ring-[#c3d4f8]"
                 autoFocus
               />
+
+              {/* Close */}
               <button
                 onClick={onToggle}
-                className="cursor-pointer absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-[#8191b3] transition-colors hover:bg-[#f1f5f9] hover:text-[#00154A]"
+                className="inline-flex h-12 cursor-pointer items-center justify-center rounded-r-lg border border-[#e2e8f0] bg-[#f8fafd] px-3 text-[#8191b3] transition-colors hover:bg-[#f1f5f9] hover:text-[#00154A]"
                 aria-label="Close search"
               >
                 <X className="h-4 w-4" />
@@ -296,19 +397,19 @@ function SearchBar({
             </div>
 
             {searchValue.length >= 2 && (
-               <div className="mt-4 max-h-[70vh] overflow-y-auto">
-                  <SearchContent 
-                    results={results} 
-                    isSearching={isSearching} 
-                    selectedIndex={selectedIndex} 
-                    onSelect={(href) => {
-                      router.push(href);
-                      setShowResults(false);
-                      setSearchValue("");
-                      onToggle?.();
-                    }}
-                  />
-               </div>
+              <div className="mt-4 max-h-[70vh] overflow-y-auto">
+                <SearchContent
+                  results={results}
+                  isSearching={isSearching}
+                  selectedIndex={selectedIndex}
+                  onSelect={(href) => {
+                    router.push(href);
+                    setShowResults(false);
+                    setSearchValue("");
+                    onToggle?.();
+                  }}
+                />
+              </div>
             )}
           </div>
         </div>
@@ -349,7 +450,7 @@ function SearchContent({ results, isSearching, selectedIndex, onSelect }: {
           type="button"
           onClick={() => onSelect(result.href)}
           className={`cursor-pointer group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
-            index === selectedIndex ? 'bg-[#f1f5f9]' : 'hover:bg-[#f8fafd]'
+            index === selectedIndex ? 'bg-[#f1f5f9]' : 'hover:bg-[#f1f5f9]'
           }`}
         >
           <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[#8191b3] overflow-hidden">
@@ -366,7 +467,7 @@ function SearchContent({ results, isSearching, selectedIndex, onSelect }: {
             ) : result.type === 'program' ? (
               <BookOpen size={18} />
             ) : (
-              <ScrollText size={18} />
+              <ScrollText size={20} />
             )}
           </div>
           <div className="flex flex-col min-w-0">

@@ -9,8 +9,9 @@ import ProgressChart from "./ProgressChart";
 import CompletionsChart from "./CompletionsChart";
 import ProgramTable, { ProgramRecord } from "./ProgramTable";
 import EditProgressModal from "./EditProgressModal";
-import { BookUser } from "lucide-react";
+import { BookUser, PieChart, BarChart3, RefreshCw, ChevronDown, X, Check, CheckSquare } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface InmateProgramJoin {
   inmate_program_id: number;
@@ -37,6 +38,11 @@ export default function InmateProgressPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<ProgramRecord | null>(null);
+  const [activeChart, setActiveChart] = useState<"status" | "completions">("status");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [batchStatus, setBatchStatus] = useState<ProgramRecord["status"]>("Ongoing");
+  const [isBatchUpdating, setIsBatchUpdating] = useState(false);
+  const [batchStatusOpen, setBatchStatusOpen] = useState(false);
 
   const fetchProgressData = useCallback(async () => {
     try {
@@ -90,6 +96,30 @@ export default function InmateProgressPage() {
   useEffect(() => {
     fetchProgressData();
   }, [fetchProgressData]);
+
+  const handleBatchUpdate = useCallback(async () => {
+    if (selectedIds.length === 0) return;
+    setIsBatchUpdating(true);
+    try {
+      const numericIds = selectedIds.map((id) => parseInt(id, 10));
+      const endDate = batchStatus === "Completed" ? new Date().toISOString().split("T")[0] : null;
+      const { error } = await supabase
+        .from("inmate_programs")
+        .update({ progress: batchStatus, end_date: endDate })
+        .in("inmate_program_id", numericIds);
+
+      if (error) throw error;
+
+      toast.success(`Updated ${selectedIds.length} record${selectedIds.length > 1 ? "s" : ""} to "${batchStatus}".`);
+      setSelectedIds([]);
+      fetchProgressData();
+    } catch (err) {
+      console.error("Batch update error:", err);
+      toast.error("Failed to batch update records.");
+    } finally {
+      setIsBatchUpdating(false);
+    }
+  }, [selectedIds, batchStatus, fetchProgressData]);
 
   const ongoingCount = programData.filter((p) => p.status === "Ongoing").length;
   const completedCount = programData.filter((p) => p.status === "Completed").length;
@@ -153,10 +183,134 @@ export default function InmateProgressPage() {
         </div>
 
         <div className="flex flex-col gap-6 lg:flex-row">
-          <div className="lg:max-w-70 w-full">
-            <ProgressChart ongoing={ongoingCount} completed={completedCount} dropped={droppedCount} />
+          {/* Tabbed chart panel */}
+          <div className="lg:max-w-80 w-full">
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+              {/* Tab bar */}
+              <div className="flex border-b border-slate-200 bg-slate-50">
+                <button
+                  type="button"
+                  onClick={() => setActiveChart("status")}
+                  className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 px-4 py-3 text-xs font-semibold transition-colors ${
+                    activeChart === "status"
+                      ? "border-b-2 border-teal-600 bg-white text-teal-700"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+                  }`}
+                >
+                  <PieChart size={14} />
+                  Status
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveChart("completions")}
+                  className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 px-4 py-3 text-xs font-semibold transition-colors ${
+                    activeChart === "completions"
+                      ? "border-b-2 border-teal-600 bg-white text-teal-700"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+                  }`}
+                >
+                  <BarChart3 size={14} />
+                  Monthly
+                </button>
+              </div>
+
+              {/* Chart content */}
+              <div className="p-4">
+                {isLoading ? (
+                  activeChart === "status" ? (
+                    <div className="space-y-4">
+                      <Skeleton className="h-4 w-36 rounded-md" />
+                      <div className="flex items-center justify-center py-4">
+                        <Skeleton className="h-40 w-40 rounded-full" />
+                      </div>
+                      <div className="space-y-2.5">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <Skeleton className="h-3 w-3 rounded-full shrink-0" />
+                            <Skeleton className="h-3 w-20 rounded" />
+                            <Skeleton className="h-3 w-8 rounded ml-auto" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <Skeleton className="h-4 w-48 rounded-md" />
+                      <div className="flex items-end gap-2 h-40 px-2">
+                        {Array.from({ length: 12 }).map((_, i) => (
+                          <div key={i} className="flex flex-1 flex-col items-center gap-1.5">
+                            <Skeleton
+                              className="w-full rounded-t-sm"
+                              style={{ height: `${30 + ((i * 17) % 70)}%` }}
+                            />
+                            <Skeleton className="h-2.5 w-4 rounded" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                ) : activeChart === "status" ? (
+                  <ProgressChart ongoing={ongoingCount} completed={completedCount} dropped={droppedCount} />
+                ) : (
+                  <CompletionsChart data={monthlyCompletionsData} />
+                )}
+              </div>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
+
+          {/* Table */}
+          <div className="flex-1 min-w-0 space-y-3">
+            {/* Batch action bar */}
+            {selectedIds.length > 0 && (
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 shadow-sm">
+                <CheckSquare size={16} className="shrink-0 text-teal-700" />
+                <span className="text-sm font-semibold text-teal-800">
+                  {selectedIds.length} record{selectedIds.length > 1 ? "s" : ""} selected
+                </span>
+                <div className="flex items-center gap-2 ml-auto flex-wrap">
+                  <span className="text-xs text-teal-700 font-medium">Set status to:</span>
+                  <Popover open={batchStatusOpen} onOpenChange={setBatchStatusOpen}>
+                    <PopoverTrigger className="flex cursor-pointer items-center gap-2 rounded-lg border border-teal-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-teal-500/20 min-w-32">
+                      <span className="flex-1 text-left">{batchStatus}</span>
+                      <ChevronDown size={13} className={`shrink-0 text-slate-400 transition-transform ${batchStatusOpen ? "rotate-180" : ""}`} />
+                    </PopoverTrigger>
+                    <PopoverContent align="start" sideOffset={6} className="w-36 p-1">
+                      {(["Ongoing", "Completed", "Dropped"] as ProgramRecord["status"][]).map((s) => (
+                        <button key={s} type="button"
+                          onClick={() => { setBatchStatus(s); setBatchStatusOpen(false); }}
+                          className="flex w-full cursor-pointer items-center gap-2 rounded-md px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-100"
+                        >
+                          <span className="flex-1 text-left">{s}</span>
+                          {batchStatus === s && <Check size={13} className="text-teal-600" />}
+                        </button>
+                      ))}
+                    </PopoverContent>
+                  </Popover>
+                  <button
+                    type="button"
+                    disabled={isBatchUpdating}
+                    onClick={handleBatchUpdate}
+                    className="cursor-pointer flex items-center gap-1.5 rounded-lg bg-teal-600 px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isBatchUpdating ? (
+                      <RefreshCw size={13} className="animate-spin" />
+                    ) : (
+                      <Check size={13} />
+                    )}
+                    Apply
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedIds([])}
+                    className="cursor-pointer flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-500 transition hover:bg-slate-50"
+                  >
+                    <X size={13} />
+                    Clear
+                  </button>
+                </div>
+              </div>
+            )}
+
             {isLoading ? (
               <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                 <div className="border-b border-slate-200 bg-slate-50 px-5 py-3 grid grid-cols-6 gap-4">
@@ -178,8 +332,9 @@ export default function InmateProgressPage() {
                 </div>
               </div>
             ) : (
-              <ProgramTable 
-                data={programData} 
+              <ProgramTable
+                data={programData}
+                onSelectionChange={setSelectedIds}
                 onEdit={(record) => {
                   setSelectedRecord(record);
                   setIsEditModalOpen(true);
@@ -188,8 +343,6 @@ export default function InmateProgressPage() {
             )}
           </div>
         </div>
-
-        <CompletionsChart data={monthlyCompletionsData} />
       </section>
 
       <EditProgressModal 

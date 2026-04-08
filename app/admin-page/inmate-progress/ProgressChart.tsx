@@ -64,10 +64,10 @@ export default function ProgressChart({ ongoing, completed, dropped }: ProgressC
   ];
 
   return (
-    <div className="min-w-0 flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div className="space-y-4">
       <div className="flex items-center gap-2">
         <PieChart className="h-5 w-5 text-slate-600" />
-        <h2 className="font-lexend text-lg font-semibold text-slate-800">Progress Distribution</h2>
+        <h2 className="font-lexend text-sm font-semibold text-slate-700">Progress Distribution</h2>
       </div>
       <div className="mt-6 flex items-start gap-8">
         <div className="flex-1">

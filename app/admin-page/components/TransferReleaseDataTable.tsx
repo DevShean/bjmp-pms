@@ -14,7 +14,7 @@ import {
 import { useMemo, useState, useEffect, memo } from "react";
 import { ArrowRightLeft, Search, FilterX, ChevronDown, LayoutGrid, Users, Check } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-
+import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
 
 export type InmateCellBlock = {
@@ -289,14 +289,36 @@ export default function TransferReleaseDataTable({
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {isLoading ? (
-                <tr>
-                  <td colSpan={columns.length} className="px-6 py-12 text-center text-sm text-slate-500">
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
-                      <span>Loading inmate records...</span>
-                    </div>
-                  </td>
-                </tr>
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className={i % 2 !== 0 ? "bg-slate-200" : "bg-white"}>
+                    {/* INMATE */}
+                    <td className="whitespace-nowrap px-6 py-4 align-middle">
+                      <div className="flex items-center gap-3">
+                        <Skeleton className="h-9 w-9 rounded-full shrink-0" />
+                        <div className="space-y-1.5">
+                          <Skeleton className="h-3.5 w-32 rounded" />
+                          <Skeleton className="h-3 w-16 rounded" />
+                        </div>
+                      </div>
+                    </td>
+                    {/* CURRENT BLOCK */}
+                    <td className="whitespace-nowrap px-6 py-4 align-middle">
+                      <Skeleton className="h-6 w-16 rounded-full" />
+                    </td>
+                    {/* GENDER */}
+                    <td className="whitespace-nowrap px-6 py-4 align-middle">
+                      <Skeleton className="h-6 w-14 rounded-full" />
+                    </td>
+                    {/* NEW BLOCK DETAILS */}
+                    <td className="whitespace-nowrap px-6 py-4 align-middle">
+                      <Skeleton className="h-9 w-40 rounded-md" />
+                    </td>
+                    {/* ACTION */}
+                    <td className="whitespace-nowrap px-6 py-4 align-middle">
+                      <Skeleton className="h-8 w-24 rounded-md" />
+                    </td>
+                  </tr>
+                ))
               ) : table.getRowModel().rows.length === 0 ? (
                 <tr>
                   <td colSpan={columns.length} className="px-6 py-12 text-center text-sm text-slate-500 font-medium">

@@ -1,122 +1,84 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { BarChart3 } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 
 interface CompletionsChartProps {
   data: Array<{ month: string; completions: number }>;
 }
 
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number }>; label?: string }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-lg">
+      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</p>
+      <p className="mt-0.5 text-sm font-bold text-teal-700">
+        {payload[0].value} completion{payload[0].value !== 1 ? "s" : ""}
+      </p>
+    </div>
+  );
+}
+
 export default function CompletionsChart({ data }: CompletionsChartProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-
-    const padding = { top: 20, right: 20, bottom: 40, left: 50 };
-    const chartWidth = rect.width - padding.left - padding.right;
-    const chartHeight = rect.height - padding.top - padding.bottom;
-
-    const maxValue = Math.max(...data.map((d) => d.completions), 1);
-    const barWidth = chartWidth / data.length * 0.5;
-    const gap = chartWidth / data.length * 0.5;
-
-    // Clear canvas with light grey background
-    ctx.fillStyle = "#f8fafc";
-    ctx.fillRect(0, 0, rect.width, rect.height);
-
-    // Draw grid lines (horizontal)
-    ctx.strokeStyle = "#e2e8f0";
-    ctx.lineWidth = 1;
-    const gridLines = 5;
-    for (let i = 0; i <= gridLines; i++) {
-      const y = padding.top + (chartHeight / gridLines) * i;
-      ctx.beginPath();
-      ctx.moveTo(padding.left, y);
-      ctx.lineTo(padding.left + chartWidth, y);
-      ctx.stroke();
-    }
-
-    // Draw axes
-    ctx.strokeStyle = "#64748b";
-    ctx.lineWidth = 2;
-    // Y axis
-    ctx.beginPath();
-    ctx.moveTo(padding.left, padding.top);
-    ctx.lineTo(padding.left, padding.top + chartHeight);
-    ctx.stroke();
-    // X axis
-    ctx.beginPath();
-    ctx.moveTo(padding.left, padding.top + chartHeight);
-    ctx.lineTo(padding.left + chartWidth, padding.top + chartHeight);
-    ctx.stroke();
-
-    // Draw Y-axis labels (0 to max)
-    ctx.fillStyle = "#64748b";
-    ctx.font = "12px sans-serif";
-    ctx.textAlign = "right";
-    ctx.textBaseline = "middle";
-    for (let i = 0; i <= gridLines; i++) {
-      const value = Math.round(maxValue - (maxValue / gridLines) * i);
-      const y = padding.top + (chartHeight / gridLines) * i;
-      ctx.fillText(String(value), padding.left - 8, y);
-    }
-
-    // Draw bars
-    data.forEach((item, index) => {
-      const x = padding.left + index * (barWidth + gap) + gap / 2;
-      const barHeight = (item.completions / maxValue) * chartHeight;
-      const y = padding.top + chartHeight - barHeight;
-
-      // Draw bar
-      ctx.fillStyle = "#3b82f6";
-      ctx.fillRect(x, y, barWidth, barHeight);
-
-      // Draw month label
-      ctx.fillStyle = "#64748b";
-      ctx.font = "12px sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(item.month, x + barWidth / 2, padding.top + chartHeight + 15);
-    });
-
-    // Draw legend at top right
-    const legendX = padding.left + chartWidth - 100;
-    const legendY = padding.top - 10;
-    ctx.fillStyle = "white";
-    ctx.fillRect(legendX - 8, legendY - 8, 100, 24);
-    ctx.strokeStyle = "#3b82f6";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(legendX - 8, legendY - 8, 100, 24);
-    ctx.fillStyle = "#1e293b";
-    ctx.font = "12px sans-serif";
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    ctx.fillText("Completions", legendX + 4, legendY + 4);
-
-  }, [data]);
+  const maxVal = Math.max(...data.map((d) => d.completions), 0);
 
   return (
-    <div className="min-w-0 flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex items-center gap-2">
-        <BarChart3 className="h-5 w-5 text-slate-600" />
-        <h2 className="font-lexend text-lg font-semibold text-slate-800">Monthly Completions</h2>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="h-5 w-5 text-slate-600" />
+          <h2 className="font-lexend text-sm font-semibold text-slate-700">Monthly Completions</h2>
+        </div>
+        <span className="text-xs text-slate-400 font-medium">{new Date().getFullYear()}</span>
       </div>
-      <div className="mt-4 relative h-64 w-full">
-        <canvas
-          id="completionsChart"
-          ref={canvasRef}
-          className="h-full w-full"
-        />
+
+      <div className="mt-5 h-64 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} barCategoryGap="35%" margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
+            <CartesianGrid vertical={false} stroke="#f1f5f9" strokeDasharray="4 0" />
+            <XAxis
+              dataKey="month"
+              tick={{ fill: "#94a3b8", fontSize: 12 }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              allowDecimals={false}
+              tick={{ fill: "#94a3b8", fontSize: 12 }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: "#f1f5f9", radius: 6 }} />
+            <Bar dataKey="completions" radius={[6, 6, 0, 0]}>
+              {data.map((entry, index) => (
+                <Cell
+                  key={index}
+                  fill={entry.completions === maxVal && maxVal > 0 ? "#0d9488" : "#99f6e4"}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="mt-3 flex items-center gap-4 text-xs text-slate-500">
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-teal-600" />
+          Peak month
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-sm bg-teal-200" />
+          Completions
+        </span>
       </div>
     </div>
   );
