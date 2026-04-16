@@ -10,7 +10,6 @@ import {
   ShieldAlert,
   ShieldCheck,
   ShieldUser,
-  Stethoscope,
   UserCog,
   Users,
 } from "lucide-react";
@@ -79,7 +78,6 @@ export const staffRoleConfig: Record<
     menuItems: [
       { name: "Dashboard", path: "/medical-page", icon: House },
       { name: "Medical Records", path: "/medical-page/medical-records", icon: HeartPulse },
-      { name: "Inmates Medic", path: "/medical-page/inmates-medic", icon: Stethoscope },
       { name: "Health Report", path: "/medical-page/health-report", icon: FileBarChart2 },
       { name: "Incidents", path: "/medical-page/incidents", icon: ShieldAlert, badge: 2 },
     ],

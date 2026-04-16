@@ -232,9 +232,7 @@ export default function BehaviorLogsPage() {
 						</tbody>
 					</table>
 					
-					<div class="footer">
-						Generated on ${new Date().toLocaleString()}
-					</div>
+
 					
 					<script>
 						window.onload = () => {
