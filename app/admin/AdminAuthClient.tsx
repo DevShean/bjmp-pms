@@ -1,12 +1,13 @@
 "use client";
 
-import { FormEvent, ReactNode, useEffect, useState } from "react";
+import { FormEvent, ReactNode, useState } from "react";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { LogIn, Building2, Eye, EyeOff, KeyRound, Mail, ShieldCheck, UserRound } from "lucide-react";
 import { toast } from "sonner";
-import AppSplashScreen from "../components/AppSplashScreen";
+//import AppSplashScreen from "../components/AppSplashScreen";
+import ServerTimeoutSplash from "../components/ServerTimeoutSplash";
 import { supabase } from "../../lib/supabase/client";
 
 type RoleKey = "administrator" | "correctionalOfficer" | "medicalStaff" | "rehabilitationStaff";
@@ -44,21 +45,21 @@ const roleCopy: Record<RoleKey, { title: string; subtitle: string; actionLabel: 
 };
 
 export default function AdminAuthClient() {
-  const [showSplash, setShowSplash] = useState(true);
+  // const [showSplash, setShowSplash] = useState(true);
   const [activeRole, setActiveRole] = useState<RoleKey>("administrator");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const shouldReduceMotion = useReducedMotion();
   const router = useRouter();
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setShowSplash(false);
-    }, 5000); // Show splash screen for at least 2 seconds
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, []);
+  // useEffect(() => {
+  //   const timer = window.setTimeout(() => {
+  //     setShowSplash(false);
+  //   }, 5000); // Show splash screen for at least 2 seconds
+  //
+  //   return () => {
+  //     window.clearTimeout(timer);
+  //   };
+  // }, []);
 
   const panelTransition = shouldReduceMotion
     ? { duration: 0 }
@@ -141,9 +142,11 @@ export default function AdminAuthClient() {
     }
   };
 
-  if (showSplash) {
-    return <AppSplashScreen />;
-  }
+  return <ServerTimeoutSplash />;
+
+  // if (showSplash) {
+  //   return <AppSplashScreen />;
+  // }
 
   return (
     <div className="flex min-h-screen items-center justify-center px-5 py-5 sm:px-8 sm:py-8">
