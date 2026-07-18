@@ -14,10 +14,10 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { FormEvent, type ReactNode, useState } from "react";
+import { FormEvent, type ReactNode, useState, useEffect } from "react";
 import { toast } from "sonner";
-// import VisitorSplashScreen from "./components/VisitorSplashScreen";
-import ServerTimeoutSplash from "./components/ServerTimeoutSplash";
+import VisitorSplashScreen from "./components/VisitorSplashScreen";
+// import ServerTimeoutSplash from "./components/ServerTimeoutSplash";
 import { supabase } from "../lib/supabase/client";
 import {
   Dialog,
@@ -57,27 +57,27 @@ const authCopy = {
 // ─── Root component ───────────────────────────────────────────────────────────
 
 export default function VisitorAuthClient() {
-  // const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const shouldReduceMotion = useReducedMotion();
   const router = useRouter();
 
-  // useEffect(() => {
-  //   const timer = window.setTimeout(() => {
-  //     setShowSplash(false);
-  //   }, 5000);
-  //   return () => window.clearTimeout(timer);
-  // }, []);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setShowSplash(false);
+    }, 5000);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const contentTransition = shouldReduceMotion
     ? { duration: 0 }
     : { duration: 0.32, ease: [0.22, 1, 0.36, 1] as const };
 
-  return <ServerTimeoutSplash />;
+  // return <ServerTimeoutSplash />;
 
-  // if (showSplash) {
-  //   return <VisitorSplashScreen />;
-  // }
+  if (showSplash) {
+    return <VisitorSplashScreen />;
+  }
 
   return (
     <div className="h-screen overflow-hidden">

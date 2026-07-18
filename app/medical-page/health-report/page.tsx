@@ -524,7 +524,7 @@ export default function HealthReportPage() {
                   <select
                     value={visitTypeFilter}
                     onChange={(e) => setVisitTypeFilter(e.target.value)}
-                    className="w-full h-[52px] rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-700 outline-none transition hover:bg-slate-100 focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none"
+                    className="w-full h-13 rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm text-slate-700 outline-none transition hover:bg-slate-100 focus:ring-2 focus:ring-blue-500 cursor-pointer appearance-none"
                   >
                     <option value="">All Visit Types</option>
                     <option value="Routine Checkup">Routine Checkup</option>
